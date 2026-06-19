@@ -1,3 +1,409 @@
+// ════════════════════════════════════════════════════════════════
+//  CDC CRM · PARCHE DE INTEGRACIÓN GOOGLE SHEETS
+//  Grupo Nuwek · v1.0 · Junio 2026
+//
+//  INSTRUCCIONES DE USO:
+//  1. Abre tu index.html del portal CDC
+//  2. Localiza la línea: function setText(id, v) {
+//  3. Pega TODO este bloque ANTES de esa línea
+//  4. Reemplaza TU_URL_EXEC con tu URL de Apps Script
+//  5. Busca DOMContentLoaded y reemplaza las llamadas a render*()
+//     por las versiones async que están al final de este archivo
+//
+//  PATRÓN CORS-FREE (del PDF Grupo Nuwek):
+//  POST con URLSearchParams → x-www-form-urlencoded → sin preflight
+// ════════════════════════════════════════════════════════════════
+
+// ── 0. URL del Apps Script (ÚNICO lugar donde se configura) ──────
+var GS_URL = 'https://script.google.com/macros/s/AKfycbzUyr0AEBXHaUUxf46AdmbqaFUdFnkgdsVih1rlmxinfFLd72PxmPKP3-Vms06lNvzh3g/exec';
+
+// ── 1. Helper universal de conexión ─────────────────────────────
+//     Sin headers → sin preflight → sin error CORS
+async function gs(action, data) {
+  try {
+    var res = await fetch(GS_URL, {
+      method: 'POST',
+      body: new URLSearchParams({
+        action: action,
+        data: JSON.stringify(data || {})
+      })
+      // ← SIN objeto headers. Crítico para evitar preflight.
+    });
+    return await res.json();
+  } catch (err) {
+    console.error('[CDC GS] Error en acción ' + action + ':', err);
+    return { ok: false, error: err.toString() };
+  }
+}
+
+// ── 2. Estado global (reemplaza los arrays demo) ─────────────────
+var CDC = {
+  leads:      [],   // desde Sheets → Leads
+  clientes:   [],   // desde Sheets → Clientes (con .sesiones anidadas)
+  actividades:[],   // desde Sheets → Actividades
+  egresos:    [],   // desde Sheets → Egresos
+  pagosFijos: [],   // desde Sheets → PagosFijos
+  facturas:   [],   // desde Sheets → Facturas
+  cargando:   false
+};
+
+// ── 3. Loader visual (muestra mientras carga Sheets) ─────────────
+function mostrarLoader(visible) {
+  var lo = document.getElementById('gs-loader');
+  if (lo) lo.style.display = visible ? 'flex' : 'none';
+}
+
+function mostrarError(msg) {
+  var el = document.getElementById('gs-error');
+  if (el) { el.textContent = msg; el.style.display = 'block'; }
+}
+
+// ── 4. Carga inicial de todos los módulos ────────────────────────
+async function cargarTodo() {
+  mostrarLoader(true);
+  try {
+    var [rLeads, rClientes, rActs, rEg, rPF, rFact] = await Promise.all([
+      gs('getLeads'),
+      gs('getClientes'),
+      gs('getActividades'),
+      gs('getEgresos'),
+      gs('getPagosFijos'),
+      gs('getFacturas')
+    ]);
+
+    if (rLeads.ok)    CDC.leads       = rLeads.data;
+    if (rClientes.ok) CDC.clientes    = rClientes.data;
+    if (rActs.ok)     CDC.actividades = rActs.data;
+    if (rEg.ok)       CDC.egresos     = rEg.data;
+    if (rPF.ok)       CDC.pagosFijos  = rPF.data;
+    if (rFact.ok)     CDC.facturas    = rFact.data;
+
+    // Sincronizar con variables legacy del portal (compatibilidad)
+    if (typeof leadsData      !== 'undefined') leadsData      = CDC.leads;
+    if (typeof clientesData   !== 'undefined') clientesData   = CDC.clientes;
+    if (typeof actividades    !== 'undefined') actividades    = CDC.actividades;
+    if (typeof egresosData    !== 'undefined') egresosData    = CDC.egresos;
+    if (typeof pagosFijos     !== 'undefined') pagosFijos     = CDC.pagosFijos;
+    if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas;
+
+    // Re-render de todos los módulos visibles
+    if (typeof renderActividades !== 'undefined') renderActividades('todas');
+    if (typeof renderPipeline    !== 'undefined') renderPipeline();
+    if (typeof renderLeads       !== 'undefined') renderLeads(CDC.leads);
+    if (typeof renderClientes    !== 'undefined') renderClientes();
+    if (typeof renderEgresos     !== 'undefined') renderEgresos();
+    if (typeof renderFacturas    !== 'undefined') renderFacturas();
+
+  } catch (err) {
+    mostrarError('Error de conexión con Google Sheets: ' + err.toString());
+    console.error('[CDC GS] cargarTodo falló:', err);
+  }
+  mostrarLoader(false);
+}
+
+// ════════════════════════════════════════════════════════════════
+//  WRAPPERS — reemplazan las funciones de guardado del portal
+//  Cada uno: guarda en Sheets → actualiza CDC[] → re-renderiza
+// ════════════════════════════════════════════════════════════════
+
+// ── LEADS ────────────────────────────────────────────────────────
+
+async function gs_guardarLead(leadData) {
+  var res = await gs('saveLead', leadData);
+  if (res.ok) {
+    await _recargarLeads();
+  } else {
+    console.error('[CDC GS] saveLead:', res.error);
+  }
+  return res;
+}
+
+async function gs_actualizarLead(leadData) {
+  // leadData debe incluir .id
+  var res = await gs('updateLead', leadData);
+  if (res.ok) {
+    await _recargarLeads();
+    // R1: si etapa = Ganado → activar onboarding
+    if (leadData.etapa === 'Ganado' && typeof abrirOnboarding !== 'undefined') {
+      setTimeout(function() { abrirOnboarding(leadData.nombre); }, 300);
+    }
+  }
+  return res;
+}
+
+async function _recargarLeads() {
+  var r = await gs('getLeads');
+  if (r.ok) {
+    CDC.leads = r.data;
+    if (typeof leadsData !== 'undefined') leadsData = CDC.leads;
+    if (typeof renderPipeline !== 'undefined') renderPipeline();
+    if (typeof renderLeads    !== 'undefined') renderLeads(CDC.leads);
+  }
+}
+
+// ── CLIENTES ─────────────────────────────────────────────────────
+
+async function gs_guardarCliente(clienteData) {
+  var res = await gs('saveCliente', clienteData);
+  if (res.ok) await _recargarClientes();
+  return res;
+}
+
+async function gs_actualizarCliente(clienteData) {
+  var res = await gs('updateCliente', clienteData);
+  if (res.ok) await _recargarClientes();
+  return res;
+}
+
+async function _recargarClientes() {
+  var r = await gs('getClientes');
+  if (r.ok) {
+    CDC.clientes = r.data;
+    if (typeof clientesData !== 'undefined') clientesData = CDC.clientes;
+    if (typeof renderClientes !== 'undefined') renderClientes();
+  }
+}
+
+// ── SESIONES + COBROS ────────────────────────────────────────────
+
+async function gs_actualizarSesion(sesionData) {
+  var res = await gs('updateSesion', sesionData);
+  if (res.ok) await _recargarClientes();
+  return res;
+}
+
+// R4: registrarCobro → saveCobro (combina sesión + cliente + factura)
+async function gs_registrarCobro(cobroData) {
+  // cobroData: { sesionId, clienteId, clienteNombre, monto, fecha,
+  //              metodo, cuenta, facturaRequerida, rfcFiscal,
+  //              razonSocial, usoCFDI, nextSesionId, nextSesionFecha,
+  //              sesionNum }
+  var res = await gs('saveCobro', cobroData);
+  if (res.ok) {
+    await Promise.all([
+      _recargarClientes(),
+      _recargarFacturas(),
+      _recargarActividades()
+    ]);
+  }
+  return res;
+}
+
+// ── ACTIVIDADES ──────────────────────────────────────────────────
+
+async function gs_guardarActividad(actData) {
+  var res = await gs('saveActividad', actData);
+  if (res.ok) await _recargarActividades();
+  return res;
+}
+
+async function gs_actualizarActividad(actData) {
+  var res = await gs('updateActividad', actData);
+  if (res.ok) await _recargarActividades();
+  return res;
+}
+
+// Marcar actividad como hecha (R: marcarHecha)
+async function gs_marcarHecha(id) {
+  return gs_actualizarActividad({ id: id, done: 'Sí', grupo: 'completadas' });
+}
+
+// Reprogramar actividad
+async function gs_reprogramarActividad(id, nuevaFecha, hora, nota) {
+  return gs_actualizarActividad({
+    id: id,
+    fecha: nuevaFecha,
+    hora: hora || '',
+    nota: nota || '',
+    grupo: _calcularGrupo(nuevaFecha)
+  });
+}
+
+function _calcularGrupo(fechaStr) {
+  if (!fechaStr) return 'hoy';
+  var hoy  = new Date(); hoy.setHours(0,0,0,0);
+  var man  = new Date(hoy); man.setDate(man.getDate() + 1);
+  var fecha = new Date(fechaStr + 'T00:00:00');
+  if (fecha < hoy)  return 'urgente';
+  if (fecha.getTime() === hoy.getTime()) return 'hoy';
+  if (fecha.getTime() === man.getTime()) return 'manana';
+  return 'manana';
+}
+
+async function _recargarActividades() {
+  var r = await gs('getActividades');
+  if (r.ok) {
+    CDC.actividades = r.data;
+    if (typeof actividades !== 'undefined') actividades = CDC.actividades;
+    if (typeof renderActividades !== 'undefined') renderActividades('todas');
+  }
+}
+
+// ── EGRESOS ──────────────────────────────────────────────────────
+
+async function gs_guardarEgreso(egresoData) {
+  var res = await gs('saveEgreso', egresoData);
+  if (res.ok) await _recargarEgresos();
+  return res;
+}
+
+async function gs_actualizarEgreso(egresoData) {
+  var res = await gs('updateEgreso', egresoData);
+  if (res.ok) await _recargarEgresos();
+  return res;
+}
+
+async function gs_guardarPagoFijo(pfData) {
+  var res = await gs('savePagoFijo', pfData);
+  if (res.ok) await _recargarEgresos();
+  return res;
+}
+
+async function gs_eliminarPagoFijo(id) {
+  var res = await gs('deletePagoFijo', { id: id });
+  if (res.ok) await _recargarEgresos();
+  return res;
+}
+
+async function _recargarEgresos() {
+  var [rEg, rPF] = await Promise.all([
+    gs('getEgresos'),
+    gs('getPagosFijos')
+  ]);
+  if (rEg.ok) {
+    CDC.egresos = rEg.data;
+    if (typeof egresosData !== 'undefined') egresosData = CDC.egresos;
+  }
+  if (rPF.ok) {
+    CDC.pagosFijos = rPF.data;
+    if (typeof pagosFijos !== 'undefined') pagosFijos = CDC.pagosFijos;
+  }
+  if (typeof renderEgresos !== 'undefined') renderEgresos();
+}
+
+// ── FACTURAS ─────────────────────────────────────────────────────
+
+// agregarFacturaPendiente — llamada desde registrarCobro (R4)
+async function gs_agregarFacturaPendiente(clienteNombre, sesionNum, monto, fecha) {
+  var cliente = CDC.clientes.find(function(c) { return c.nombre === clienteNombre; });
+  return gs('saveFactura', {
+    clienteId:      cliente ? cliente.id : '',
+    clienteNombre:  clienteNombre,
+    sesionNum:      sesionNum,
+    monto:          monto,
+    fecha:          fecha,
+    estatus:        'Por crear',
+    rfcFiscal:      cliente ? (cliente.rfcFiscal || '') : '',
+    razonSocial:    cliente ? (cliente.razonSocial || '') : '',
+    usoCFDI:        cliente ? (cliente.usoCFDI || '') : ''
+  });
+}
+
+// Avanzar estatus de factura (R10: solo progresa, requiere folio)
+async function gs_avanzarFactura(facturaId, nuevoEstatus, folio) {
+  var res = await gs('updateFactura', {
+    id:       facturaId,
+    estatus:  nuevoEstatus,
+    folio:    folio || ''
+  });
+  if (res.ok) await _recargarFacturas();
+  else alert(res.error || 'No se pudo actualizar la factura');
+  return res;
+}
+
+async function _recargarFacturas() {
+  var r = await gs('getFacturas');
+  if (r.ok) {
+    CDC.facturas = r.data;
+    if (typeof facturasData !== 'undefined') facturasData = CDC.facturas;
+    if (typeof renderFacturas !== 'undefined') renderFacturas();
+  }
+}
+
+// ════════════════════════════════════════════════════════════════
+//  FRAGMENTO HTML — pega dentro del <body> del portal
+//  (loader + banner de error + botón de reconexión)
+// ════════════════════════════════════════════════════════════════
+
+/*
+<!-- PEGAR JUSTO DESPUÉS DEL <body> -->
+<div id="gs-loader" style="
+  display:none; position:fixed; inset:0; background:rgba(26,26,46,.85);
+  z-index:9999; align-items:center; justify-content:center; flex-direction:column; gap:16px;">
+  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"
+    style="animation:spin 1s linear infinite;">
+    <circle cx="24" cy="24" r="20" stroke="#4A6CF7" stroke-width="4" stroke-dasharray="80 40"/>
+  </svg>
+  <span style="color:#fff; font-family:Arial,sans-serif; font-size:14px; letter-spacing:.5px;">
+    Sincronizando con Google Sheets…
+  </span>
+</div>
+
+<div id="gs-error" style="
+  display:none; position:fixed; top:16px; right:16px; background:#B71C1C;
+  color:#fff; padding:12px 20px; border-radius:8px; font-family:Arial,sans-serif;
+  font-size:13px; z-index:9998; max-width:320px; cursor:pointer;"
+  onclick="this.style.display='none'">
+</div>
+
+<style>
+@keyframes spin { to { transform: rotate(360deg); } }
+</style>
+-->
+*/
+
+// ════════════════════════════════════════════════════════════════
+//  REEMPLAZO DEL DOMContentLoaded
+//
+//  En tu HTML, localiza:
+//    window.addEventListener('DOMContentLoaded', function(){ ... });
+//
+//  Reemplaza TODA esa función por esto:
+// ════════════════════════════════════════════════════════════════
+
+/*
+window.addEventListener('DOMContentLoaded', async function() {
+
+  // --- Init UI igual que antes ---
+  changeUser('drwilly'); // o tu función de init de usuario
+  nav('hoy');            // pantalla inicial
+
+  // --- Cargar datos desde Google Sheets ---
+  await cargarTodo();
+
+});
+*/
+
+// ════════════════════════════════════════════════════════════════
+//  TABLA DE REEMPLAZOS
+//  Qué función del portal original llama a qué wrapper de GS
+// ════════════════════════════════════════════════════════════════
+
+/*
+  FUNCIÓN ORIGINAL EN EL PORTAL    →  WRAPPER GS QUE LA REEMPLAZA
+  ─────────────────────────────────────────────────────────────────
+  guardarPipe()                     →  gs_actualizarLead(leadData)
+  onDrop(ev, etapa) al soltar       →  gs_actualizarLead({id, etapa:'Ganado'})
+  marcarHecha(id)                   →  gs_marcarHecha(id)
+  confirmarReprog()                 →  gs_reprogramarActividad(id, fecha, hora, nota)
+  activarCliente()                  →  gs_guardarCliente(data) o gs_actualizarCliente()
+  registrarCobro()                  →  gs_registrarCobro(cobroData)
+  agregarFacturaPendiente(...)      →  gs_agregarFacturaPendiente(...)
+  avanzarFactura(id, estatus)       →  gs_avanzarFactura(id, estatus, folio)
+  saveEgreso() / guardarEgreso()    →  gs_guardarEgreso(data)
+  savePagoFijo()                    →  gs_guardarPagoFijo(data)
+*/
+
+
+
+
+
+
+
+
+
+
+
 /* ============================================================
    CLÍNICA DEL CEREBRO · CRM/ERP
    Bloque 1 — Helpers, formateadores, datos demo y estado
