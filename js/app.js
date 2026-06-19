@@ -89,9 +89,31 @@ async function cargarTodo() {
     });
     if (rClientes.ok) CDC.clientes    = rClientes.data;
     if (rActs.ok)     CDC.actividades = rActs.data;
-    if (rEg.ok)       CDC.egresos     = rEg.data;
+    if (rEg.ok) {
+      // Separar egresos por tipo para los arrays del portal
+      CDC.egresos = rEg.data;
+      historialEgresos = rEg.data.filter(function(e){ return e.tipo==='historial' || !e.tipo; }).map(function(e){
+        return {id:e.id, nombre:e.nombre, monto:Number(e.monto)||0, fecha:e.fecha, metodo:e.metodo, cat:e.cat, cuenta:e.cuenta, deducible:e.deducible, conciliado:(e.conciliado==='Sí'||e.conciliado===true)};
+      });
+      porPagarData = rEg.data.filter(function(e){ return e.tipo==='porpagar'; }).map(function(e){
+        return {id:e.id, nombre:e.nombre, monto:Number(e.monto)||0, cat:e.cat, limite:e.limite||'', metodo:e.metodo||'Transferencia'};
+      });
+      pagosFijos = rEg.data.filter(function(e){ return e.tipo==='fijo'; }).map(function(e){
+        return {id:e.id, nombre:e.nombre, monto:Number(e.monto)||0, dia:Number(e.dia)||1, cat:e.cat, cuenta:e.cuenta||''};
+      });
+    }
     if (rPF.ok)       CDC.pagosFijos  = rPF.data;
-    if (rFact.ok)     CDC.facturas    = rFact.data;
+    if (rFact.ok) {
+      CDC.facturas = rFact.data;
+      facturasData = rFact.data.map(function(f){
+        return {
+          id:f.id, cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'',
+          monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear',
+          folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'',
+          razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''
+        };
+      });
+    }
 
     // Sincronizar con variables legacy del portal (compatibilidad)
     if (typeof leadsData      !== 'undefined') leadsData      = CDC.leads;
@@ -1684,6 +1706,8 @@ function toggleConciliarEgreso(id){
   e.conciliado=!e.conciliado;
   renderEgresos(); renderFinKpis(finTabActual);
   toast(e.conciliado?'Egreso conciliado con banco':'Egreso marcado como pendiente de conciliar');
+  gs('updateEgreso', {id:id, conciliado:(e.conciliado?'Sí':'No'), actualizadoEn:new Date().toISOString()})
+    .catch(function(err){ console.error('[CDC GS] updateEgreso conciliar:',err); });
 }
 function toggleConciliarIngreso(id){
   var i=getIngreso(id); if(!i) return;
@@ -1754,14 +1778,24 @@ function guardarNuevoEgreso(){
   if(!nombre){ toast('Captura el concepto'); return; }
   if(monto<=0){ toast('Captura un monto válido'); return; }
   var cat = $('ne-cat').value;
+  var ahora = new Date().toISOString();
   if(neTabActual==='ya'){
-    historialEgresos.push({id:uid('he'), nombre:nombre, monto:monto, fecha:$('ne-fecha').value||HOY, metodo:$('ne-metodo').value, cat:cat, cuenta:$('ne-cuenta').value||'', deducible:$('ne-deducible').value, conciliado:$('ne-conciliado-row').classList.contains('on')});
+    var eg = {id:uid('he'), nombre:nombre, monto:monto, fecha:$('ne-fecha').value||HOY, metodo:$('ne-metodo').value, cat:cat, cuenta:$('ne-cuenta').value||'', deducible:$('ne-deducible').value, conciliado:$('ne-conciliado-row').classList.contains('on')};
+    historialEgresos.push(eg);
+    gs('createEgreso', {id:eg.id, nombre:eg.nombre, monto:eg.monto, cat:eg.cat, fecha:eg.fecha, metodo:eg.metodo, cuenta:eg.cuenta, deducible:eg.deducible, conciliado:(eg.conciliado?'Sí':'No'), tipo:'historial', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] createEgreso:',e); });
     toast('Egreso registrado en historial');
   } else if(neTabActual==='prog'){
-    porPagarData.push({id:uid('pp'), nombre:nombre, monto:monto, cat:cat, limite:$('ne-limite').value||HOY, metodo:'Transferencia'});
+    var pp = {id:uid('pp'), nombre:nombre, monto:monto, cat:cat, limite:$('ne-limite').value||HOY, metodo:'Transferencia'};
+    porPagarData.push(pp);
+    gs('createEgreso', {id:pp.id, nombre:pp.nombre, monto:pp.monto, cat:pp.cat, fecha:'', metodo:pp.metodo, cuenta:'', deducible:'Sí', conciliado:'No', tipo:'porpagar', limite:pp.limite, creadoEn:ahora, actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] createEgreso prog:',e); });
     toast('Egreso programado en "Por pagar"');
   } else {
-    pagosFijos.push({id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('ne-dia').value)||1, cat:cat, cuenta:(cuentasPorMetodo[$('ne-rec-metodo').value]||['BBVA 4521'])[0]});
+    var pf = {id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('ne-dia').value)||1, cat:cat, cuenta:(cuentasPorMetodo[$('ne-rec-metodo').value]||['BBVA 4521'])[0]};
+    pagosFijos.push(pf);
+    gs('createEgreso', {id:pf.id, nombre:pf.nombre, monto:pf.monto, cat:pf.cat, fecha:'', metodo:'', cuenta:pf.cuenta, deducible:'Sí', conciliado:'No', tipo:'fijo', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] createEgreso fijo:',e); });
     toast('Pago fijo recurrente creado');
   }
   closeModal('m-nuevo-egreso');
@@ -1776,7 +1810,11 @@ function openPagoFijo(){
 function guardarPagoFijo(){
   var nombre=$('pf-nombre').value.trim(); var monto=Number($('pf-monto').value)||0;
   if(!nombre || monto<=0){ toast('Completa concepto y monto'); return; }
-  pagosFijos.push({id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('pf-dia').value)||1, cat:$('pf-cat').value, cuenta:$('pf-cuenta').value});
+  var pfn = {id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('pf-dia').value)||1, cat:$('pf-cat').value, cuenta:$('pf-cuenta').value};
+  pagosFijos.push(pfn);
+  var ahora = new Date().toISOString();
+  gs('createEgreso', {id:pfn.id, nombre:pfn.nombre, monto:pfn.monto, cat:pfn.cat, fecha:'', metodo:'', cuenta:pfn.cuenta, deducible:'Sí', conciliado:'No', tipo:'fijo', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+    .catch(function(e){ console.error('[CDC GS] createEgreso pagoFijo:',e); });
   closeModal('m-pago-fijo'); renderEgresos();
   toast('Pago fijo "'+nombre+'" creado');
 }
@@ -1838,15 +1876,24 @@ function registrarPagoDesdeDetalle(){
   var cuenta=$('pgd-cuenta').value||(cuentasPorMetodo[metodo]||[''])[0];
   var cat=$('pgd-cat').value;
   var deducible=$('pgd-deducible').value;
+  var ahora = new Date().toISOString();
   if(egresoCtx.tipo==='pendiente'){
     var pp=getPorPagar(egresoCtx.id); var nombre = pp?pp.nombre:'Pago';
-    historialEgresos.push({id:uid('he'), nombre:nombre, monto:monto, fecha:fecha, metodo:metodo, cat:cat, cuenta:cuenta, deducible:deducible, conciliado:false});
+    var newId = uid('he');
+    historialEgresos.push({id:newId, nombre:nombre, monto:monto, fecha:fecha, metodo:metodo, cat:cat, cuenta:cuenta, deducible:deducible, conciliado:false});
     porPagarData = porPagarData.filter(function(x){return x.id!==egresoCtx.id;});
+    gs('createEgreso', {id:newId, nombre:nombre, monto:monto, cat:cat, fecha:fecha, metodo:metodo, cuenta:cuenta, deducible:deducible, conciliado:'No', tipo:'historial', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] createEgreso pendiente:',e); });
+    gs('updateEgreso', {id:egresoCtx.id, tipo:'pagado', actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] updateEgreso pendiente:',e); });
     toast('"'+nombre+'" pagado y movido al historial');
   } else {
     var pfijo=getPagoFijo(egresoCtx.id); var nf = pfijo?(pfijo.nombre+' (mes en curso)'):'Pago fijo';
-    historialEgresos.push({id:uid('he'), nombre:nf, monto:monto, fecha:fecha, metodo:metodo, cat:cat, cuenta:cuenta, deducible:deducible, conciliado:false});
+    var newId2 = uid('he');
+    historialEgresos.push({id:newId2, nombre:nf, monto:monto, fecha:fecha, metodo:metodo, cat:cat, cuenta:cuenta, deducible:deducible, conciliado:false});
     if(pfijo){ pfijo.pagadoMes = HOY.slice(0,7); }
+    gs('createEgreso', {id:newId2, nombre:nf, monto:monto, cat:cat, fecha:fecha, metodo:metodo, cuenta:cuenta, deducible:deducible, conciliado:'No', tipo:'historial', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] createEgreso fijoPago:',e); });
     toast('Pago fijo cubierto este mes · reaparecerá el próximo mes');
   }
   closeModal('m-pago-detalle'); renderEgresos(); renderFinKpis(finTabActual);
@@ -1883,6 +1930,8 @@ function guardarEgresoDetalle(){
   e.deducible=$('egd-deducible').value; e.conciliado=$('egd-conciliado').classList.contains('on');
   closeModal('m-egreso-detalle'); renderEgresos(); renderFinKpis(finTabActual);
   toast('Egreso actualizado');
+  gs('updateEgreso', {id:egresoCtx.id, monto:e.monto, fecha:e.fecha, metodo:e.metodo, cuenta:e.cuenta, deducible:e.deducible, conciliado:(e.conciliado?'Sí':'No'), actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] updateEgreso detalle:',e); });
 }
 
 /* ===================== FACTURAS ===================== */
@@ -1967,8 +2016,10 @@ function avanzarFactura(id){
   }
   f.estado = sig;
   renderFacturas(); renderNav();
-  abrirFacturaDetalle(id); // refrescar modal
+  abrirFacturaDetalle(id);
   toast('Factura de '+f.cliente+' → '+sig);
+  gs('updateFactura', {id:id, estatus:sig, folio:f.folio||'', actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] updateFactura:',e); });
 }
 /* ============================================================
    Bloque 5 — MÓDULO TABLEROS (Chart.js) + INIT
