@@ -1,0 +1,36 @@
+<!doctype html>
+<html lang="es">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Test API · Clínica del Cerebro</title>
+  <style>
+    body { font-family: system-ui, -apple-system, Segoe UI, sans-serif; background:#F4F2EC; color:#1B2A28; padding:32px; }
+    button { background:#0E6E66; color:white; border:0; border-radius:10px; padding:10px 16px; font-weight:700; cursor:pointer; margin:4px; }
+    pre { background:white; border:1px solid #E7E3D8; border-radius:12px; padding:16px; overflow:auto; }
+  </style>
+</head>
+<body>
+  <h1>Test API · Clínica del Cerebro</h1>
+  <p>Usa esta página para validar que GitHub Pages puede leer tu Apps Script.</p>
+  <button onclick="ping()">Ping API</button>
+  <button onclick="action('getLeads')">Leer Leads</button>
+  <button onclick="action('getClientes')">Leer Clientes</button>
+  <button onclick="action('getUsuarios')">Leer Usuarios</button>
+  <pre id="out">Esperando prueba...</pre>
+<script>
+const API_URL = 'https://script.google.com/macros/s/AKfycbypaqf5pSArutietz1X-0IvL2sLIJuIcVqKYmKeQdDsOV5uQMZWLCan3uEIoza3NqcBKA/exec';
+function print(data) { document.getElementById('out').textContent = JSON.stringify(data, null, 2); }
+async function ping() {
+  try { print(await (await fetch(API_URL)).json()); }
+  catch (err) { print({ ok:false, error: err.message }); }
+}
+async function action(action) {
+  try {
+    const res = await fetch(API_URL, { method:'POST', headers:{'Content-Type':'text/plain;charset=utf-8'}, body: JSON.stringify({ action }) });
+    print(await res.json());
+  } catch (err) { print({ ok:false, error: err.message }); }
+}
+</script>
+</body>
+</html>

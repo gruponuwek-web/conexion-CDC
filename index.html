@@ -1,0 +1,515 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Clínica del Cerebro · CRM/ERP</title>
+<link rel="stylesheet" href="./css/styles.css">
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="brand">
+      <div class="mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-3 3 2.5 2.5 0 0 0-2 4 2.5 2.5 0 0 0 1 4.5A2.5 2.5 0 0 0 12 19zM12 5a3 3 0 0 1 3 3 2.5 2.5 0 0 1 2 4 2.5 2.5 0 0 1-1 4.5A2.5 2.5 0 0 1 12 19zM12 5v14M9 9h.01M15 9h.01M8.5 13h.01M15.5 13h.01"/></svg></div>
+      <div class="name">Clínica del Cerebro<span>CRM · ERP</span></div>
+    </div>
+    <nav class="nav" id="nav-list"></nav>
+    <div class="sidebar-foot"><div class="flow-mini"><b>Flujo del paciente</b><br>Lead → Pipeline → Ganado → Onboarding → Cliente → Sesiones → Cobro → Factura → Alta</div></div>
+  </aside>
+  <div class="main">
+    <header class="topbar">
+      <div><div class="page-title" id="page-title">Hoy</div><div class="page-sub" id="page-sub">Centro de actividades</div></div>
+      <div class="spacer"></div>
+      <div class="usercard">
+        <div class="who"><b id="user-name">Dr. Willy</b><br><span id="user-role">Acceso total</span></div>
+        <div class="av" id="user-av" style="background:linear-gradient(135deg,#1AA398,#0E6E66)">DW</div>
+        <select id="user-sel" onchange="changeUser(this.value)"><option value="willy">Dr. Willy</option><option value="vicky">Sra. Vicky</option></select>
+      </div>
+    </header>
+    <main class="content">
+      <section class="screen active" id="screen-hoy">
+        <div class="kpis">
+          <div class="kpi x-red"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 9v4m0 4h.01M10.3 3.86 1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.7 3.86a2 2 0 0 0-3.42 0z"/></svg></div><div class="val" id="kpi-urg">0</div><div class="lbl">Urgentes</div></div>
+          <div class="kpi x-primary"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="val" id="kpi-hoy">0</div><div class="lbl">Para hoy</div></div>
+          <div class="kpi x-blue"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div><div class="val" id="kpi-man">0</div><div class="lbl">Mañana</div></div>
+          <div class="kpi x-green"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div><div class="val" id="kpi-done">0</div><div class="lbl">Completadas</div></div>
+        </div>
+        <div class="section-head"><h2>Agenda de seguimiento</h2><div class="spacer"></div></div>
+        <div class="chips" id="act-chips"></div>
+        <div id="acts-container"></div>
+      </section>
+      <section class="screen" id="screen-leads">
+        <div class="kpis">
+          <div class="kpi x-primary"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M22 21v-2a4 4 0 0 0-3-3.87M16 3.13a4 4 0 0 1 0 7.75"/></svg></div><div class="val" id="kpi-total">0</div><div class="lbl">Leads en pipeline</div></div>
+          <div class="kpi x-red"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M8.5 14.5A5 5 0 0 0 12 22a5 5 0 0 0 3.5-7.5c-.5-.5-1-1.4-1.2-2.5 0 0-1.8 1-2.3 3 0 0-1.5-1-1.5-3.5 0-1.5 1-3 1-3s-2 .5-2.5 2.5C8.3 12 8.5 14.5 8.5 14.5z"/></svg></div><div class="val" id="kpi-hot">0</div><div class="lbl">Leads calientes</div></div>
+          <div class="kpi x-amber"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg></div><div class="val" id="kpi-conv">0%</div><div class="lbl">Tasa a Ganado</div></div>
+          <div class="kpi x-blue"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"/></svg></div><div class="val" id="kpi-canal">—</div><div class="lbl">Canal principal</div></div>
+        </div>
+        <div class="section-head"><h2>Pipeline</h2><div class="spacer"></div><button class="btn btn-primary" onclick="openNuevoLead()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nuevo lead</button></div>
+        <div class="kanban" id="kanban">
+          <div class="kcol" id="col-Nuevo" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'Nuevo')"><div class="kcol-head"><span class="dot" style="background:#9AA3A0"></span><span class="t">Nuevo</span><span class="c" id="cnt-Nuevo">0</span></div><div class="kcol-desc">Prospectos sin contactar aún</div><div class="kcol-body"></div></div>
+          <div class="kcol" id="col-Contactado" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'Contactado')"><div class="kcol-head"><span class="dot" style="background:#5B9BD8"></span><span class="t">Contactado</span><span class="c" id="cnt-Contactado">0</span></div><div class="kcol-desc">Primer contacto hecho; calificando</div><div class="kcol-body"></div></div>
+          <div class="kcol" id="col-Diagnóstico" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'Diagnóstico')"><div class="kcol-head"><span class="dot" style="background:#E0A53B"></span><span class="t">Diagnóstico</span><span class="c" id="cnt-Diagnóstico">0</span></div><div class="kcol-desc">En evaluación / neurometría</div><div class="kcol-body"></div></div>
+          <div class="kcol" id="col-Cotizado" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'Cotizado')"><div class="kcol-head"><span class="dot" style="background:#7B52C9"></span><span class="t">Cotizado</span><span class="c" id="cnt-Cotizado">0</span></div><div class="kcol-desc">Cotización enviada; dando seguimiento</div><div class="kcol-body"></div></div>
+          <div class="kcol" id="col-Ganado" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'Ganado')"><div class="kcol-head"><span class="dot" style="background:#1F8A4C"></span><span class="t">Ganado</span><span class="c" id="cnt-Ganado">0</span></div><div class="kcol-desc">Aceptó; pasa a onboarding</div><div class="kcol-body"></div></div>
+          <div class="kcol" id="col-Perdido" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'Perdido')"><div class="kcol-head"><span class="dot" style="background:#C2553F"></span><span class="t">Perdido</span><span class="c" id="cnt-Perdido">0</span></div><div class="kcol-desc">Cotizó pero no se cerró el trato</div><div class="kcol-body"></div></div>
+          <div class="kcol" id="col-No clasifica" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'No clasifica')"><div class="kcol-head"><span class="dot" style="background:#8A9199"></span><span class="t">No clasifica</span><span class="c" id="cnt-No clasifica">0</span></div><div class="kcol-desc">No contestan o sin perfil</div><div class="kcol-body"></div></div>
+        </div>
+        <div class="section-head" style="margin-top:26px"><h2>Lista de leads</h2><div class="spacer"></div></div>
+        <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lead</th><th>Paciente</th><th>Padecimiento</th><th>Etapa</th><th>Canal</th><th>Temp.</th></tr></thead><tbody id="leads-tbody"></tbody></table></div>
+      </section>
+      <section class="screen" id="screen-clientes">
+        <div class="kpis">
+          <div class="kpi x-green"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg></div><div class="val" id="ck-activos">0</div><div class="lbl">Clientes activos</div></div>
+          <div class="kpi x-blue"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2zM22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div><div class="val" id="ck-sesiones">0</div><div class="lbl">Sesiones impartidas</div></div>
+          <div class="kpi x-primary"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="val" id="ck-cobrado">$0</div><div class="lbl">Total cobrado</div></div>
+          <div class="kpi x-amber"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="val" id="ck-porcobrar">$0</div><div class="lbl">Por cobrar</div></div>
+        </div>
+        <div class="section-head"><h2>Cartera de clientes</h2><div class="count" id="cli-count"></div><div class="spacer"></div></div>
+        <div id="clientes-acordeones"></div>
+      </section>
+      <section class="screen" id="screen-egresos">
+        <div class="tabs" id="fin-tabs" style="margin-bottom:16px">
+          <div class="tab active" id="fintab-egresos" onclick="finTab('egresos')">Egresos</div>
+          <div class="tab" id="fintab-ingresos" onclick="finTab('ingresos')">Ingresos</div>
+        </div>
+        <div class="kpis" id="fin-kpis"></div>
+        <div class="section-head"><h2 id="fin-head">Egresos</h2><div class="spacer"></div><button class="btn btn-primary" id="fin-nuevo-btn" onclick="openNuevoEgreso()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nuevo egreso</button></div>
+        <div id="egresos-acordeones"></div>
+        <div id="ingresos-acordeones" style="display:none"></div>
+      </section>
+      <section class="screen" id="screen-facturas">
+        <div class="kpis">
+          <div class="kpi x-amber"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div><div class="val" id="fk-por-crear">0</div><div class="lbl">Por crear CFDI</div></div>
+          <div class="kpi x-blue"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="m22 2-7 20-4-9-9-4z"/><path d="M22 2 11 13"/></svg></div><div class="val" id="fk-por-enviar">0</div><div class="lbl">Por enviar</div></div>
+          <div class="kpi x-green"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></div><div class="val" id="fk-enviadas">0</div><div class="lbl">Enviadas</div></div>
+          <div class="kpi x-primary"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="val" id="fk-monto">$0</div><div class="lbl">Monto en cola</div></div>
+        </div>
+        <div class="section-head"><h2>Cola CFDI</h2><div class="count">Generadas automáticamente desde cobros</div><div class="spacer"></div></div>
+        <div id="facturas-list"></div>
+      </section>
+      <section class="screen" id="screen-tableros">
+        <div id="tableros-lock" style="display:none">
+          <div class="lock-screen">
+            <div class="lk"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="11" width="18" height="11" rx="2"/><path d="M7 11V7a5 5 0 0 1 10 0v4"/></svg></div>
+            <h2>Acceso restringido</h2>
+            <p>Los tableros ejecutivos están reservados para el <b>Dr. Willy</b>. Cambia de usuario en la esquina superior derecha para acceder.</p>
+          </div>
+        </div>
+        <div id="tableros-content">
+          <div class="dash-tabs" id="dash-tabs"></div>
+          <div class="dashpane active" id="dash-general"></div>
+          <div class="dashpane" id="dash-leads"></div>
+          <div class="dashpane" id="dash-clientes"></div>
+          <div class="dashpane" id="dash-sesiones"></div>
+          <div class="dashpane" id="dash-financiero"></div>
+        </div>
+      </section>
+    </main>
+  </div>
+</div>
+<div class="toast" id="toast"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-msg"></span></div>
+<!-- m-pipe-detalle -->
+<div class="modal" id="m-pipe-detalle">
+  <div class="modal-bg" onclick="closeModal('m-pipe-detalle')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/></svg></div>
+      <div><h3 id="pd-nombre">Lead</h3><div class="mh-sub" id="pd-pac"></div></div>
+      <button class="modal-x" onclick="closeModal('m-pipe-detalle')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="pd-etapa-wrap" class="field">
+        <label>Etapa del pipeline</label>
+        <div id="pd-etapa-fixed"></div>
+        <select id="pd-etapa-select" style="display:none"><option>Nuevo</option><option>Contactado</option><option>Diagnóstico</option><option>Cotizado</option><option>Ganado</option><option>Perdido</option><option>No clasifica</option></select>
+      </div>
+      <div class="divider" id="pd-div-1"></div>
+      <div class="sec-cap">Datos de contacto</div>
+      <div class="field-row">
+        <div class="field" id="pd-correo-field"><label>Correo electrónico</label><input id="pd-correo" type="email" placeholder="correo@ejemplo.com"></div>
+        <div class="field"><label>Celular</label><input id="pd-cel" type="tel" placeholder="55 1234 5678"></div>
+      </div>
+      <div class="sec-cap">Datos del paciente</div>
+      <div class="field"><label>Nombre del paciente</label><input id="pd-paciente" type="text" placeholder="Nombre del paciente"></div>
+      <div class="field-row">
+        <div class="field"><label>Edad</label><input id="pd-edad" type="number" min="0" max="120" placeholder="Ej. 10"></div>
+        <div class="field" id="pd-genero-field"><label>Género</label><select id="pd-genero"><option value="">— Sin especificar —</option><option>Femenino</option><option>Masculino</option><option>Otro</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Padecimiento</label><select id="pd-padecimiento"><option>TDAH</option><option>Ansiedad</option><option>Depresión</option><option>Estrés crónico</option><option>Dislexia</option><option>Migraña</option><option>Cognitivo</option></select></div>
+        <div class="field" id="pd-temp-field"><label>Temperatura</label><select id="pd-temp"><option>Caliente</option><option>Tibio</option><option>Frío</option></select></div>
+      </div>
+      <div class="field-row" id="pd-row-canal">
+        <div class="field"><label>Canal de origen</label><select id="pd-canal"><option>Instagram</option><option>Facebook</option><option>WhatsApp</option><option>Google</option><option>Referido</option><option>Otro</option></select></div>
+        <div class="field"><label>Siguiente actividad</label><select id="pd-sigact"><option value="">— Ninguna —</option><option>Llamada</option><option>Mensaje WhatsApp</option><option>Enviar cotización</option><option>Agendar cita</option><option>Seguimiento cotización</option><option>Enviar documento</option></select></div>
+      </div>
+      <div class="field-row" id="pd-row-sigfecha">
+        <div class="field"><label>Fecha siguiente actividad</label><input id="pd-sigfecha" type="date"></div>
+        <div class="field"><label>Hora</label><input id="pd-sighora" type="time"></div>
+      </div>
+      <div class="field"><label>Nota</label><textarea id="pd-nota" placeholder="Anota detalles del contacto..."></textarea></div>
+      <div class="divider"></div>
+      <div class="panel-title"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>Historial</div>
+      <div class="timeline" id="pd-historial"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-pipe-detalle')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPipe()">Guardar cambios</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-nuevo-lead -->
+<div class="modal" id="m-nuevo-lead">
+  <div class="modal-bg" onclick="closeModal('m-nuevo-lead')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M16 21v-2a4 4 0 0 0-4-4H6a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M19 8v6M22 11h-6"/></svg></div>
+      <div><h3>Nuevo lead</h3><div class="mh-sub">Registra un prospecto en el pipeline</div></div>
+      <button class="modal-x" onclick="closeModal('m-nuevo-lead')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="sec-cap">Datos de contacto</div>
+      <div class="field"><label>Nombre del contacto <span class="req">*</span></label><input id="nl-nombre" type="text" placeholder="Ej. Laura Méndez"></div>
+      <div class="field-row">
+        <div class="field"><label>Correo electrónico</label><input id="nl-correo" type="email" placeholder="correo@ejemplo.com"></div>
+        <div class="field"><label>Celular</label><input id="nl-cel" type="tel" placeholder="55 1234 5678"></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-cap">Datos del paciente</div>
+      <div class="field"><label>Nombre del paciente</label><input id="nl-paciente" type="text" placeholder="Ej. Diego Méndez (hijo)"></div>
+      <div class="field-row">
+        <div class="field"><label>Edad</label><input id="nl-edad" type="number" min="0" max="120" placeholder="Ej. 10"></div>
+        <div class="field"><label>Género</label><select id="nl-genero"><option value="">— Sin especificar —</option><option>Femenino</option><option>Masculino</option><option>Otro</option></select></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Padecimiento</label><select id="nl-padecimiento"><option>TDAH</option><option>Ansiedad</option><option>Depresión</option><option>Estrés crónico</option><option>Dislexia</option><option>Migraña</option><option>Cognitivo</option></select></div>
+        <div class="field"><label>Temperatura</label><select id="nl-temp"><option>Caliente</option><option>Tibio</option><option>Frío</option></select></div>
+      </div>
+      <div class="divider"></div>
+      <div class="sec-cap">Clasificación y notas</div>
+      <div class="field-row">
+        <div class="field"><label>Canal</label><select id="nl-canal"><option>Instagram</option><option>Facebook</option><option>WhatsApp</option><option>Google</option><option>Referido</option><option>Otro</option></select></div>
+        <div class="field"><label>Etapa inicial</label><select id="nl-etapa"><option>Nuevo</option><option>Contactado</option><option>Diagnóstico</option><option>Cotizado</option></select></div>
+      </div>
+      <div class="field"><label>Notas</label><textarea id="nl-notas" placeholder="Descripción del paciente, contexto, observaciones..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-nuevo-lead')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarNuevoLead()">Crear lead</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-etapa-actividad -->
+<div class="modal" id="m-etapa-actividad">
+  <div class="modal-bg" onclick="closeModal('m-etapa-actividad')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--primary-l);color:var(--primary)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round"><circle cx="12" cy="12" r="9"/><path d="M9 12h6M13 8l4 4-4 4"/></svg></div>
+      <div><h3 id="ea-nombre">Lead</h3><div class="mh-sub" id="ea-sub"></div></div>
+      <button class="modal-x" onclick="closeModal('m-etapa-actividad')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="panel panel-blue" style="margin-bottom:16px"><div style="font-size:12.5px;color:var(--ink-2)" id="ea-desc"></div></div>
+      <div class="field"><label>Actividad de seguimiento</label><select id="ea-tipo"></select></div>
+      <div class="field-row">
+        <div class="field"><label>Fecha</label><input id="ea-fecha" type="date"></div>
+        <div class="field"><label>Hora</label><input id="ea-hora" type="time"></div>
+      </div>
+      <div class="field"><label>Nota</label><textarea id="ea-nota" placeholder="Detalle del avance, contexto o siguiente paso..."></textarea></div>
+      <div class="hint" id="ea-reglatxt"></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-etapa-actividad')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEtapaActividad()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-onboarding -->
+<div class="modal" id="m-onboarding">
+  <div class="modal-bg" onclick="closeModal('m-onboarding')"></div>
+  <div class="modal-box wide">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--amber-bg);color:var(--amber)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M9 11l3 3L22 4"/><path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V5a2 2 0 0 1 2-2h11"/></svg></div>
+      <div><h3>Onboarding · <span id="ob-nombre">Cliente</span></h3><div class="mh-sub">Cierre comercial y setup clínico</div></div>
+      <button class="modal-x" onclick="closeModal('m-onboarding')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div style="display:flex;align-items:center;gap:12px;margin-bottom:6px">
+        <span style="font-size:12px;font-weight:600;color:var(--ink-2)">Progreso de onboarding</span>
+        <span id="ob-progress-txt" style="margin-left:auto;font-size:12px;font-weight:700;color:var(--primary)">0%</span>
+      </div>
+      <div class="progress"><div class="progress-bar" id="ob-progress-bar"></div></div>
+      <div class="tabs" style="margin-top:18px">
+        <div class="tab active" id="obtab-1" onclick="obTab(1)">1 · Cierre comercial</div>
+        <div class="tab" id="obtab-2" onclick="obTab(2)">2 · Setup clínico</div>
+      </div>
+      <div class="tabpane active" id="obpane-1">
+        <div id="ob-checks-1"></div>
+        <div class="divider"></div>
+        <div class="panel-title">Datos del tratamiento <span style="font-weight:500;color:var(--ink-3);font-size:12px">(requeridos para activar)</span></div>
+        <div class="field-row">
+          <div class="field"><label># de sesiones <span class="req">*</span></label><input id="ob-num-sesiones" type="number" min="1" placeholder="10" oninput="obRecalc()"></div>
+          <div class="field"><label>Fecha primera sesión <span class="req">*</span></label><input id="ob-fecha-primera" type="date" oninput="obRecalc()"></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Monto total <span class="req">*</span></label><input id="ob-monto-total" type="number" min="0" placeholder="32000" oninput="obRecalc()"></div>
+          <div class="field"><label>Servicio <span class="req">*</span></label><select id="ob-servicio" onchange="obRecalc()"><option value="">— Selecciona —</option><option>EMT · TDAH</option><option>EMT · Ansiedad</option><option>EMT · Depresión</option><option>EMT · Estrés crónico</option><option>EMT · Dislexia</option><option>EMT · Migraña</option><option>Neurometría</option></select></div>
+        </div>
+      </div>
+      <div class="tabpane" id="obpane-2">
+        <div id="ob-checks-2"></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <span id="ob-hint" style="margin-right:auto;font-size:12px;color:var(--ink-3);align-self:center"></span>
+      <button class="btn btn-ghost" id="ob-cancelar-btn" style="display:none;color:var(--red)" onclick="cancelarOnboarding()">Cancelar</button>
+      <button class="btn btn-ghost" onclick="closeModal('m-onboarding')">Guardar y cerrar</button>
+      <button class="btn btn-primary" id="ob-activar-btn" onclick="activarCliente()" disabled>Activar cliente</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-ses-editar (panel de sesión) -->
+<div class="modal" id="m-ses-editar">
+  <div class="modal-bg" onclick="closeModal('m-ses-editar')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" id="ses-ed-ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M2 3h6a4 4 0 0 1 4 4v14a3 3 0 0 0-3-3H2z"/><path d="M22 3h-6a4 4 0 0 0-4 4v14a3 3 0 0 1 3-3h7z"/></svg></div>
+      <div><h3 id="ses-ed-title">Sesión</h3><div class="mh-sub" id="ses-ed-sub"></div></div>
+      <button class="modal-x" onclick="closeModal('m-ses-editar')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="ses-ed-statusrow" style="margin-bottom:16px"></div>
+      <div class="field"><label>Fecha de la sesión</label><input id="ses-ed-fecha" type="date"></div>
+      <div class="field" id="ses-ed-hora-row"><label>Hora</label><input id="ses-ed-hora" type="time"></div>
+      <div class="field"><label>Notas clínicas</label><textarea id="ses-ed-notas" placeholder="Observaciones de la sesión..."></textarea></div>
+      <div id="ses-ed-cobro-panel"></div>
+    </div>
+    <div class="modal-foot" id="ses-ed-foot"></div>
+  </div>
+</div>
+
+<!-- m-cobro -->
+<div class="modal" id="m-cobro">
+  <div class="modal-bg" onclick="closeModal('m-cobro')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--green-bg);color:var(--green)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <div><h3>Registrar cobro</h3><div class="mh-sub" id="cb-sub"></div></div>
+      <button class="modal-x" onclick="closeModal('m-cobro')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field"><label>Monto cobrado</label><input id="cb-monto" type="number" min="0"></div>
+        <div class="field"><label>Fecha de cobro</label><input id="cb-fecha" type="date"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Método de pago</label><select id="cb-metodo" onchange="cbActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
+        <div class="field"><label>Cuenta</label><select id="cb-cuenta"></select></div>
+      </div>
+      <div class="field"><label>¿Requiere factura?</label><select id="cb-factura"><option>No</option><option>Sí</option></select></div>
+      <div class="panel panel-blue" style="margin-bottom:0">
+        <div style="font-size:12.5px;color:var(--ink-2)">Si marcas <b>Sí</b>, se generará automáticamente una entrada en la cola de Facturas con estatus <b>Por crear</b>.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-cobro')">Cancelar</button>
+      <button class="btn btn-primary" onclick="registrarCobro()">Confirmar cobro</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-reprog -->
+<div class="modal" id="m-reprog">
+  <div class="modal-bg" onclick="closeModal('m-reprog')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--blue-bg);color:var(--blue)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M16 18l2 2 4-4" /></svg></div>
+      <div><h3>Reprogramar actividad</h3><div class="mh-sub" id="reprog-info"></div></div>
+      <button class="modal-x" onclick="closeModal('m-reprog')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field"><label>Nueva fecha</label><input id="reprog-fecha" type="date"></div>
+        <div class="field"><label>Hora</label><input id="reprog-hora" type="time"></div>
+      </div>
+      <div class="field"><label>Nota (opcional)</label><textarea id="reprog-nota" placeholder="Motivo del cambio..."></textarea></div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-reprog')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarReprog()">Reprogramar</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-act-detalle -->
+<div class="modal" id="m-act-detalle">
+  <div class="modal-bg" onclick="closeModal('m-act-detalle')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" id="ad-ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l3 2"/></svg></div>
+      <div><h3 id="ad-titulo">Actividad</h3><div class="mh-sub"><span id="ad-tipo"></span> · <span id="ad-fecha"></span></div></div>
+      <button class="modal-x" onclick="closeModal('m-act-detalle')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="ad-estado-badge" style="margin-bottom:16px"></div>
+      <div id="ad-contexto"></div>
+    </div>
+    <div class="modal-foot" id="ad-acciones"></div>
+  </div>
+</div>
+
+<!-- m-nuevo-egreso -->
+<div class="modal" id="m-nuevo-egreso">
+  <div class="modal-bg" onclick="closeModal('m-nuevo-egreso')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--red-bg);color:var(--red)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
+      <div><h3>Nuevo egreso</h3><div class="mh-sub">Registra, programa o crea un pago recurrente</div></div>
+      <button class="modal-x" onclick="closeModal('m-nuevo-egreso')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="tabs">
+        <div class="tab active" id="netab-ya" onclick="neTab('ya')">Ya ocurrió</div>
+        <div class="tab" id="netab-prog" onclick="neTab('prog')">Programar</div>
+        <div class="tab" id="netab-rec" onclick="neTab('rec')">Recurrente</div>
+      </div>
+      <div class="field"><label>Concepto</label><input id="ne-nombre" type="text" placeholder="Ej. Mantenimiento equipo EMT"></div>
+      <div class="field-row">
+        <div class="field"><label>Monto</label><input id="ne-monto" type="number" min="0" placeholder="0"></div>
+        <div class="field"><label>Categoría</label><select id="ne-cat"><option>Renta</option><option>Nómina</option><option>Servicios</option><option>Insumos</option><option>Equipo</option><option>Software</option><option>Marketing</option><option>Otro</option></select></div>
+      </div>
+      <!-- pane: ya -->
+      <div class="tabpane active" id="nepane-ya">
+        <div class="field-row">
+          <div class="field"><label>Fecha de pago</label><input id="ne-fecha" type="date"></div>
+          <div class="field"><label>Método</label><select id="ne-metodo" onchange="neActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
+        </div>
+        <div class="field-row">
+          <div class="field"><label>Cuenta</label><select id="ne-cuenta"></select></div>
+          <div class="field"><label>Deducible</label><select id="ne-deducible"><option>Sí</option><option>No</option></select></div>
+        </div>
+        <label class="checkrow" id="ne-conciliado-row" onclick="this.classList.toggle('on')"><span class="cbox"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><span class="ct">Conciliado con banco</span></span></label>
+      </div>
+      <!-- pane: prog -->
+      <div class="tabpane" id="nepane-prog">
+        <div class="field"><label>Fecha límite de pago</label><input id="ne-limite" type="date"></div>
+        <div class="hint">Aparecerá en "Por pagar" y se marcará como vencido si pasa la fecha.</div>
+      </div>
+      <!-- pane: rec -->
+      <div class="tabpane" id="nepane-rec">
+        <div class="field-row">
+          <div class="field"><label>Día del mes</label><input id="ne-dia" type="number" min="1" max="31" placeholder="5"></div>
+          <div class="field"><label>Cuenta / método</label><select id="ne-rec-metodo" onchange="neActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
+        </div>
+        <div class="hint">Aparecerá en "Pagos fijos" con recordatorio mensual.</div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-nuevo-egreso')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarNuevoEgreso()">Guardar egreso</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-pago-fijo -->
+<div class="modal" id="m-pago-fijo">
+  <div class="modal-bg" onclick="closeModal('m-pago-fijo')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--blue-bg);color:var(--blue)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18"/></svg></div>
+      <div><h3>Nuevo pago fijo</h3><div class="mh-sub">Egreso recurrente mensual</div></div>
+      <button class="modal-x" onclick="closeModal('m-pago-fijo')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Concepto</label><input id="pf-nombre" type="text" placeholder="Ej. Renta consultorio"></div>
+      <div class="field-row">
+        <div class="field"><label>Monto</label><input id="pf-monto" type="number" min="0"></div>
+        <div class="field"><label>Día del mes</label><input id="pf-dia" type="number" min="1" max="31"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Categoría</label><select id="pf-cat"><option>Renta</option><option>Nómina</option><option>Servicios</option><option>Software</option><option>Otro</option></select></div>
+        <div class="field"><label>Cuenta</label><select id="pf-cuenta"><option>BBVA 4521</option><option>HSBC 7832</option><option>Tarjeta 9901 (BBVA)</option></select></div>
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-pago-fijo')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarPagoFijo()">Crear pago fijo</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-pago-detalle -->
+<div class="modal" id="m-pago-detalle">
+  <div class="modal-bg" onclick="closeModal('m-pago-detalle')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--amber-bg);color:var(--amber)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 8v4l2 2"/></svg></div>
+      <div><h3 id="pgd-nombre">Pago</h3><div class="mh-sub" id="pgd-sub"></div></div>
+      <button class="modal-x" onclick="closeModal('m-pago-detalle')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" id="pgd-body"></div>
+    <div class="modal-foot" id="pgd-foot"></div>
+  </div>
+</div>
+
+<!-- m-egreso-detalle -->
+<div class="modal" id="m-egreso-detalle">
+  <div class="modal-bg" onclick="closeModal('m-egreso-detalle')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--gray-bg);color:var(--ink-2)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 20h9M16.5 3.5a2.1 2.1 0 0 1 3 3L7 19l-4 1 1-4z"/></svg></div>
+      <div><h3 id="egd-nombre">Editar egreso</h3><div class="mh-sub" id="egd-sub"></div></div>
+      <button class="modal-x" onclick="closeModal('m-egreso-detalle')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field-row">
+        <div class="field"><label>Monto</label><input id="egd-monto" type="number"></div>
+        <div class="field"><label>Fecha de pago</label><input id="egd-fecha" type="date"></div>
+      </div>
+      <div class="field-row">
+        <div class="field"><label>Método</label><select id="egd-metodo" onchange="egdActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
+        <div class="field"><label>Cuenta</label><select id="egd-cuenta"></select></div>
+      </div>
+      <div class="field"><label>Deducible</label><select id="egd-deducible"><option>Sí</option><option>No</option></select></div>
+      <label class="checkrow" id="egd-conciliado" onclick="this.classList.toggle('on')"><span class="cbox"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><span class="ct">Conciliado con banco</span></span></label>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-egreso-detalle')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarEgresoDetalle()">Guardar</button>
+    </div>
+  </div>
+</div>
+
+<!-- m-factura-detalle -->
+<div class="modal" id="m-factura-detalle">
+  <div class="modal-bg" onclick="closeModal('m-factura-detalle')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--amber-bg);color:var(--amber)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg></div>
+      <div><h3 id="fd-titulo">Factura</h3><div class="mh-sub" id="fd-sub"></div></div>
+      <button class="modal-x" onclick="closeModal('m-factura-detalle')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div id="fd-estado-badge" style="margin-bottom:16px"></div>
+      <div class="panel" style="background:var(--surface-2);border-color:var(--line)">
+        <div class="panel-title">Datos del cobro</div>
+        <div id="fd-datos-cobro"></div>
+      </div>
+      <div class="panel" style="background:var(--surface-2);border-color:var(--line)">
+        <div class="panel-title">Datos fiscales</div>
+        <div id="fd-datos-fiscales"></div>
+      </div>
+      <div id="fd-acciones-panel"></div>
+    </div>
+    <div class="modal-foot" id="fd-footer"></div>
+  </div>
+</div>
+<script src="./js/vendor/chart.umd.min.js"></script>
+<script src="./js/app.js"></script>
+</body>
+</html>
