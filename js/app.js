@@ -71,7 +71,22 @@ async function cargarTodo() {
       gs('getFacturas')
     ]);
 
-    if (rLeads.ok)    CDC.leads       = rLeads.data;
+    if (rLeads.ok)    CDC.leads = rLeads.data.map(function(l){
+      // historial llega como JSON string desde Sheets → parsear a array
+      if (typeof l.historial === 'string') {
+        try { l.historial = JSON.parse(l.historial); } catch(_){ l.historial = []; }
+      }
+      if (!Array.isArray(l.historial)) l.historial = [];
+      // temperatura en Sheets puede llamarse 'temperatura' pero app.js usa 'temp'
+      if (l.temperatura !== undefined && l.temp === undefined) l.temp = l.temperatura;
+      // celular → cel
+      if (l.celular !== undefined && l.cel === undefined) l.cel = l.celular;
+      // sigActTipo → sigAct, sigActFecha → sigFecha, sigActHora → sigHora
+      if (l.sigActTipo !== undefined && l.sigAct === undefined) l.sigAct = l.sigActTipo;
+      if (l.sigActFecha !== undefined && l.sigFecha === undefined) l.sigFecha = l.sigActFecha;
+      if (l.sigActHora !== undefined && l.sigHora === undefined) l.sigHora = l.sigActHora;
+      return l;
+    });
     if (rClientes.ok) CDC.clientes    = rClientes.data;
     if (rActs.ok)     CDC.actividades = rActs.data;
     if (rEg.ok)       CDC.egresos     = rEg.data;
