@@ -15,7 +15,7 @@
 // ════════════════════════════════════════════════════════════════
 
 // ── 0. URL del Apps Script (ÚNICO lugar donde se configura) ──────
-var GS_URL = 'https://script.google.com/macros/s/AKfycbzUyr0AEBXHaUUxf46AdmbqaFUdFnkgdsVih1rlmxinfFLd72PxmPKP3-Vms06lNvzh3g/exec';
+var GS_URL = 'https://script.google.com/macros/s/AKfycbx7mVTsCw2caBW7iipOjZGJwCtdNZcxGW_TXXKQinQaZfKKE5AHQMdku4uuzWe_r4II4Q/exec';
 
 // ── 1. Helper universal de conexión ─────────────────────────────
 //     Sin headers → sin preflight → sin error CORS
@@ -1049,6 +1049,28 @@ function guardarPipe(){
     renderLeads(); renderNav();
     toast('Lead actualizado');
   }
+  // Guardar cambios en Google Sheets
+  gs('updateLead', {
+    id:           l.id,
+    nombre:       l.nombre,
+    correo:       l.correo,
+    celular:      l.cel,
+    paciente:     l.paciente,
+    edad:         l.edad,
+    genero:       l.genero,
+    padecimiento: l.padecimiento,
+    temperatura:  l.temp,
+    canal:        l.canal,
+    etapa:        l.etapa,
+    nota:         l.nota,
+    historial:    JSON.stringify(l.historial||[]),
+    sigActTipo:   l.sigAct  || '',
+    sigActFecha:  l.sigFecha|| '',
+    sigActHora:   l.sigHora || '',
+    actualizadoEn: new Date().toISOString()
+  }).then(function(res){
+    if(!res.ok) console.error('[CDC GS] updateLead:', res.error);
+  }).catch(function(err){ console.error('[CDC GS] updateLead error:', err); });
 }
 
 /* ----- Convertir lead Ganado en cliente + abrir onboarding (R1) ----- */
@@ -1163,10 +1185,36 @@ function guardarNuevoLead(){
     sigAct:'', sigFecha:'', nota:$('nl-notas').value.trim(),
     historial:[{t:fechaLarga(HOY), x:'Lead creado manualmente'}]
   };
+  // Guardar en memoria local inmediatamente (UI responsiva)
   leadsData.push(l);
   closeModal('m-nuevo-lead');
   renderLeads(); renderNav();
   toast('Lead "'+nombre+'" agregado al pipeline');
+  // Guardar en Google Sheets (campos exactos del Sheet)
+  var ahora = new Date().toISOString();
+  gs('createLead', {
+    id:           l.id,
+    nombre:       l.nombre,
+    correo:       l.correo,
+    celular:      l.cel,
+    paciente:     l.paciente,
+    edad:         l.edad,
+    genero:       l.genero,
+    padecimiento: l.padecimiento,
+    temperatura:  l.temp,
+    canal:        l.canal,
+    etapa:        l.etapa,
+    nota:         l.nota,
+    historial:    JSON.stringify(l.historial),
+    sigActTipo:   l.sigAct  || '',
+    sigActFecha:  l.sigFecha|| '',
+    sigActHora:   l.sigHora || '',
+    creadoEn:     ahora,
+    actualizadoEn:ahora
+  }).then(function(res){
+    if(!res.ok) console.error('[CDC GS] createLead:', res.error);
+    else console.info('[CDC GS] Lead guardado en Sheets:', l.nombre);
+  }).catch(function(err){ console.error('[CDC GS] createLead error:', err); });
 }
 /* ============================================================
    Bloque 3 — MÓDULO CLIENTES
