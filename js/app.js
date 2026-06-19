@@ -88,7 +88,24 @@ async function cargarTodo() {
       return l;
     });
     if (rClientes.ok) CDC.clientes    = rClientes.data;
-    if (rActs.ok)     CDC.actividades = rActs.data;
+    if (rActs.ok) {
+      CDC.actividades = rActs.data;
+      actividadesData = rActs.data.map(function(a){
+        return {
+          id:       a.id,
+          prospecto:a.prospecto || '',
+          refTipo:  a.refTipo   || 'lead',
+          refId:    a.refId     || '',
+          tipo:     a.tipo      || '',
+          fecha:    a.fecha     || '',
+          hora:     a.hora      || '',
+          grupo:    a.grupo     || 'hoy',
+          done:     (a.done === 'Sí' || a.done === true),
+          urgente:  (a.urgente === 'Sí' || a.urgente === true),
+          contexto: a.contexto  || ''
+        };
+      });
+    }
     if (rEg.ok) {
       // Separar egresos por tipo para los arrays del portal
       CDC.egresos = rEg.data;
@@ -795,8 +812,11 @@ function renderActividades(filtro){
 function marcarHecha(id){
   var a = getActividad(id); if(!a) return;
   a.done = !a.done;
+  a.grupo = a.done ? 'completadas' : clasificarGrupo(a.fecha);
   renderActividades(actFiltro); renderActChips(); renderNav();
   toast(a.done ? 'Actividad completada ✓' : 'Actividad reabierta');
+  gs('updateCita', {id:id, done:(a.done?'Sí':'No'), grupo:a.grupo, actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] updateCita marcarHecha:',e); });
 }
 
 function reprog(id){
@@ -818,6 +838,8 @@ function confirmarReprog(){
   closeModal('m-reprog');
   renderActividades(actFiltro); renderActChips(); renderHoyKpis(); renderNav();
   toast('Actividad reprogramada · '+fechaHoraTxt(nueva, a.hora));
+  gs('updateCita', {id:reprogCtx, fecha:a.fecha, hora:a.hora, grupo:a.grupo, actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] updateCita reprog:',e); });
 }
 function clasificarGrupo(iso){
   var hoy = new Date(HOY+'T00:00:00'), d = new Date(iso+'T00:00:00');
