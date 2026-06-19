@@ -553,26 +553,8 @@ var _uidSeq = 1000;
 function uid(p){ _uidSeq++; return (p||'id')+'-'+_uidSeq; }
 
 /* ---------- Datos demo ---------- */
-var leadsData = [
-  {id:'l1', nombre:'María González', correo:'maria.gonzalez@gmail.com', cel:'55 1432 8890', paciente:'María González', edad:38, genero:'Femenino', padecimiento:'Ansiedad', temp:'Caliente', canal:'Instagram', etapa:'Nuevo',
-   sigAct:'Llamada', sigFecha:'2025-05-25', nota:'Pidió informes por DM. Interesada en sesiones para ansiedad.',
-   historial:[{t:'24 may 2025',x:'Llegó por anuncio de Instagram'},{t:'24 may 2025',x:'Respondió formulario de contacto'}]},
-  {id:'l2', nombre:'Roberto Sánchez', correo:'roberto.sanchez@outlook.com', cel:'55 2890 1123', paciente:'Roberto Sánchez', edad:45, genero:'Masculino', padecimiento:'Estrés crónico', temp:'Tibio', canal:'Google', etapa:'Contactado',
-   sigAct:'Mensaje WhatsApp', sigFecha:'2025-05-26', nota:'Primera llamada hecha. Pidió tiempo para pensarlo.',
-   historial:[{t:'22 may 2025',x:'Contacto inicial vía Google'},{t:'23 may 2025',x:'Llamada de calificación realizada'}]},
-  {id:'l3', nombre:'Ana Flores', correo:'ana.flores@gmail.com', cel:'55 3321 7765', paciente:'Sofía Flores', edad:9, genero:'Femenino', padecimiento:'Dislexia', temp:'Caliente', canal:'Referido', etapa:'Diagnóstico',
-   sigAct:'Agendar cita', sigFecha:'2025-05-28', nota:'Hija de la contacto. Referida por la Dra. Pérez. Quiere agendar neurometría.',
-   historial:[{t:'20 may 2025',x:'Referida por colega'},{t:'21 may 2025',x:'Llamada: interesada en evaluación'},{t:'23 may 2025',x:'Explicado proceso de diagnóstico'}]},
-  {id:'l4', nombre:'Carlos Mendoza', correo:'carlos.mendoza@gmail.com', cel:'55 7781 2234', paciente:'Carlos Mendoza', edad:29, genero:'Masculino', padecimiento:'Depresión', temp:'Tibio', canal:'Facebook', etapa:'Cotizado',
-   sigAct:'Seguimiento cotización', sigFecha:'2025-05-25', nota:'Cotización enviada de paquete EMT 12 sesiones. Pendiente respuesta.',
-   historial:[{t:'18 may 2025',x:'Contacto por Facebook'},{t:'19 may 2025',x:'Diagnóstico inicial'},{t:'22 may 2025',x:'Cotización enviada ($38,400)'}]},
-  {id:'l5', nombre:'Patricia Reyes', correo:'patricia.reyes@yahoo.com', cel:'55 4456 9981', paciente:'Patricia Reyes', edad:52, genero:'Femenino', padecimiento:'Migraña', temp:'Frío', canal:'WhatsApp', etapa:'Contactado',
-   sigAct:'Llamada', sigFecha:'2025-05-22', nota:'No contestó últimas 2 llamadas. Reintentar.',
-   historial:[{t:'15 may 2025',x:'Mensaje de WhatsApp recibido'},{t:'17 may 2025',x:'Llamada sin respuesta'}]},
-  {id:'l6', nombre:'Fernanda López', correo:'fernanda.lopez@gmail.com', cel:'55 6612 3398', paciente:'Mateo López', edad:11, genero:'Masculino', padecimiento:'TDAH', temp:'Caliente', canal:'Instagram', etapa:'Cotizado',
-   sigAct:'Seguimiento cotización', sigFecha:'2025-05-25', nota:'Hijo de la contacto. Muy interesada. Cotización de 10 sesiones enviada, pide confirmar fecha de inicio.',
-   historial:[{t:'19 may 2025',x:'Contacto por Instagram'},{t:'21 may 2025',x:'Diagnóstico de TDAH explicado'},{t:'23 may 2025',x:'Cotización enviada ($32,000)'}]}
-];
+// Datos cargados desde Google Sheets al arrancar (cargarTodo)
+var leadsData = [];
 
 function mkSesiones(num, doneCount, precio, fechaPrimera, pausadoDesde){
   // estados: done / next / scheduled / pending
@@ -592,82 +574,13 @@ function mkSesiones(num, doneCount, precio, fechaPrimera, pausadoDesde){
   return arr;
 }
 
-var clientesData = [
-  {id:'c1', nombre:'Mónica Vargas', paciente:'Mónica (41a)', padecimiento:'Ansiedad', servicio:'EMT · Ansiedad', estado:'Activo',
-   monto:32000, cobrado:22400, porCobrar:9600, numSes:10, precioSes:3200,
-   rfc:'VAGM850612H10', razonSocial:'Mónica Vargas Hernández', usoCFDI:'D01 · Honorarios médicos',
-   sesiones: mkSesiones(10,7,3200,'2025-04-02',false),
-   onboarding:{contrato:true,anticipo:true,consent:true,neurometria:true,expediente:true,protocolo:true,calendario:true}},
-  {id:'c2', nombre:'Daniel Torres', paciente:'Daniel (34a)', padecimiento:'TDAH', servicio:'EMT · TDAH', estado:'Activo',
-   monto:25600, cobrado:9600, porCobrar:16000, numSes:8, precioSes:3200,
-   rfc:'TODA910118J22', razonSocial:'Daniel Torres Ochoa', usoCFDI:'D01 · Honorarios médicos',
-   sesiones: mkSesiones(8,3,3200,'2025-04-28',false),
-   onboarding:{contrato:true,anticipo:true,consent:true,neurometria:true,expediente:true,protocolo:true,calendario:true}},
-  {id:'c3', nombre:'Gabriela Ríos', paciente:'Gabriela (47a)', padecimiento:'Depresión', servicio:'EMT · Depresión', estado:'Completado',
-   monto:38400, cobrado:38400, porCobrar:0, numSes:12, precioSes:3200,
-   rfc:'RIGG780903K55', razonSocial:'Gabriela Ríos González', usoCFDI:'D01 · Honorarios médicos',
-   sesiones: mkSesiones(12,12,3200,'2025-02-10',false),
-   onboarding:{contrato:true,anticipo:true,consent:true,neurometria:true,expediente:true,protocolo:true,calendario:true}},
-  {id:'c4', nombre:'Elena Ruiz', paciente:'Elena (39a)', padecimiento:'Estrés crónico', servicio:'EMT · Estrés crónico', estado:'Pausado', razonPausa:'Viaje de trabajo (3 semanas)',
-   monto:32000, cobrado:12800, porCobrar:19200, numSes:10, precioSes:3200,
-   rfc:'RUXE860725L88', razonSocial:'Elena Ruiz Jiménez', usoCFDI:'G03 · Gastos en general',
-   sesiones: mkSesiones(10,4,3200,'2025-04-15',true),
-   onboarding:{contrato:true,anticipo:true,consent:true,neurometria:true,expediente:true,protocolo:true,calendario:true}},
-  {id:'c5', nombre:'Sergio Lara', paciente:'Sergio (50a)', padecimiento:'Migraña', servicio:'', estado:'En onboarding',
-   monto:0, cobrado:0, porCobrar:0, numSes:0, precioSes:0,
-   rfc:'', razonSocial:'Sergio Lara Medina', usoCFDI:'D01 · Honorarios médicos',
-   sesiones: [],
-   onboarding:{contrato:true,anticipo:true,consent:false,neurometria:false,expediente:false,protocolo:false,calendario:false}}
-];
-
-var actividadesData = [
-  {id:'a1', prospecto:'Patricia Reyes', refTipo:'lead', refId:'l5', tipo:'Llamada', fecha:'2025-05-22', hora:'09:30', grupo:'vencido', done:false, urgente:true,
-   contexto:'Lead frío · Migraña. No contestó las últimas 2 llamadas. Conviene un último intento antes de archivar.'},
-  {id:'a2', prospecto:'María González', refTipo:'lead', refId:'l1', tipo:'Llamada', fecha:'2025-05-25', hora:'10:00', grupo:'hoy', done:false, urgente:true,
-   contexto:'Lead caliente · Ansiedad. Pidió informes por Instagram. Llamar para calificar y agendar diagnóstico.'},
-  {id:'a3', prospecto:'Carlos Mendoza', refTipo:'lead', refId:'l4', tipo:'Seguimiento cotización', fecha:'2025-05-25', hora:'13:00', grupo:'hoy', done:false, urgente:false,
-   contexto:'Cotización de $38,400 enviada hace 3 días. Dar seguimiento para resolver dudas y cerrar.'},
-  {id:'a4', prospecto:'Fernanda López', refTipo:'lead', refId:'l6', tipo:'Seguimiento cotización', fecha:'2025-05-25', hora:'16:30', grupo:'hoy', done:false, urgente:false,
-   contexto:'Lead caliente · TDAH. Solo falta confirmar fecha de inicio para ganar el trato.'},
-  {id:'a5', prospecto:'Roberto Sánchez', refTipo:'lead', refId:'l2', tipo:'Mensaje WhatsApp', fecha:'2025-05-26', hora:'11:00', grupo:'manana', done:false, urgente:false,
-   contexto:'Enviar material de estrés crónico y casos de éxito para reactivar el interés.'},
-  {id:'a6', prospecto:'Ana Flores', refTipo:'lead', refId:'l3', tipo:'Agendar cita', fecha:'2025-05-28', hora:'12:00', grupo:'semana', done:false, urgente:false,
-   contexto:'Referida lista para diagnóstico. Agendar neurometría inicial de Sofía.'}
-];
-
-var pagosFijos = [
-  {id:'pf1', nombre:'Renta consultorio', monto:18000, dia:5,  cat:'Renta',    cuenta:'BBVA 4521'},
-  {id:'pf2', nombre:'Nómina asistente',  monto:12000, dia:15, cat:'Nómina',   cuenta:'BBVA 4521'},
-  {id:'pf3', nombre:'Internet y luz',    monto:2400,  dia:10, cat:'Servicios', cuenta:'HSBC 7832'},
-  {id:'pf4', nombre:'Software CRM',      monto:1200,  dia:1,  cat:'Software',  cuenta:'BBVA 4521'}
-];
-
-var porPagarData = [
-  {id:'pp1', nombre:'Mantenimiento equipo EMT', monto:4500, cat:'Equipo',  limite:'2025-05-28', metodo:'Transferencia'},
-  {id:'pp2', nombre:'Insumos clínicos',         monto:2800, cat:'Insumos', limite:'2025-06-02', metodo:'Transferencia'}
-];
-
-var historialEgresos = [
-  {id:'he1', nombre:'Renta consultorio mayo', monto:18000, fecha:'2025-05-05', metodo:'Transferencia', cat:'Renta',     cuenta:'HSBC 7832', deducible:'Sí', conciliado:true},
-  {id:'he2', nombre:'Publicidad Meta',        monto:3500,  fecha:'2025-05-12', metodo:'Tarjeta',       cat:'Marketing', cuenta:'BBVA 4521', deducible:'Sí', conciliado:true},
-  {id:'he3', nombre:'Software CRM mayo',      monto:1200,  fecha:'2025-05-01', metodo:'Tarjeta',       cat:'Software',  cuenta:'BBVA 4521', deducible:'Sí', conciliado:false},
-  {id:'he4', nombre:'Insumos consultorio',    monto:1850,  fecha:'2025-05-18', metodo:'Efectivo',      cat:'Insumos',   cuenta:'Efectivo caja', deducible:'No', conciliado:false}
-];
-var ingresosData = [
-  {id:'in1', cliente:'Mónica Vargas',  concepto:'Sesión 1 · EMT', monto:3200, fecha:'2025-05-06', metodo:'Transferencia', cuenta:'HSBC 7832',     factura:'Sí', conciliado:true},
-  {id:'in2', cliente:'Mónica Vargas',  concepto:'Sesión 2 · EMT', monto:3200, fecha:'2025-05-09', metodo:'Transferencia', cuenta:'HSBC 7832',     factura:'Sí', conciliado:true},
-  {id:'in3', cliente:'Daniel Torres',  concepto:'Sesión 1 · EMT', monto:3200, fecha:'2025-05-08', metodo:'Tarjeta',       cuenta:'BBVA 4521',     factura:'No', conciliado:false},
-  {id:'in4', cliente:'Gabriela Ríos',  concepto:'Liquidación paquete', monto:6400, fecha:'2025-05-15', metodo:'Tarjeta',  cuenta:'Santander 1180', factura:'Sí', conciliado:true},
-  {id:'in5', cliente:'Elena Ruiz',     concepto:'Sesión 3 · EMT', monto:3200, fecha:'2025-05-19', metodo:'Efectivo',      cuenta:'Efectivo caja', factura:'No', conciliado:false},
-  {id:'in6', cliente:'Daniel Torres',  concepto:'Sesión 2 · EMT', monto:3200, fecha:'2025-05-22', metodo:'Transferencia', cuenta:'Banorte 3492',  factura:'No', conciliado:false}
-];
-
-var facturasData = [
-  {id:'f1', cliente:'Gabriela Ríos', sesion:12, monto:3200, fecha:'2025-05-08', estado:'Completada', folio:'A-1039', rfc:'RIGG780903K55', razonSocial:'Gabriela Ríos González', usoCFDI:'D01 · Honorarios médicos'},
-  {id:'f2', cliente:'Daniel Torres', sesion:3,  monto:3200, fecha:'2025-05-20', estado:'Enviada',    folio:'A-1042', rfc:'TODA910118J22', razonSocial:'Daniel Torres Ochoa', usoCFDI:'D01 · Honorarios médicos'},
-  {id:'f3', cliente:'Mónica Vargas', sesion:7,  monto:3200, fecha:'2025-05-23', estado:'Creada',     folio:'A-1043', rfc:'VAGM850612H10', razonSocial:'Mónica Vargas Hernández', usoCFDI:'D01 · Honorarios médicos'},
-  {id:'f4', cliente:'Mónica Vargas', sesion:6,  monto:3200, fecha:'2025-05-21', estado:'Por crear',  folio:'',        rfc:'VAGM850612H10', razonSocial:'Mónica Vargas Hernández', usoCFDI:'D01 · Honorarios médicos'}
-];
+var clientesData    = [];
+var actividadesData = [];
+var pagosFijos      = [];
+var porPagarData    = [];
+var historialEgresos= [];
+var ingresosData    = [];
+var facturasData    = [];
 
 var FACT_SEQ = ['Por crear','Creada','Enviada','Completada'];
 var FACT_BADGE = {'Por crear':'b-amber','Creada':'b-blue','Enviada':'b-violet','Completada':'b-green'};
@@ -2150,11 +2063,13 @@ function renderTableros(){
 /* ============================================================
    INIT — único punto de arranque
    ============================================================ */
-window.addEventListener('DOMContentLoaded', function(){
+window.addEventListener('DOMContentLoaded', async function(){
   // usuario inicial (sin toast)
   usuarioActual = 'willy';
   setText('user-name','Dr. Willy'); setText('user-role','Acceso total'); setText('user-av','DW');
   renderNav();
   renderActChips();
   nav('hoy');
+  // Cargar todos los datos desde Google Sheets
+  await cargarTodo();
 });
