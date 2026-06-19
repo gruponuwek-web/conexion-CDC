@@ -989,17 +989,28 @@ function guardarPipe(){
 /* ----- Convertir lead Ganado en cliente + abrir onboarding (R1) ----- */
 function ganarLead(id, prevEtapa){
   var l = getLead(id); if(!l) return;
-  // crear cliente en onboarding si no existe
   var nuevoId = 'c-'+l.id;
   if(!getCliente(nuevoId)){
-    clientesData.push({
+    var nc = {
       id:nuevoId, nombre:l.nombre, correo:l.correo||'', cel:l.cel||'',
       paciente:l.paciente, edad:l.edad!=null?l.edad:null, genero:l.genero||'',
       padecimiento:l.padecimiento, servicio:'', estado:'En onboarding',
       monto:0, cobrado:0, porCobrar:0, numSes:0, precioSes:0,
       rfc:'', razonSocial:l.nombre, usoCFDI:'D01 · Honorarios médicos', sesiones:[], notas:l.nota||'',
       onboarding:{contrato:false,anticipo:false,consent:false,neurometria:false,expediente:false,protocolo:false,calendario:false}
-    });
+    };
+    clientesData.push(nc);
+    // Guardar en Sheets
+    var ahora = new Date().toISOString();
+    gs('createCliente', {
+      id:nuevoId, nombre:nc.nombre, correo:nc.correo, cel:nc.cel,
+      paciente:nc.paciente, edad:nc.edad, genero:nc.genero,
+      padecimiento:nc.padecimiento, servicio:'', estado:'En onboarding',
+      razonPausa:'', monto:0, cobrado:0, porCobrar:0, numSes:0, precioSes:0,
+      rfc:'', razonSocial:nc.nombre, usoCFDI:'D01 · Honorarios médicos',
+      notas:nc.notas, creadoEn:ahora, actualizadoEn:ahora
+    }).then(function(r){ if(!r.ok) console.error('[CDC GS] createCliente:',r.error); })
+      .catch(function(e){ console.error('[CDC GS] createCliente error:',e); });
   }
   toast('¡'+l.nombre+' ganado! Iniciando onboarding…');
   abrirOnboarding(nuevoId, true, prevEtapa||'Cotizado', id);
@@ -1276,6 +1287,8 @@ function cambiarEstadoCliente(id, estado){
   if(estado!=='Cancelado'){ c.razonCancel=null; c.razonOtro=null; }
   renderClientes();
   toast(c.nombre+' → '+estado);
+  gs('updateCliente', {id:id, estado:estado, actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] updateCliente estado:',e); });
 }
 function setRazonCancel(id, r){ var c=getCliente(id); if(!c) return; c.razonCancel=r; if(r==='Otro') renderClientes(); }
 function setRazonOtro(id, v){ var c=getCliente(id); if(c) c.razonOtro=v; }
@@ -1342,6 +1355,9 @@ function agendarSesion(){
   x.s.estado='scheduled';
   closeModal('m-ses-editar'); renderClientes();
   toast('Sesión '+sesionCtx.n+' agendada para el '+fechaLarga(f));
+  gs('updateSesion', {id:'s-'+sesionCtx.clienteId+'-'+sesionCtx.n,
+    estado:'scheduled', fecha:f, hora:x.s.hora, actualizadoEn:new Date().toISOString()
+  }).catch(function(e){ console.error('[CDC GS] updateSesion error:',e); });
 }
 function guardarSesion(){
   var x=_curSes(); if(!x){closeModal('m-ses-editar');return;}
@@ -1352,9 +1368,12 @@ function guardarSesion(){
 function marcarImpartida(){
   var x=_curSes(); if(!x){closeModal('m-ses-editar');return;}
   x.s.notas=$('ses-ed-notas').value;
-  x.s.estado='next';   // impartida, pendiente de cobro
+  x.s.estado='next';
   closeModal('m-ses-editar'); renderClientes();
   toast('Sesión '+sesionCtx.n+' marcada como impartida · pendiente de cobro');
+  gs('updateSesion', {id:'s-'+sesionCtx.clienteId+'-'+sesionCtx.n,
+    estado:'next', notas:x.s.notas, actualizadoEn:new Date().toISOString()
+  }).catch(function(e){ console.error('[CDC GS] updateSesion error:',e); });
 }
 
 /* ----- Cobro (R4) ----- */
@@ -1385,19 +1404,39 @@ function registrarCobro(){
   x.s.estado='done';
   x.s.fecha = x.s.fecha || fecha;
   x.s.precio = monto;
-  // cerrar actividad de cobro asociada si existe
   var actId = 'cobro-'+sesionCtx.clienteId+'-'+sesionCtx.n;
   var act = getActividad(actId); if(act) act.done=true;
-  // registrar ingreso en historial de finanzas
   ingresosData.push({id:uid('in'), cliente:x.c.nombre, concepto:'Sesión '+sesionCtx.n+' · EMT', monto:monto, fecha:fecha, metodo:metodo, cuenta:cuenta, factura:(requiereFactura?'Sí':'No'), conciliado:false});
-  // R4: generar factura pendiente
-  if(requiereFactura){
-    agregarFacturaPendiente(x.c, sesionCtx.n, monto, fecha);
-  }
+  if(requiereFactura){ agregarFacturaPendiente(x.c, sesionCtx.n, monto, fecha); }
   closeModal('m-cobro');
   recomputeCliente(x.c);
   renderClientes(); renderNav();
   toast('Cobro de '+money(monto)+' registrado'+(requiereFactura?' · factura en cola':''));
+  // Guardar en Sheets
+  var ahora = new Date().toISOString();
+  var sesId = 's-'+sesionCtx.clienteId+'-'+sesionCtx.n;
+  gs('updateSesion', {id:sesId, estado:'done', fecha:x.s.fecha,
+    precio:monto, cobrada:'Sí', facturaRequerida:(requiereFactura?'Sí':'No'),
+    actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] updateSesion cobro:',e); });
+  gs('createCobro', {
+    id:uid('co'), clienteId:x.c.id, sesionId:sesId,
+    sesionN:sesionCtx.n, monto:monto, fecha:fecha,
+    metodo:metodo, cuenta:cuenta,
+    facturaRequerida:(requiereFactura?'Sí':'No'), creadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] createCobro:',e); });
+  gs('updateCliente', {id:x.c.id,
+    cobrado:x.c.cobrado, porCobrar:x.c.porCobrar, actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] updateCliente cobro:',e); });
+  if(requiereFactura){
+    gs('createFactura', {
+      id:uid('f'), clienteId:x.c.id, clienteNombre:x.c.nombre,
+      sesionId:sesId, sesionN:sesionCtx.n, monto:monto, fecha:fecha,
+      estatus:'Por crear', folio:'',
+      rfc:x.c.rfc||'', razonSocial:x.c.razonSocial||'', usoCFDI:x.c.usoCFDI||'',
+      creadoEn:ahora, actualizadoEn:ahora
+    }).catch(function(e){ console.error('[CDC GS] createFactura:',e); });
+  }
 }
 
 /* ============================================================
@@ -1511,6 +1550,24 @@ function activarCliente(){
   clienteAbiertoId = c.id;
   nav('clientes');
   toast(c.nombre+' activado · tratamiento iniciado');
+  // Actualizar cliente en Sheets
+  var ahora = new Date().toISOString();
+  gs('updateCliente', {
+    id:c.id, servicio:sv, estado:'Activo',
+    numSes:ns, precioSes:c.precioSes, monto:mt,
+    cobrado:0, porCobrar:mt, actualizadoEn:ahora
+  }).then(function(r){ if(!r.ok) console.error('[CDC GS] updateCliente activar:',r.error); })
+    .catch(function(e){ console.error('[CDC GS] updateCliente error:',e); });
+  // Crear sesiones en Sheets
+  c.sesiones.forEach(function(s){
+    gs('createSesion', {
+      id:'s-'+c.id+'-'+s.n, clienteId:c.id,
+      n:s.n, estado:s.estado, fecha:s.fecha||'',
+      hora:s.hora||'', notas:'', precio:s.precio,
+      cobrada:'No', facturaRequerida:'No', folioCFDI:'',
+      creadoEn:ahora, actualizadoEn:ahora
+    }).catch(function(e){ console.error('[CDC GS] createSesion error:',e); });
+  });
 }
 /* ============================================================
    Bloque 4 — MÓDULOS EGRESOS y FACTURAS
