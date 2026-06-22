@@ -135,6 +135,16 @@ async function cargarTodo() {
     if (rActs.ok) {
       CDC.actividades = rActs.data;
       actividadesData = rActs.data.map(function(a){
+        var done = (a.done === 'Sí' || a.done === true || a.done === 'true');
+        // Recalcular grupo basado en fecha real (no confiar en lo guardado)
+        var grupo;
+        if (done) {
+          grupo = 'completadas';
+        } else if (a.fecha) {
+          grupo = clasificarGrupo(a.fecha);
+        } else {
+          grupo = a.grupo || 'hoy';
+        }
         return {
           id:       a.id,
           prospecto:a.prospecto || '',
@@ -143,9 +153,9 @@ async function cargarTodo() {
           tipo:     a.tipo      || '',
           fecha:    a.fecha     || '',
           hora:     a.hora      || '',
-          grupo:    a.grupo     || 'hoy',
-          done:     (a.done === 'Sí' || a.done === true),
-          urgente:  (a.urgente === 'Sí' || a.urgente === true),
+          grupo:    grupo,
+          done:     done,
+          urgente:  (a.urgente === 'Sí' || a.urgente === true || grupo === 'vencido'),
           contexto: a.contexto  || ''
         };
       });
@@ -582,7 +592,7 @@ function actKey(a){ return (a.fecha||'9999-12-31')+'T'+(a.hora||'23:59'); }
 function ordenarActs(list){ return list.slice().sort(function(a,b){ var ka=actKey(a),kb=actKey(b); return ka<kb?-1:(ka>kb?1:0); }); }
 
 /* ---------- Constantes de negocio ---------- */
-var HOY = '2025-05-25';
+var HOY = new Date().toISOString().slice(0,10);
 
 var BANCOS = ['BBVA 4521','HSBC 7832','Santander 1180','Banorte 3492'];
 var cuentasPorMetodo = {
@@ -807,7 +817,7 @@ var GRUPOS = [
 
 function renderHoyKpis(){
   var pend = actividadesData.filter(function(a){return !a.done;});
-  setText('kpi-urg', pend.filter(function(a){return a.urgente;}).length);
+  setText('kpi-urg', pend.filter(function(a){return a.urgente || a.grupo==='vencido';}).length);
   setText('kpi-hoy', pend.filter(function(a){return a.grupo==='hoy';}).length);
   setText('kpi-man', pend.filter(function(a){return a.grupo==='manana';}).length);
   setText('kpi-done', actividadesData.filter(function(a){return a.done;}).length);
@@ -816,7 +826,7 @@ function renderHoyKpis(){
 function renderActChips(){
   var counts = {
     todas: actividadesData.filter(function(a){return !a.done;}).length,
-    vencido: actividadesData.filter(function(a){return !a.done && a.grupo==='vencido';}).length,
+    vencido: actividadesData.filter(function(a){return !a.done && (a.grupo==='vencido'||a.grupo==='urgente');}).length,
     hoy: actividadesData.filter(function(a){return !a.done && a.grupo==='hoy';}).length,
     manana: actividadesData.filter(function(a){return !a.done && a.grupo==='manana';}).length,
     semana: actividadesData.filter(function(a){return !a.done && a.grupo==='semana';}).length,
@@ -853,6 +863,7 @@ function renderActividades(filtro){
   var list;
   if(filtro==='done') list = actividadesData.filter(function(a){return a.done;});
   else if(filtro==='todas') list = actividadesData.filter(function(a){return !a.done;});
+  else if(filtro==='vencido') list = actividadesData.filter(function(a){return !a.done && (a.grupo==='vencido' || a.grupo==='urgente');});
   else list = actividadesData.filter(function(a){return !a.done && a.grupo===filtro;});
 
   if(list.length===0){
@@ -861,10 +872,19 @@ function renderActividades(filtro){
   }
   var html = '';
   if(filtro==='todas'){
-    GRUPOS.forEach(function(g){
-      var sub = ordenarActs(list.filter(function(a){return a.grupo===g.key;}));
+    // Incluir vencidas/urgentes en el grupo "Vencidas" de la vista Todas
+    var todosGrupos = [{key:'vencido',label:'Vencidas'},{key:'urgente',label:'Vencidas'}].concat(GRUPOS);
+    var yaVisto = {};
+    todosGrupos.forEach(function(g){
+      var sub = ordenarActs(list.filter(function(a){
+        if(yaVisto[a.id]) return false;
+        var match = (a.grupo===g.key);
+        if(match) yaVisto[a.id] = true;
+        return match;
+      }));
       if(sub.length===0) return;
-      html += '<div class="act-group-title">'+g.label+' · '+sub.length+'</div>';
+      var label = (g.key==='vencido'||g.key==='urgente') ? 'Vencidas' : g.label;
+      html += '<div class="act-group-title">'+label+' · '+sub.length+'</div>';
       sub.forEach(function(a){ html += actCardHtml(a); });
     });
   } else {
@@ -1174,11 +1194,13 @@ function setLeadActividad(l, tipo, fecha, hora, nota){
   // reemplaza la actividad abierta previa de este lead
   actividadesData = actividadesData.filter(function(a){ return !(a.refTipo==='lead' && a.refId===l.id && !a.done); });
   l.sigAct = tipo; l.sigFecha = fecha; l.sigHora = hora;
-  actividadesData.push({
+  var nuevaAct = {
     id:uid('a'), prospecto:l.nombre, refTipo:'lead', refId:l.id, tipo:tipo, fecha:fecha, hora:hora,
     grupo:clasificarGrupo(fecha), done:false, urgente:(clasificarGrupo(fecha)==='vencido'),
     contexto: (nota && nota.trim()) ? nota.trim() : (l.padecimiento+' · '+tipo+' tras pasar a '+l.etapa+'.')
-  });
+  };
+  actividadesData.push(nuevaAct);
+  return nuevaAct;
 }
 function abrirEtapaActividad(id, prev, etapa){
   var l = getLead(id); if(!l) return;
@@ -1213,8 +1235,23 @@ function guardarEtapaActividad(){
   if(!opcional && !tipo){ toast('Define una actividad de seguimiento'); return; }
   if(nota && nota.trim()){ l.historial = l.historial||[]; l.historial.unshift({t:fechaLarga(HOY), x:nota.trim()}); }
   if(tipo){
-    setLeadActividad(l, tipo, fecha, hora, nota);
-    toast('Actividad “'+tipo+'” agendada · '+fechaHoraTxt(fecha,hora));
+    var nuevaAct = setLeadActividad(l, tipo, fecha, hora, nota);
+    toast('Actividad "'+tipo+'" agendada · '+fechaHoraTxt(fecha,hora));
+    if(nuevaAct){
+      var ahora = new Date().toISOString();
+      gs('createCita', {
+        id:nuevaAct.id, prospecto:nuevaAct.prospecto,
+        refTipo:nuevaAct.refTipo, refId:String(nuevaAct.refId),
+        tipo:nuevaAct.tipo, fecha:nuevaAct.fecha, hora:nuevaAct.hora||'',
+        grupo:nuevaAct.grupo, done:'No',
+        urgente:(nuevaAct.urgente?'Sí':'No'),
+        contexto:nuevaAct.contexto||'',
+        creadoEn:ahora, actualizadoEn:ahora
+      }).then(function(r){
+        if(!r.ok) console.error('[CDC GS] createCita:', r.error);
+        else console.info('[CDC GS] Actividad guardada:', nuevaAct.tipo, nuevaAct.prospecto);
+      }).catch(function(e){ console.error('[CDC GS] createCita:',e); });
+    }
   } else {
     l.sigAct=''; l.sigFecha=''; l.sigHora='';
     actividadesData = actividadesData.filter(function(a){ return !(a.refTipo==='lead' && a.refId===l.id && !a.done); });
