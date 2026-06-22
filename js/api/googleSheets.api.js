@@ -1,56 +1,59 @@
 import { APP_CONFIG } from '../core/config.js';
 
+// ── Helper único · Patrón Grupo Nuwek (PDF CORS) ────────────────
+// SIN headers + URLSearchParams = petición "simple" = sin preflight
+// El body viaja como x-www-form-urlencoded → llega a e.parameter en Apps Script
 async function request(action, payload = {}) {
   if (!APP_CONFIG.googleAppsScriptUrl) {
     throw new Error('Falta configurar googleAppsScriptUrl en js/core/config.js');
   }
 
-  const response = await fetch(APP_CONFIG.googleAppsScriptUrl, {
+  const res = await fetch(APP_CONFIG.googleAppsScriptUrl, {
     method: 'POST',
-    headers: { 'Content-Type': 'text/plain;charset=utf-8' },
-    body: JSON.stringify({ action, payload }),
+    body: new URLSearchParams({
+      action,
+      data: JSON.stringify(payload),  // ← "data" coincide con e.parameter.data en Code.gs
+    }),
+    // ← SIN objeto headers. Crítico. Ver guía CORS Grupo Nuwek.
   });
 
-  const data = await response.json();
-  if (!data.ok) throw new Error(data.error || 'Error en Google Apps Script');
-  return data.data;
+  const result = await res.json();
+  if (!result.ok) throw new Error(result.error || 'Error en Google Apps Script');
+  return result.data;
 }
 
 export const GoogleSheetsAPI = {
-  ping: async () => {
-    const response = await fetch(APP_CONFIG.googleAppsScriptUrl);
-    return response.json();
-  },
+  ping: () => request('ping'),
 
-  getLeads: () => request('getLeads'),
-  createLead: (lead) => request('createLead', lead),
-  updateLead: (lead) => request('updateLead', lead),
+  getLeads:      ()       => request('getLeads'),
+  createLead:    (data)   => request('createLead', data),
+  updateLead:    (data)   => request('updateLead', data),
 
-  getClientes: () => request('getClientes'),
-  createCliente: (cliente) => request('createCliente', cliente),
-  updateCliente: (cliente) => request('updateCliente', cliente),
+  getClientes:   ()       => request('getClientes'),
+  createCliente: (data)   => request('createCliente', data),
+  updateCliente: (data)   => request('updateCliente', data),
 
-  getAgenda: () => request('getAgenda'),
-  createCita: (cita) => request('createCita', cita),
-  updateCita: (cita) => request('updateCita', cita),
+  getAgenda:     ()       => request('getAgenda'),
+  createCita:    (data)   => request('createCita', data),
+  updateCita:    (data)   => request('updateCita', data),
 
-  getSesiones: () => request('getSesiones'),
-  createSesion: (sesion) => request('createSesion', sesion),
-  updateSesion: (sesion) => request('updateSesion', sesion),
+  getSesiones:   ()       => request('getSesiones'),
+  createSesion:  (data)   => request('createSesion', data),
+  updateSesion:  (data)   => request('updateSesion', data),
 
-  getCobros: () => request('getCobros'),
-  createCobro: (cobro) => request('createCobro', cobro),
-  updateCobro: (cobro) => request('updateCobro', cobro),
+  getCobros:     ()       => request('getCobros'),
+  createCobro:   (data)   => request('createCobro', data),
+  updateCobro:   (data)   => request('updateCobro', data),
 
-  getEgresos: () => request('getEgresos'),
-  createEgreso: (egreso) => request('createEgreso', egreso),
-  updateEgreso: (egreso) => request('updateEgreso', egreso),
+  getEgresos:    ()       => request('getEgresos'),
+  createEgreso:  (data)   => request('createEgreso', data),
+  updateEgreso:  (data)   => request('updateEgreso', data),
 
-  getFacturas: () => request('getFacturas'),
-  createFactura: (factura) => request('createFactura', factura),
-  updateFactura: (factura) => request('updateFactura', factura),
+  getFacturas:   ()       => request('getFacturas'),
+  createFactura: (data)   => request('createFactura', data),
+  updateFactura: (data)   => request('updateFactura', data),
 
-  getUsuarios: () => request('getUsuarios'),
-  getConfig: () => request('getConfig'),
-  getListas: () => request('getListas'),
+  getUsuarios:   ()       => request('getUsuarios'),
+  getConfig:     ()       => request('getConfig'),
+  getListas:     ()       => request('getListas'),
 };
