@@ -87,7 +87,20 @@ async function cargarTodo() {
       if (l.sigActHora !== undefined && l.sigHora === undefined) l.sigHora = l.sigActHora;
       return l;
     });
-    if (rClientes.ok) CDC.clientes    = rClientes.data;
+    if (rClientes.ok) {
+      CDC.clientes = rClientes.data.map(function(c){
+        c.monto     = Number(c.monto)     || 0;
+        c.cobrado   = Number(c.cobrado)   || 0;
+        c.porCobrar = Number(c.porCobrar) || 0;
+        c.numSes    = Number(c.numSes)    || 0;
+        c.precioSes = Number(c.precioSes) || 0;
+        if (c.celular !== undefined && c.cel === undefined) c.cel = c.celular;
+        if (!Array.isArray(c.sesiones)) c.sesiones = [];
+        if (!c.onboarding) c.onboarding = {contrato:false,anticipo:false,consent:false,neurometria:false,expediente:false,protocolo:false,calendario:false};
+        return c;
+      });
+      clientesData = CDC.clientes;
+    }
     if (rActs.ok) {
       CDC.actividades = rActs.data;
       actividadesData = rActs.data.map(function(a){
@@ -140,13 +153,14 @@ async function cargarTodo() {
     if (typeof pagosFijos     !== 'undefined') pagosFijos     = CDC.pagosFijos;
     if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas;
 
-    // Re-render de todos los módulos visibles
-    if (typeof renderActividades !== 'undefined') renderActividades('todas');
-    if (typeof renderPipeline    !== 'undefined') renderPipeline();
-    if (typeof renderLeads       !== 'undefined') renderLeads(CDC.leads);
-    if (typeof renderClientes    !== 'undefined') renderClientes();
-    if (typeof renderEgresos     !== 'undefined') renderEgresos();
-    if (typeof renderFacturas    !== 'undefined') renderFacturas();
+    // Re-render de todos los módulos
+    renderLeads();
+    renderActividades(actFiltro);
+    renderHoyKpis();
+    renderClientes();
+    renderEgresos();
+    renderFacturas();
+    renderNav();
 
   } catch (err) {
     mostrarError('Error de conexión con Google Sheets: ' + err.toString());
