@@ -649,7 +649,12 @@ var facturaCtx = null;         // factura id
 var egresoCtx = null;          // {tipo, id}
 
 var _uidSeq = 1000;
-function uid(p){ _uidSeq++; return (p||'id')+'-'+_uidSeq; }
+function uid(p){ 
+  // Usar timestamp + random para evitar colisiones al recargar
+  var ts = Date.now();
+  var rnd = Math.floor(Math.random() * 1000);
+  return (p||'id')+'-'+ts+'-'+rnd; 
+}
 
 /* ---------- Datos demo ---------- */
 // Datos cargados desde Google Sheets al arrancar (cargarTodo)
@@ -684,8 +689,22 @@ var facturasData    = [];
 var FACT_SEQ = ['Por crear','Creada','Enviada','Completada'];
 var FACT_BADGE = {'Por crear':'b-amber','Creada':'b-blue','Enviada':'b-violet','Completada':'b-green'};
 
-function getCliente(id){ for(var i=0;i<clientesData.length;i++){ if(clientesData[i].id===id) return clientesData[i]; } return null; }
-function getLead(id){ for(var i=0;i<leadsData.length;i++){ if(leadsData[i].id===id) return leadsData[i]; } return null; }
+function getCliente(id){ 
+  if(!id) return null;
+  var sid = String(id);
+  for(var i=0;i<clientesData.length;i++){ 
+    if(String(clientesData[i].id)===sid) return clientesData[i]; 
+  } 
+  return null; 
+}
+function getLead(id){ 
+  if(!id) return null;
+  var sid = String(id);
+  for(var i=0;i<leadsData.length;i++){ 
+    if(String(leadsData[i].id)===sid) return leadsData[i]; 
+  } 
+  return null; 
+}
 function getActividad(id){ for(var i=0;i<actividadesData.length;i++){ if(actividadesData[i].id===id) return actividadesData[i]; } return null; }
 function getFactura(id){ for(var i=0;i<facturasData.length;i++){ if(facturasData[i].id===id) return facturasData[i]; } return null; }
 /* ============================================================
@@ -1042,7 +1061,11 @@ function openPipeDetalle(id, fromDrag){
 }
 
 function guardarPipe(){
-  var l = getLead(pipeActualId); if(!l){ closeModal('m-pipe-detalle'); return; }
+  var l = getLead(pipeActualId);
+  if(!l){
+    console.error('[CDC] guardarPipe: lead no encontrado con id:', pipeActualId);
+    closeModal('m-pipe-detalle'); return;
+  }
   var sel = $('pd-etapa-select');
   var nuevaEtapa = (sel.style.display!=='none') ? sel.value : l.etapa;
   var cambioEtapa = nuevaEtapa!==l.etapa;
@@ -1126,6 +1149,8 @@ function cambiarEtapaLead(id, nuevaEtapa, fromDrag){
   var l = getLead(id); if(!l) return;
   var prev = l.etapa;
   if(prev===nuevaEtapa) return;
+  // Actualizar contexto al lead correcto
+  pipeActualId = id;
   // Guardar etapa anterior ANTES de cambiar
   var etapaAnterior = prev;
   l.etapa = nuevaEtapa;
@@ -1177,6 +1202,8 @@ function abrirEtapaActividad(id, prev, etapa){
 }
 function guardarEtapaActividad(){
   if(!etapaActCtx){ closeModal('m-etapa-actividad'); return; }
+  // Asegurar que pipeActualId apunta al lead correcto
+  pipeActualId = etapaActCtx.id;
   var l = getLead(etapaActCtx.id); if(!l){ closeModal('m-etapa-actividad'); return; }
   var opcional = (ETAPAS_OPCIONALES.indexOf(etapaActCtx.etapa)>=0);
   var tipo = $('ea-tipo').value;
