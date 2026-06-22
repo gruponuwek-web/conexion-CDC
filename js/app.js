@@ -1095,14 +1095,23 @@ function cambiarEtapaLead(id, nuevaEtapa, fromDrag){
   var l = getLead(id); if(!l) return;
   var prev = l.etapa;
   if(prev===nuevaEtapa) return;
+  // Guardar etapa anterior ANTES de cambiar
+  var etapaAnterior = prev;
   l.etapa = nuevaEtapa;
   l.historial = l.historial || [];
-  l.historial.unshift({t:fechaLarga(HOY), x:'Etapa: '+prev+' → '+nuevaEtapa});
+  l.historial.unshift({t:fechaLarga(HOY), x:'Etapa: '+etapaAnterior+' → '+nuevaEtapa});
+  // Guardar en Sheets
+  gs('updateLead', {
+    id: l.id,
+    etapa: nuevaEtapa,
+    historial: JSON.stringify(l.historial),
+    actualizadoEn: new Date().toISOString()
+  }).catch(function(e){ console.error('[CDC GS] updateLead etapa:',e); });
   renderLeads(); renderNav();
   if(nuevaEtapa==='Ganado'){
-    setTimeout(function(){ ganarLead(id, prev); }, 300);   // R1: arranca onboarding
+    setTimeout(function(){ ganarLead(id, etapaAnterior); }, 300);
   } else {
-    abrirEtapaActividad(id, prev, nuevaEtapa);
+    abrirEtapaActividad(id, etapaAnterior, nuevaEtapa);
   }
 }
 function setLeadActividad(l, tipo, fecha, hora, nota){
@@ -1117,7 +1126,7 @@ function setLeadActividad(l, tipo, fecha, hora, nota){
 }
 function abrirEtapaActividad(id, prev, etapa){
   var l = getLead(id); if(!l) return;
-  etapaActCtx = {id:id, etapa:etapa};
+  etapaActCtx = {id:id, etapa:etapa, prev:prev};
   var opcional = (ETAPAS_OPCIONALES.indexOf(etapa)>=0);
   setText('ea-nombre', l.nombre);
   setText('ea-sub', prev+' → '+etapa);
