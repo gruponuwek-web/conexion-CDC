@@ -62,9 +62,10 @@ function mostrarError(msg) {
 async function cargarTodo() {
   mostrarLoader(true);
   try {
-    var [rLeads, rClientes, rActs, rEg, rPF, rFact] = await Promise.all([
+    var [rLeads, rClientes, rSes, rActs, rEg, rPF, rFact] = await Promise.all([
       gs('getLeads'),
       gs('getClientes'),
+      gs('getSesiones'),
       gs('getActividades'),
       gs('getEgresos'),
       gs('getPagosFijos'),
@@ -87,6 +88,29 @@ async function cargarTodo() {
       if (l.sigActHora !== undefined && l.sigHora === undefined) l.sigHora = l.sigActHora;
       return l;
     });
+    // Preparar sesiones indexadas por clienteId para anidarlas
+    var sesionesPorCliente = {};
+    if (rSes && rSes.ok && rSes.data) {
+      rSes.data.forEach(function(s){
+        var cid = s.clienteId;
+        if (!sesionesPorCliente[cid]) sesionesPorCliente[cid] = [];
+        sesionesPorCliente[cid].push({
+          n:       Number(s.n)       || 0,
+          estado:  s.estado          || 'pending',
+          fecha:   s.fecha           || '',
+          hora:    s.hora            || '',
+          notas:   s.notas           || '',
+          precio:  Number(s.precio)  || 0,
+          cobrada: s.cobrada         || 'No',
+          id:      s.id              || ''
+        });
+      });
+      // Ordenar sesiones por número
+      for (var cid in sesionesPorCliente) {
+        sesionesPorCliente[cid].sort(function(a,b){ return a.n - b.n; });
+      }
+    }
+
     if (rClientes.ok) {
       CDC.clientes = rClientes.data.map(function(c){
         c.monto     = Number(c.monto)     || 0;
@@ -95,7 +119,14 @@ async function cargarTodo() {
         c.numSes    = Number(c.numSes)    || 0;
         c.precioSes = Number(c.precioSes) || 0;
         if (c.celular !== undefined && c.cel === undefined) c.cel = c.celular;
-        if (!Array.isArray(c.sesiones)) c.sesiones = [];
+        // Anidar sesiones desde la hoja Sesiones
+        c.sesiones = sesionesPorCliente[c.id] || [];
+        // Si tiene sesiones pero porCobrar es 0, recalcular
+        if (c.sesiones.length > 0 && c.porCobrar === 0 && c.monto > 0) {
+          var doneN = c.sesiones.filter(function(s){ return s.estado === 'done'; }).length;
+          c.cobrado   = doneN * c.precioSes;
+          c.porCobrar = c.monto - c.cobrado;
+        }
         if (!c.onboarding) c.onboarding = {contrato:false,anticipo:false,consent:false,neurometria:false,expediente:false,protocolo:false,calendario:false};
         return c;
       });
