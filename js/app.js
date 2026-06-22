@@ -62,14 +62,15 @@ function mostrarError(msg) {
 async function cargarTodo() {
   mostrarLoader(true);
   try {
-    var [rLeads, rClientes, rSes, rActs, rEg, rPF, rFact] = await Promise.all([
+    var [rLeads, rClientes, rSes, rActs, rEg, rPF, rFact, rCobros] = await Promise.all([
       gs('getLeads'),
       gs('getClientes'),
       gs('getSesiones'),
       gs('getActividades'),
       gs('getEgresos'),
       gs('getPagosFijos'),
-      gs('getFacturas')
+      gs('getFacturas'),
+      gs('getCobros')
     ]);
 
     if (rLeads.ok)    CDC.leads = rLeads.data.map(function(l){
@@ -193,6 +194,27 @@ async function cargarTodo() {
     if (typeof egresosData    !== 'undefined') egresosData    = CDC.egresos;
     if (typeof pagosFijos     !== 'undefined') pagosFijos     = CDC.pagosFijos;
     if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas;
+
+    // Normalizar cobros → ingresosData
+    // Construir índice clienteId → nombre para lookup rápido
+    if (rCobros && rCobros.ok && rCobros.data) {
+      var clienteIdx = {};
+      (CDC.clientes || []).forEach(function(c){ clienteIdx[String(c.id)] = c.nombre; });
+      ingresosData = rCobros.data.map(function(c){
+        var nombreCliente = clienteIdx[String(c.clienteId)] || c.clienteId || '';
+        return {
+          id:         c.id,
+          cliente:    nombreCliente,
+          concepto:   'Sesión ' + (c.sesionN || '') + ' · EMT',
+          monto:      Number(c.monto) || 0,
+          fecha:      c.fecha || '',
+          metodo:     c.metodo || '',
+          cuenta:     c.cuenta || '',
+          factura:    c.facturaRequerida || 'No',
+          conciliado: (c.conciliado === 'Sí' || c.conciliado === true)
+        };
+      });
+    }
 
     // Re-render de todos los módulos
     renderLeads();
@@ -1597,8 +1619,8 @@ function registrarCobro(){
     actualizadoEn:ahora
   }).catch(function(e){ console.error('[CDC GS] updateSesion cobro:',e); });
   gs('createCobro', {
-    id:uid('co'), clienteId:x.c.id, sesionId:sesId,
-    sesionN:sesionCtx.n, monto:monto, fecha:fecha,
+    id:uid('co'), clienteId:x.c.id,
+    sesionId:sesId, sesionN:sesionCtx.n, monto:monto, fecha:fecha,
     metodo:metodo, cuenta:cuenta,
     facturaRequerida:(requiereFactura?'Sí':'No'), creadoEn:ahora
   }).catch(function(e){ console.error('[CDC GS] createCobro:',e); });
