@@ -1987,7 +1987,7 @@ function getPorPagar(id){ for(var i=0;i<porPagarData.length;i++){if(porPagarData
 function getEgreso(id){ for(var i=0;i<historialEgresos.length;i++){if(historialEgresos[i].id===id)return historialEgresos[i];} return null; }
 function getIngreso(id){ for(var i=0;i<ingresosData.length;i++){if(ingresosData[i].id===id)return ingresosData[i];} return null; }
 
-var EG_CATS = ['Renta','Nómina','Servicios','Insumos','Equipo','Software','Marketing','Otro'];
+var EG_CATS = ['Renta','Nómina','Servicios','Insumos','Equipo','Software','Marketing','Comisiones bancarias','Otro'];
 var EG_METODOS = ['Transferencia','Tarjeta','Efectivo','Cheque'];
 function optionsHtml(arr, sel){
   return arr.map(function(o){ return '<option'+(o===sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
