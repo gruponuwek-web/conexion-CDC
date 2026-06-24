@@ -645,7 +645,7 @@ var ETAPA_ACT_DEFAULT = {
 };
 var ETAPAS_OPCIONALES = ['Perdido','No clasifica'];
 var ACT_TIPOS = ['Llamada','Mensaje WhatsApp','Enviar cotización','Agendar cita','Seguimiento cotización','Enviar documento'];
-var PADECIMIENTOS = ['TDAH','Ansiedad','Depresión','Estrés crónico','Dislexia','Migraña','Cognitivo'];
+var PADECIMIENTOS = ['TDAH','Ansiedad','Depresión','Estrés crónico','Dislexia','Migraña','Cognitivo','Otro'];
 var CANALES = ['Instagram','Facebook','WhatsApp','Google','Referido','Otro'];
 
 var ESTADO_CLI = {

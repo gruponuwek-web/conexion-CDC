@@ -137,7 +137,14 @@
         <div class="field" id="pd-genero-field"><label>Género</label><select id="pd-genero"><option value="">— Sin especificar —</option><option>Femenino</option><option>Masculino</option><option>Otro</option></select></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Padecimiento</label><select id="pd-padecimiento"><option>TDAH</option><option>Ansiedad</option><option>Depresión</option><option>Estrés crónico</option><option>Dislexia</option><option>Migraña</option><option>Cognitivo</option></select></div>
+        <div class="field"><label>Padecimiento</label><select id="pd-padecimiento"><option>TDAH</option>
+<option>Ansiedad</option>
+<option>Depresión</option>
+<option>Estrés crónico</option>
+<option>Dislexia</option>
+<option>Migraña</option>
+<option>Cognitivo</option>
+<option>Otro</option></select></div>
         <div class="field" id="pd-temp-field"><label>Temperatura</label><select id="pd-temp"><option>Caliente</option><option>Tibio</option><option>Frío</option></select></div>
       </div>
       <div class="field-row" id="pd-row-canal">
@@ -184,7 +191,14 @@
         <div class="field"><label>Género</label><select id="nl-genero"><option value="">— Sin especificar —</option><option>Femenino</option><option>Masculino</option><option>Otro</option></select></div>
       </div>
       <div class="field-row">
-        <div class="field"><label>Padecimiento</label><select id="nl-padecimiento"><option>TDAH</option><option>Ansiedad</option><option>Depresión</option><option>Estrés crónico</option><option>Dislexia</option><option>Migraña</option><option>Cognitivo</option></select></div>
+        <div class="field"><label>Padecimiento</label><select id="nl-padecimiento"><option>TDAH</option>
+<option>Ansiedad</option>
+<option>Depresión</option>
+<option>Estrés crónico</option>
+<option>Dislexia</option>
+<option>Migraña</option>
+<option>Cognitivo</option>
+<option>Otro</option></select></div>
         <div class="field"><label>Temperatura</label><select id="nl-temp"><option>Caliente</option><option>Tibio</option><option>Frío</option></select></div>
       </div>
       <div class="divider"></div>
@@ -257,7 +271,18 @@
         </div>
         <div class="field-row">
           <div class="field"><label>Monto total <span class="req">*</span></label><input id="ob-monto-total" type="number" min="0" placeholder="32000" oninput="obRecalc()"></div>
-          <div class="field"><label>Servicio <span class="req">*</span></label><select id="ob-servicio" onchange="obRecalc()"><option value="">— Selecciona —</option><option>EMT · TDAH</option><option>EMT · Ansiedad</option><option>EMT · Depresión</option><option>EMT · Estrés crónico</option><option>EMT · Dislexia</option><option>EMT · Migraña</option><option>Neurometría</option></select></div>
+          <div class="field"><label>Servicio <span class="req">*</span></label><select id="ob-servicio" onchange="obRecalc()"><option value="">— Selecciona —</option>
+<option>Consulta inicial</option>
+<option>Neurometría qEEG</option>
+<option>Consulta médica - Neurólogo</option>
+<option>Consulta médica - Psiquiatra</option>
+<option>Consulta médica - Neuropediatra</option>
+<option>Consulta médica - Neuropsicólogo</option>
+<option>Sesiones TMS (20 sesiones)</option>
+<option>Sesión EMT adicional (21+)</option>
+<option>Consulta de seguimiento</option>
+<option>Comisión renta de espacio</option>
+<option>Otros</option></select></div>
         </div>
       </div>
       <div class="tabpane" id="obpane-2">
@@ -512,28 +537,4 @@
 <script src="./js/vendor/chart.umd.min.js"></script>
 <script src="./js/app.js"></script>
 </body>
-<div id="gs-loader" style="
-  display:none; position:fixed; inset:0; background:rgba(26,26,46,.85);
-  z-index:9999; align-items:center; justify-content:center; flex-direction:column; gap:16px;">
-  <svg width="48" height="48" viewBox="0 0 48 48" fill="none" xmlns="http://www.w3.org/2000/svg"
-    style="animation:spin 1s linear infinite;">
-    <circle cx="24" cy="24" r="20" stroke="#4A6CF7" stroke-width="4" stroke-dasharray="80 40"/>
-  </svg>
-  <span style="color:#fff; font-family:Arial,sans-serif; font-size:14px; letter-spacing:.5px;">
-    Sincronizando con Google Sheets…
-  </span>
-</div>
- 
-<div id="gs-error" style="
-  display:none; position:fixed; top:16px; right:16px; background:#B71C1C;
-  color:#fff; padding:12px 20px; border-radius:8px; font-family:Arial,sans-serif;
-  font-size:13px; z-index:9998; max-width:320px; cursor:pointer;"
-  onclick="this.style.display='none'">
-</div>
- 
-<style>
-@keyframes spin { to { transform: rotate(360deg); } }
-</style>
--->
-*/
 </html>
