@@ -1946,13 +1946,21 @@ function finFiltroHtml(){
   if(anios.indexOf(new Date().getFullYear().toString())===-1)
     anios.unshift(new Date().getFullYear().toString());
 
-  var meses = [
+  var MESES_LABEL = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var MESES = [
     ['','Todos los meses'],['01','Enero'],['02','Febrero'],['03','Marzo'],
     ['04','Abril'],['05','Mayo'],['06','Junio'],['07','Julio'],
     ['08','Agosto'],['09','Septiembre'],['10','Octubre'],
     ['11','Noviembre'],['12','Diciembre']
   ];
-  var mesOpts = meses.map(function(m){
+
+  var activo = finFiltroMes || finFiltroAnio;
+  var badgeTxt = '';
+  if(finFiltroMes && finFiltroAnio) badgeTxt = MESES_LABEL[parseInt(finFiltroMes,10)]+' '+finFiltroAnio;
+  else if(finFiltroMes) badgeTxt = MESES[parseInt(finFiltroMes,10)][1];
+  else if(finFiltroAnio) badgeTxt = finFiltroAnio;
+
+  var mesOpts = MESES.map(function(m){
     return '<option value="'+m[0]+'"'+(finFiltroMes===m[0]?' selected':'')+'>'+m[1]+'</option>';
   }).join('');
   var anioOpts = '<option value=""'+(finFiltroAnio===''?' selected':'')+'>Todos los años</option>'
@@ -1960,15 +1968,50 @@ function finFiltroHtml(){
         return '<option value="'+a+'"'+(finFiltroAnio===a?' selected':'')+'>'+a+'</option>';
       }).join('');
 
-  return '<div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">'
-    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--ink-3)"><path d="M3 4h18M7 10h10M10 16h4"/></svg>'
-    + '<select style="min-width:160px" onchange="setFinFiltroMes(this.value)">'+mesOpts+'</select>'
-    + '<select style="min-width:130px" onchange="setFinFiltroAnio(this.value)">'+anioOpts+'</select>'
-    + (finFiltroMes||finFiltroAnio ? '<button class="btn btn-ghost btn-sm" onclick="limpiarFinFiltro()">✕ Limpiar</button>' : '')
+  // Construir opciones para custom dropdowns
+  var mesItems = MESES.map(function(m){
+    var sel = finFiltroMes === m[0];
+    return '<div class="fdd-item'+(sel?' selected':'')+'" onclick="setFinFiltroMes(''+m[0]+'')">'+m[1]+'</div>';
+  }).join('');
+
+  var anioItems = ('<div class="fdd-item'+(finFiltroAnio===''?' selected':'')+'" onclick="setFinFiltroAnio('')">Todos los años</div>')
+    + anios.map(function(a){
+        var sel = finFiltroAnio === a;
+        return '<div class="fdd-item'+(sel?' selected':'')+'" onclick="setFinFiltroAnio(''+a+'')">'+a+'</div>';
+      }).join('');
+
+  var mesTxt  = finFiltroMes  ? MESES[parseInt(finFiltroMes,10)][1] : 'Todos los meses';
+  var anioTxt = finFiltroAnio ? finFiltroAnio : 'Todos los años';
+
+  return '<div class="fin-filtro-bar">'
+    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="fin-filtro-ico"><path d="M3 4h18M7 10h10M10 16h4"/></svg>'
+    + '<span class="fin-filtro-label">Período</span>'
+    + '<div class="fdd" onclick="fddToggle(this)">'
+        + '<div class="fdd-val">'+mesTxt+'<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg></div>'
+        + '<div class="fdd-list">'+mesItems+'</div>'
+    + '</div>'
+    + '<div class="fdd" onclick="fddToggle(this)">'
+        + '<div class="fdd-val">'+anioTxt+'<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg></div>'
+        + '<div class="fdd-list">'+anioItems+'</div>'
+    + '</div>'
+    + (activo
+        ? '<span class="badge b-primary" style="margin-left:4px">'+badgeTxt+'</span>'
+          + '<button class="btn btn-ghost btn-sm fin-filtro-clear" onclick="limpiarFinFiltro()">✕ Limpiar</button>'
+        : '')
     + '</div>';
 }
 
-function setFinFiltroMes(v)  { finFiltroMes  = v; renderFinanzas(); }
+function fddToggle(el){
+  // Cerrar todos los demás
+  document.querySelectorAll('.fdd.open').forEach(function(d){ if(d!==el) d.classList.remove('open'); });
+  el.classList.toggle('open');
+}
+// Cerrar dropdowns al hacer clic fuera
+document.addEventListener('click', function(e){
+  if(!e.target.closest('.fdd')) document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); });
+});
+
+function setFinFiltroMes(v)  { finFiltroMes  = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFinanzas(); }
 function setFinFiltroAnio(v) { finFiltroAnio = v; renderFinanzas(); }
 function limpiarFinFiltro()  { finFiltroMes=''; finFiltroAnio=''; renderFinanzas(); }
 

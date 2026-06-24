@@ -290,3 +290,17 @@ table.tbl{width:100%;border-collapse:collapse}
 .fin-filtro-sel:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
 .fin-filtro-clear{margin-left:4px;font-size:12px;padding:6px 12px;color:var(--ink-3);border:1px solid var(--line);border-radius:8px;font-weight:600;transition:.14s;background:var(--surface)}
 .fin-filtro-clear:hover{color:var(--red);border-color:var(--red-bd);background:var(--red-bg)}
+
+/* ── Custom dropdown filtro ──────────────────────────────── */
+.fdd{position:relative;display:inline-block;user-select:none}
+.fdd-val{display:flex;align-items:center;gap:6px;padding:7px 12px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);color:var(--ink);font-size:13px;font-weight:500;cursor:pointer;min-width:148px;height:36px;transition:.14s}
+.fdd-val svg{width:14px;height:14px;color:var(--ink-3);margin-left:auto;transition:.2s;flex-shrink:0}
+.fdd:hover .fdd-val{border-color:var(--ink-3)}
+.fdd.open .fdd-val{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
+.fdd.open .fdd-val svg{transform:rotate(180deg)}
+.fdd-list{display:none;position:absolute;top:calc(100% + 6px);left:0;min-width:100%;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);box-shadow:var(--shadow-md);z-index:200;padding:5px;max-height:280px;overflow-y:auto}
+.fdd.open .fdd-list{display:block;animation:fade .15s ease}
+.fdd-item{padding:8px 12px;border-radius:7px;font-size:13px;font-weight:500;color:var(--ink-2);cursor:pointer;transition:.1s}
+.fdd-item:hover{background:var(--primary-l);color:var(--primary-d)}
+.fdd-item.selected{background:var(--primary);color:#fff;font-weight:600}
+.fdd-item.selected:hover{background:var(--primary-d)}
