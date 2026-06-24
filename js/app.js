@@ -1971,13 +1971,14 @@ function finFiltroHtml(){
   // Construir opciones para custom dropdowns
   var mesItems = MESES.map(function(m){
     var sel = finFiltroMes === m[0];
-    return '<div class="fdd-item'+(sel?' selected':'')+'" onclick="setFinFiltroMes(''+m[0]+'')">'+m[1]+'</div>';
+    var v = m[0];
+    return '<div class="fdd-item'+(sel?' selected':'')+'" onclick="setFinFiltroMes(\'' + v + '\')">'+m[1]+'</div>';
   }).join('');
 
-  var anioItems = ('<div class="fdd-item'+(finFiltroAnio===''?' selected':'')+'" onclick="setFinFiltroAnio('')">Todos los años</div>')
+  var anioItems = '<div class="fdd-item'+(finFiltroAnio===''?' selected':'')+'" onclick="setFinFiltroAnio(\'\')">Todos los a\u00f1os</div>'
     + anios.map(function(a){
         var sel = finFiltroAnio === a;
-        return '<div class="fdd-item'+(sel?' selected':'')+'" onclick="setFinFiltroAnio(''+a+'')">'+a+'</div>';
+        return '<div class="fdd-item'+(sel?' selected':'')+'" onclick="setFinFiltroAnio(\''+a+'\')">'+a+'</div>';
       }).join('');
 
   var mesTxt  = finFiltroMes  ? MESES[parseInt(finFiltroMes,10)][1] : 'Todos los meses';
