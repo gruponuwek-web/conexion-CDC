@@ -15,7 +15,7 @@
 // ════════════════════════════════════════════════════════════════
 
 // ── 0. URL del Apps Script (ÚNICO lugar donde se configura) ──────
-var GS_URL = 'https://script.google.com/macros/s/AKfycbzm0bVzZOpO_eC0QW--oAIE6ORfXWtXv9n0ORpKXDPIRaQTyPxfDsQoZrjUxZdMnKd8Fw/exec';
+var GS_URL = 'https://script.google.com/macros/s/AKfycbwh9YoKdHeFM4aNXTgeYE4d7JhAh2cyl7Bt20JInEw_D1ey7t7pK69RN1mblEiwCdU9Nw/exec';
 
 // ── 1. Helper universal de conexión ─────────────────────────────
 //     Sin headers → sin preflight → sin error CORS
