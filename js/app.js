@@ -2010,6 +2010,20 @@ document.addEventListener('click', function(e){
   if(!e.target.closest('.fdd')) document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); });
 });
 
+function fddToggle(el){
+  document.querySelectorAll('.fdd.open').forEach(function(d){ if(d!==el) d.classList.remove('open'); });
+  el.classList.toggle('open');
+}
+window.fddToggle = fddToggle;
+window.setFinFiltroMes = function(v){ finFiltroMes = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFinanzas(); };
+window.setFinFiltroAnio = function(v){ finFiltroAnio = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFinanzas(); };
+window.limpiarFinFiltro = function(){ finFiltroMes=''; finFiltroAnio=''; renderFinanzas(); };
+document.addEventListener('click', function(e){
+  if(!e.target.closest || !e.target.closest('.fdd')){
+    document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); });
+  }
+});
+
 function setFinFiltroMes(v)  { finFiltroMes  = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFinanzas(); }
 function setFinFiltroAnio(v) { finFiltroAnio = v; renderFinanzas(); }
 function limpiarFinFiltro()  { finFiltroMes=''; finFiltroAnio=''; renderFinanzas(); }
