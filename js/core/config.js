@@ -4,7 +4,7 @@ export const APP_CONFIG = {
   appName: 'Clínica del Cerebro · CRM/ERP',
   version: '3.1.0',
   timezone: 'America/Mexico_City',
-  googleAppsScriptUrl: 'https://script.google.com/macros/s/AKfycbzm0bVzZOpO_eC0QW--oAIE6ORfXWtXv9n0ORpKXDPIRaQTyPxfDsQoZrjUxZdMnKd8Fw/exec',
+  googleAppsScriptUrl: 'https://script.google.com/macros/s/AKfycbwxt-8MyayihK7UYUabI9WnhKLh0KyHXKSJ0Dr-PCVHM0xlTv-vqp8nAqTzQdj0WTRfbA/exec',
   dataSource: 'googleSheets', // mock | googleSheets
 };
 

@@ -1757,16 +1757,19 @@ function activarCliente(){
     cobrado:0, porCobrar:mt, actualizadoEn:ahora
   }).then(function(r){ if(!r.ok) console.error('[CDC GS] updateCliente activar:',r.error); })
     .catch(function(e){ console.error('[CDC GS] updateCliente error:',e); });
-  // Crear sesiones en Sheets
-  c.sesiones.forEach(function(s){
-    gs('createSesion', {
+  // Crear todas las sesiones en una sola llamada (evita rate limiting)
+  var sesionesPayload = c.sesiones.map(function(s){
+    return {
       id:'s-'+c.id+'-'+s.n, clienteId:c.id,
       n:s.n, estado:s.estado, fecha:s.fecha||'',
       hora:s.hora||'', notas:'', precio:s.precio,
       cobrada:'No', facturaRequerida:'No', folioCFDI:'',
       creadoEn:ahora, actualizadoEn:ahora
-    }).catch(function(e){ console.error('[CDC GS] createSesion error:',e); });
+    };
   });
+  gs('createSesiones', { sesiones: sesionesPayload })
+    .then(function(r){ if(!r.ok) console.error('[CDC GS] createSesiones:', r.error); })
+    .catch(function(e){ console.error('[CDC GS] createSesiones error:',e); });
 }
 /* ============================================================
    Bloque 4 — MÓDULOS EGRESOS y FACTURAS
@@ -1987,7 +1990,7 @@ function getPorPagar(id){ for(var i=0;i<porPagarData.length;i++){if(porPagarData
 function getEgreso(id){ for(var i=0;i<historialEgresos.length;i++){if(historialEgresos[i].id===id)return historialEgresos[i];} return null; }
 function getIngreso(id){ for(var i=0;i<ingresosData.length;i++){if(ingresosData[i].id===id)return ingresosData[i];} return null; }
 
-var EG_CATS = ['Renta','Nómina','Servicios','Insumos','Equipo','Software','Marketing','Comisiones bancarias','Otro'];
+var EG_CATS = ['Renta','Nómina','Servicios','Insumos','Equipo','Software','Marketing','Otro'];
 var EG_METODOS = ['Transferencia','Tarjeta','Efectivo','Cheque'];
 function optionsHtml(arr, sel){
   return arr.map(function(o){ return '<option'+(o===sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
