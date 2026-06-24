@@ -200,18 +200,46 @@ async function cargarTodo() {
     if (rCobros && rCobros.ok && rCobros.data) {
       var clienteIdx = {};
       (CDC.clientes || []).forEach(function(c){ clienteIdx[String(c.id)] = c.nombre; });
-      ingresosData = rCobros.data.map(function(c){
-        var nombreCliente = clienteIdx[String(c.clienteId)] || c.clienteId || '';
+
+      // Calcular cobrado real por cliente desde la hoja Cobros
+      var cobradoPorCliente = {};
+      var cobradoPorSesion  = {};
+      rCobros.data.forEach(function(co){
+        var cid = String(co.clienteId);
+        cobradoPorCliente[cid] = (cobradoPorCliente[cid] || 0) + (Number(co.monto) || 0);
+        // índice sesión → monto real cobrado
+        var sesKey = cid + '-' + co.sesionN;
+        cobradoPorSesion[sesKey] = Number(co.monto) || 0;
+      });
+
+      // Actualizar precio real en cada sesión y montos del cliente
+      CDC.clientes.forEach(function(c){
+        var cid = String(c.id);
+        if(c.sesiones){
+          c.sesiones.forEach(function(s){
+            var key = cid + '-' + s.n;
+            if(cobradoPorSesion[key]) s.precio = cobradoPorSesion[key];
+          });
+        }
+        if(cobradoPorCliente[cid] !== undefined){
+          c.cobrado   = cobradoPorCliente[cid];
+          c.porCobrar = Math.max(0, (c.monto || 0) - c.cobrado);
+        }
+      });
+      clientesData = CDC.clientes;
+
+      ingresosData = rCobros.data.map(function(co){
+        var nombreCliente = clienteIdx[String(co.clienteId)] || co.clienteId || '';
         return {
-          id:         c.id,
+          id:         co.id,
           cliente:    nombreCliente,
-          concepto:   'Sesión ' + (c.sesionN || '') + ' · EMT',
-          monto:      Number(c.monto) || 0,
-          fecha:      c.fecha || '',
-          metodo:     c.metodo || '',
-          cuenta:     c.cuenta || '',
-          factura:    c.facturaRequerida || 'No',
-          conciliado: (c.conciliado === 'Sí' || c.conciliado === true)
+          concepto:   'Sesión ' + (co.sesionN || '') + ' · EMT',
+          monto:      Number(co.monto) || 0,
+          fecha:      co.fecha || '',
+          metodo:     co.metodo || '',
+          cuenta:     co.cuenta || '',
+          factura:    co.facturaRequerida || 'No',
+          conciliado: (co.conciliado === 'Sí' || co.conciliado === true)
         };
       });
     }
