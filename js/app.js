@@ -1590,6 +1590,7 @@ function clickDot(clienteId, n){
       + '</div>'
       + '</div>';
     foot += '<button class="btn btn-primary" onclick="registrarCobroNext(\'' + clienteId + '\',' + n + ')">Confirmar cobro</button>';
+  } else { // done
     cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)">'
       + '<div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesi\u00f3n completada</div>'
       + '<div style="font-size:13px;color:var(--ink-2);margin-bottom:10px">Impartida y cobrada.</div>'
