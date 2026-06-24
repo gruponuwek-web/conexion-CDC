@@ -281,3 +281,12 @@ table.tbl{width:100%;border-collapse:collapse}
 .tl-item .tl-t{font-size:11.5px;color:var(--ink-3)}
 .tl-item .tl-x{font-size:13px;font-weight:500}
 @media (max-width:1080px){.kpis{grid-template-columns:repeat(2,1fr)}.cols-2{grid-template-columns:1fr}}
+
+/* ── Filtro Finanzas ─────────────────────────────────────── */
+.fin-filtro-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 16px;margin-bottom:18px;box-shadow:var(--shadow-sm)}
+.fin-filtro-ico{width:15px;height:15px;color:var(--ink-3);flex-shrink:0}
+.fin-filtro-label{font-size:11px;font-weight:700;color:var(--ink-3);letter-spacing:.04em;text-transform:uppercase}
+.fin-filtro-sel{font-size:13px;font-family:var(--font);font-weight:500;color:var(--ink);padding:7px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface-2);cursor:pointer;min-width:148px;height:36px;outline:none;transition:.14s}
+.fin-filtro-sel:focus{border-color:var(--primary);box-shadow:0 0 0 3px var(--primary-l)}
+.fin-filtro-clear{margin-left:4px;font-size:12px;padding:6px 12px;color:var(--ink-3);border:1px solid var(--line);border-radius:8px;font-weight:600;transition:.14s;background:var(--surface)}
+.fin-filtro-clear:hover{color:var(--red);border-color:var(--red-bd);background:var(--red-bg)}
