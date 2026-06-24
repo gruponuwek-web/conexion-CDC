@@ -221,10 +221,9 @@ async function cargarTodo() {
             if(cobradoPorSesion[key]) s.precio = cobradoPorSesion[key];
           });
         }
-        if(cobradoPorCliente[cid] !== undefined){
-          c.cobrado   = cobradoPorCliente[cid];
-          c.porCobrar = Math.max(0, (c.monto || 0) - c.cobrado);
-        }
+        // porCobrar = paquete total - lo ya cobrado (fuente de verdad: hoja Cobros)
+        c.cobrado   = cobradoPorCliente[cid] !== undefined ? cobradoPorCliente[cid] : (c.cobrado || 0);
+        c.porCobrar = Math.max(0, (c.monto || 0) - c.cobrado);
       });
       clientesData = CDC.clientes;
 
@@ -1377,8 +1376,8 @@ function recomputeCliente(c){
   var done = c.sesiones.filter(function(s){return s.estado==='done';});
   // Sumar montos reales cobrados por sesión (no precio fijo * cantidad)
   c.cobrado   = done.reduce(function(sum, s){ return sum + (Number(s.precio)||0); }, 0);
-  var pending = c.sesiones.filter(function(s){return s.estado!=='done';});
-  c.porCobrar = pending.reduce(function(sum, s){ return sum + (Number(s.precio)||Number(c.precioSes)||0); }, 0);
+  // porCobrar = monto total pactado - lo cobrado (no suma de sesiones pendientes)
+  c.porCobrar = Math.max(0, (Number(c.monto) || 0) - c.cobrado);
   if(c.sesiones.length>0 && done.length===c.sesiones.length && c.estado!=='Cancelado' && c.estado!=='Pausado'){
     c.estado = 'Completado';
   }
