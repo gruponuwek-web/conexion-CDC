@@ -1934,6 +1934,57 @@ function activarCliente(){
    ============================================================ */
 
 /* ===================== EGRESOS ===================== */
+// ── Filtro mes/año para Finanzas ─────────────────────────────────
+function finFiltroHtml(){
+  var anios = [];
+  var todas = ingresosData.concat(historialEgresos);
+  todas.forEach(function(r){
+    var a = (r.fecha||'').slice(0,4);
+    if(a && anios.indexOf(a)===-1) anios.push(a);
+  });
+  anios.sort().reverse();
+  if(anios.indexOf(new Date().getFullYear().toString())===-1)
+    anios.unshift(new Date().getFullYear().toString());
+
+  var meses = [
+    ['','Todos los meses'],['01','Enero'],['02','Febrero'],['03','Marzo'],
+    ['04','Abril'],['05','Mayo'],['06','Junio'],['07','Julio'],
+    ['08','Agosto'],['09','Septiembre'],['10','Octubre'],
+    ['11','Noviembre'],['12','Diciembre']
+  ];
+  var mesOpts = meses.map(function(m){
+    return '<option value="'+m[0]+'"'+(finFiltroMes===m[0]?' selected':'')+'>'+m[1]+'</option>';
+  }).join('');
+  var anioOpts = '<option value=""'+(finFiltroAnio===''?' selected':'')+'>Todos los años</option>'
+    + anios.map(function(a){
+        return '<option value="'+a+'"'+(finFiltroAnio===a?' selected':'')+'>'+a+'</option>';
+      }).join('');
+
+  return '<div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">'
+    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:16px;height:16px;color:var(--ink-3)"><path d="M3 4h18M7 10h10M10 16h4"/></svg>'
+    + '<select style="min-width:160px" onchange="setFinFiltroMes(this.value)">'+mesOpts+'</select>'
+    + '<select style="min-width:130px" onchange="setFinFiltroAnio(this.value)">'+anioOpts+'</select>'
+    + (finFiltroMes||finFiltroAnio ? '<button class="btn btn-ghost btn-sm" onclick="limpiarFinFiltro()">✕ Limpiar</button>' : '')
+    + '</div>';
+}
+
+function setFinFiltroMes(v)  { finFiltroMes  = v; renderFinanzas(); }
+function setFinFiltroAnio(v) { finFiltroAnio = v; renderFinanzas(); }
+function limpiarFinFiltro()  { finFiltroMes=''; finFiltroAnio=''; renderFinanzas(); }
+
+function finFiltrar(rows){
+  return rows.filter(function(r){
+    var fecha = (r.fecha||'');
+    // Normalizar fecha ISO con timezone
+    if(fecha.length > 10) fecha = fecha.slice(0,10);
+    var mes  = fecha.slice(5,7);
+    var anio = fecha.slice(0,4);
+    if(finFiltroMes  && mes  !== finFiltroMes)  return false;
+    if(finFiltroAnio && anio !== finFiltroAnio) return false;
+    return true;
+  });
+}
+
 function finKpiCard(cls, iconName, val, lbl){
   return '<div class="kpi '+cls+'"><div class="ic">'+ico(iconName)+'</div><div class="val">'+val+'</div><div class="lbl">'+lbl+'</div></div>';
 }
@@ -1941,22 +1992,23 @@ function renderFinKpis(which){
   var cont = $('fin-kpis'); if(!cont) return;
   var html='';
   if(which==='ingresos'){
-    var mesIn = ingresosData.filter(function(i){return (i.fecha||'').slice(0,7)==='2025-05';});
-    var totalIn = mesIn.reduce(function(s,i){return s+(i.monto||0);},0);
-    var sinConc = ingresosData.filter(function(i){return !i.conciliado;}).length;
-    var fact = ingresosData.filter(function(i){return i.factura==='Sí';}).reduce(function(s,i){return s+(i.monto||0);},0);
-    html += finKpiCard('x-green','cobro', money(totalIn), 'Ingresos del mes');
-    html += finKpiCard('x-blue','cita', mesIn.length, 'Cobros del mes');
+    var inFilt = finFiltrar(ingresosData);
+    var totalIn = inFilt.reduce(function(s,i){return s+(i.monto||0);},0);
+    var sinConc = inFilt.filter(function(i){return !i.conciliado;}).length;
+    var fact = inFilt.filter(function(i){return i.factura==='Sí';}).reduce(function(s,i){return s+(i.monto||0);},0);
+    var lblPeriodo = (finFiltroMes||finFiltroAnio) ? 'en el período' : 'total';
+    html += finKpiCard('x-green','cobro', money(totalIn), 'Ingresos '+lblPeriodo);
+    html += finKpiCard('x-blue','cita', inFilt.length, 'Cobros '+lblPeriodo);
     html += finKpiCard('x-violet','doc', sinConc, 'Sin conciliar');
     html += finKpiCard('x-primary','doc', money(fact), 'Facturados');
   } else {
-    var mes = historialEgresos.filter(function(e){return (e.fecha||'').slice(0,7)==='2025-05';}).reduce(function(s,e){return s+(e.monto||0);},0);
-    var _mesAct = HOY.slice(0,7);
-    var fijosMes = pagosFijos.filter(function(p){return (p.pagadoMes||'')!==_mesAct;}).reduce(function(s,p){return s+(p.monto||0);},0);
-    var ded = historialEgresos.filter(function(e){return e.deducible==='Sí';}).reduce(function(s,e){return s+(e.monto||0);},0);
-    html += finKpiCard('x-red','cobro', money(mes+fijosMes), 'Egresos del mes');
+    var egFilt = finFiltrar(historialEgresos);
+    var totalEg = egFilt.reduce(function(s,e){return s+(e.monto||0);},0);
+    var ded = egFilt.filter(function(e){return e.deducible==='Sí';}).reduce(function(s,e){return s+(e.monto||0);},0);
+    var lblEg = (finFiltroMes||finFiltroAnio) ? 'en el período' : 'total';
+    html += finKpiCard('x-red','cobro', money(totalEg), 'Egresos '+lblEg);
     html += finKpiCard('x-amber','reloj', porPagarData.length, 'Por pagar');
-    html += finKpiCard('x-violet','doc', historialEgresos.filter(function(e){return !e.conciliado;}).length, 'Sin conciliar');
+    html += finKpiCard('x-violet','doc', egFilt.filter(function(e){return !e.conciliado;}).length, 'Sin conciliar');
     html += finKpiCard('x-green','doc', money(ded), 'Deducibles');
   }
   cont.innerHTML = html;
@@ -2003,15 +2055,18 @@ function renderEgresos(){
   html += egSection('Por pagar', 'Egresos programados pendientes', porPagarData.length, ppRows, '');
 
   // Historial
-  var heRows = historialEgresos.length? historialEgresos.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).map(function(e){
+  var egresosVis = finFiltrar(historialEgresos);
+  var heRows = egresosVis.length? egresosVis.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).map(function(e){
     return '<div class="histrow" style="cursor:pointer" onclick="openEgresoDetalle(\''+e.id+'\')">'
       + '<div class="act-ico" style="width:34px;height:34px;background:var(--gray-bg);color:var(--ink-2)">'+ico('cobro')+'</div>'
       + '<div style="flex:1"><b style="font-weight:650">'+esc(e.nombre)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+fechaLarga(e.fecha)+' · '+esc(e.metodo)+' · '+esc(e.cuenta||'—')+' · '+esc(e.cat)+'</div></div>'
       + (e.deducible==='Sí'?'<span class="badge b-green" style="margin-right:8px">Deducible</span>':'')
       + '<div style="font-weight:700;margin-right:10px">'+money(e.monto)+'</div>'
       + concBtn('egreso', e.id, e.conciliado)+'</div>';
-  }).join('') : '<div class="empty" style="padding:18px">Sin egresos registrados</div>';
-  html += egSection('Historial de egresos', 'Pagos ya realizados', historialEgresos.length, heRows, '');
+  }).join('') : '<div class="empty" style="padding:18px">Sin egresos'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
+  html += egSection('Historial de egresos', 'Pagos ya realizados', egresosVis.length, heRows, '');
+  // PLACEHOLDER_EG
+  var _ignore_eg = 'historialEgresos.length, heRows, '');
 
   cont.innerHTML = html;
   renderFinKpis(finTabActual);
@@ -2040,31 +2095,43 @@ function toggleConciliarIngreso(id){
 }
 function renderIngresos(){
   var cont = $('ingresos-acordeones'); if(!cont) return;
-  var rows = ingresosData.length? ingresosData.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).map(function(i){
+  var ingresosVis = finFiltrar(ingresosData);
+  var rows = ingresosVis.length? ingresosVis.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).map(function(i){
     return '<div class="histrow">'
       + '<div class="act-ico" style="width:34px;height:34px;background:var(--green-bg);color:var(--green)">'+ico('cobro')+'</div>'
       + '<div style="flex:1"><b style="font-weight:650">'+esc(i.cliente)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+fechaLarga(i.fecha)+' · '+esc(i.concepto)+' · '+esc(i.metodo)+' · '+esc(i.cuenta||'—')+'</div></div>'
       + (i.factura==='Sí'?'<span class="badge b-blue" style="margin-right:8px">Facturado</span>':'')
       + '<div style="font-weight:700;color:var(--green);margin-right:10px">'+money(i.monto)+'</div>'
       + concBtn('ingreso', i.id, i.conciliado)+'</div>';
-  }).join('') : '<div class="empty" style="padding:18px">Sin ingresos registrados</div>';
+  }).join('') : '<div class="empty" style="padding:18px">Sin ingresos'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
   var html = egSection('Historial de ingresos', 'Cobros recibidos de clientes', ingresosData.length, rows, '');
   cont.innerHTML = html;
 }
 var finTabActual = 'egresos';
+var finFiltroMes  = '';   // '' = todos, '01'..'12'
+var finFiltroAnio = '';   // '' = todos, '2024','2025','2026'
 function finTab(which){
   finTabActual = which;
   ['egresos','ingresos'].forEach(function(t){
     var tab=$('fintab-'+t); if(tab) tab.classList.toggle('active', t===which);
   });
   var egC=$('egresos-acordeones'), inC=$('ingresos-acordeones');
+  var egF=$('fin-filtro-egresos'), inF=$('fin-filtro-ingresos');
   if(egC) egC.style.display = which==='egresos'?'':'none';
   if(inC) inC.style.display = which==='ingresos'?'':'none';
+  if(egF) egF.style.display = which==='egresos'?'':'none';
+  if(inF) inF.style.display = which==='ingresos'?'':'none';
   setText('fin-head', which==='ingresos'?'Ingresos':'Egresos');
   var btn=$('fin-nuevo-btn'); if(btn) btn.style.display = which==='ingresos'?'none':'';
   renderFinKpis(which);
 }
 function renderFinanzas(){
+  // Insertar selector de filtro en ambas secciones
+  var filtroHtml = finFiltroHtml();
+  var fe = $('fin-filtro-egresos');
+  var fi = $('fin-filtro-ingresos');
+  if(fe) fe.innerHTML = filtroHtml;
+  if(fi) fi.innerHTML = filtroHtml;
   renderEgresos();
   renderIngresos();
   finTab(finTabActual);
