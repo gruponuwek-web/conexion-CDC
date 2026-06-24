@@ -2065,8 +2065,6 @@ function renderEgresos(){
       + concBtn('egreso', e.id, e.conciliado)+'</div>';
   }).join('') : '<div class="empty" style="padding:18px">Sin egresos'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
   html += egSection('Historial de egresos', 'Pagos ya realizados', egresosVis.length, heRows, '');
-  // PLACEHOLDER_EG
-  var _ignore_eg = 'historialEgresos.length, heRows, '');
 
   cont.innerHTML = html;
   renderFinKpis(finTabActual);
