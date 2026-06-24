@@ -1560,7 +1560,7 @@ function clickDot(clienteId, n){
         + '<select id="inline-cb-factura" style="margin-top:4px;width:140px"><option>No</option><option>S\u00ed</option></select>'
       + '</div>'
       + '</div>';
-    foot += '<button class="btn btn-primary" onclick="registrarCobroInline(''+clienteId+'','+n+')">Confirmar cobro</button>';
+    foot += '<button class="btn btn-primary" onclick="registrarCobroInline(\''+clienteId+'\','+n+')">Confirmar cobro</button>';
   } else { // done
     cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada</div>'
       + '<div style="font-size:13px;color:var(--ink-2)">Impartida y cobrada ('+money(s.precio)+').</div></div>';
