@@ -1984,25 +1984,23 @@ function finFiltroHtml(){
   var mesTxt  = finFiltroMes  ? MESES[parseInt(finFiltroMes,10)][1] : 'Todos los meses';
   var anioTxt = finFiltroAnio ? finFiltroAnio : 'Todos los años';
 
+  var chevSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
   return '<div class="fin-filtro-bar">'
     + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="fin-filtro-ico"><path d="M3 4h18M7 10h10M10 16h4"/></svg>'
-    + '<span class="fin-filtro-label">Período</span>'
+    + '<span class="fin-filtro-label">Per\u00edodo</span>'
     + '<div class="fdd" onclick="fddToggle(this)">'
-        + '<div class="fdd-val">'+mesTxt+'<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg></div>'
+        + '<div class="fdd-val">'+mesTxt+chevSvg+'</div>'
         + '<div class="fdd-list">'+mesItems+'</div>'
     + '</div>'
     + '<div class="fdd" onclick="fddToggle(this)">'
-        + '<div class="fdd-val">'+anioTxt+'<svg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='currentColor' stroke-width='2.2' stroke-linecap='round'><path d='m6 9 6 6 6-6'/></svg></div>'
+        + '<div class="fdd-val">'+anioTxt+chevSvg+'</div>'
         + '<div class="fdd-list">'+anioItems+'</div>'
     + '</div>'
     + (activo
         ? '<span class="badge b-primary" style="margin-left:4px">'+badgeTxt+'</span>'
-          + '<button class="btn btn-ghost btn-sm fin-filtro-clear" onclick="limpiarFinFiltro()">✕ Limpiar</button>'
+          + '<button class="btn btn-ghost btn-sm fin-filtro-clear" onclick="limpiarFinFiltro()">\u2715 Limpiar</button>'
         : '')
     + '</div>';
-}
-
-function fddToggle(el){
   // Cerrar todos los demás
   document.querySelectorAll('.fdd.open').forEach(function(d){ if(d!==el) d.classList.remove('open'); });
   el.classList.toggle('open');
