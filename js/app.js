@@ -1346,10 +1346,12 @@ function guardarNuevoLead(){
 
 function recomputeCliente(c){
   if(!c.sesiones) return;
-  var done = c.sesiones.filter(function(s){return s.estado==='done';}).length;
-  c.cobrado = done * c.precioSes;
-  c.porCobrar = (c.sesiones.length - done) * c.precioSes;
-  if(c.sesiones.length>0 && done===c.sesiones.length && c.estado!=='Cancelado' && c.estado!=='Pausado'){
+  var done = c.sesiones.filter(function(s){return s.estado==='done';});
+  // Sumar montos reales cobrados por sesión (no precio fijo * cantidad)
+  c.cobrado   = done.reduce(function(sum, s){ return sum + (Number(s.precio)||0); }, 0);
+  var pending = c.sesiones.filter(function(s){return s.estado!=='done';});
+  c.porCobrar = pending.reduce(function(sum, s){ return sum + (Number(s.precio)||Number(c.precioSes)||0); }, 0);
+  if(c.sesiones.length>0 && done.length===c.sesiones.length && c.estado!=='Cancelado' && c.estado!=='Pausado'){
     c.estado = 'Completado';
   }
 }
@@ -1531,17 +1533,132 @@ function clickDot(clienteId, n){
     foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
     foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Marcar impartida</button>';
   } else if(s.estado==='next'){
-    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Cobro pendiente</div>'
-      + '<div style="font-size:13px;color:var(--ink-2)">Sesión impartida. Registra el cobro de <b>'+money(s.precio)+'</b> para completarla.</div></div>';
-    foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
-  } else { // done
-    cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada</div>'
-      + '<div style="font-size:13px;color:var(--ink-2)">Impartida y cobrada ('+money(s.precio)+').</div></div>';
-    foot += '<button class="btn btn-primary" onclick="guardarSesion()">Guardar notas</button>';
+    var cuentasN = cuentasPorMetodo['Transferencia'] || [];
+    var cuentasOptsN = cuentasN.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+    cobroPanel = '<div class="panel panel-blue">'
+      + '<div class="panel-title">'+ico('cobro')+'Registrar cobro</div>'
+      + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:8px">'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">Monto <span style="color:var(--ink-3);font-weight:400">(sugerido: '+money(s.precio)+')</span></label>'
+          + '<input id="next-cb-monto" type="number" min="0" value="'+s.precio+'" style="margin-top:4px">'
+        + '</div>'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">Fecha</label>'
+          + '<input id="next-cb-fecha" type="date" value="'+new Date().toISOString().slice(0,10)+'" style="margin-top:4px">'
+        + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:10px;flex-wrap:wrap;margin-top:10px">'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">M\u00e9todo</label>'
+          + '<select id="next-cb-metodo" onchange="nextCuentaUpdate()" style="margin-top:4px"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select>'
+        + '</div>'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">Cuenta</label>'
+          + '<select id="next-cb-cuenta" style="margin-top:4px">'+cuentasOptsN+'</select>'
+        + '</div>'
+      + '</div>'
+      + '<div style="margin-top:10px">'
+        + '<label style="font-size:11px">\u00bfRequiere factura?</label>'
+        + '<select id="next-cb-factura" style="margin-top:4px;width:140px"><option>No</option><option>S\u00ed</option></select>'
+      + '</div>'
+      + '</div>';
+    foot += '<button class="btn btn-primary" onclick="registrarCobroNext(\'' + clienteId + '\',' + n + ')">Confirmar cobro</button>';
+    cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)">'
+      + '<div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesi\u00f3n completada</div>'
+      + '<div style="font-size:13px;color:var(--ink-2);margin-bottom:10px">Impartida y cobrada.</div>'
+      + '<div style="display:flex;gap:10px;flex-wrap:wrap">'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">Monto cobrado</label>'
+          + '<input id="edit-cb-monto" type="number" min="0" value="'+s.precio+'" style="margin-top:4px">'
+        + '</div>'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">Fecha</label>'
+          + '<input id="edit-cb-fecha" type="date" value="'+(s.fecha||'')+'" style="margin-top:4px">'
+        + '</div>'
+      + '</div>'
+      + '</div>';
+    foot += '<button class="btn btn-ghost" onclick="guardarSesion()">Guardar notas</button>';
+    foot += '<button class="btn btn-primary" onclick="editarCobroDone()">Actualizar cobro</button>';
   }
   setHtml('ses-ed-cobro-panel', cobroPanel);
   setHtml('ses-ed-foot', foot);
   openModal('m-ses-editar');
+}
+
+function nextCuentaUpdate(){
+  var metodo = document.getElementById('next-cb-metodo');
+  var cuenta  = document.getElementById('next-cb-cuenta');
+  if(!metodo || !cuenta) return;
+  var cuentas = cuentasPorMetodo[metodo.value] || [];
+  cuenta.innerHTML = cuentas.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+}
+
+function registrarCobroNext(clienteId, n){
+  var monto   = Number(document.getElementById('next-cb-monto').value)  || 0;
+  var fecha   = document.getElementById('next-cb-fecha').value           || new Date().toISOString().slice(0,10);
+  var metodo  = document.getElementById('next-cb-metodo').value          || 'Transferencia';
+  var cuenta  = document.getElementById('next-cb-cuenta').value          || '';
+  var factura = document.getElementById('next-cb-factura').value         || 'No';
+  if(monto <= 0){ toast('Captura un monto válido'); return; }
+  sesionCtx = { clienteId: clienteId, n: n };
+  var x = _curSes(); if(!x){ closeModal('m-ses-editar'); return; }
+  var requiereFactura = (factura === 'Sí');
+  x.s.estado = 'done';
+  x.s.fecha  = fecha;
+  x.s.precio = monto;
+  var actId = 'cobro-'+clienteId+'-'+n;
+  var act = getActividad(actId); if(act) act.done = true;
+  ingresosData.push({id:uid('in'), cliente:x.c.nombre, concepto:'Sesión '+n+' · EMT', monto:monto, fecha:fecha, metodo:metodo, cuenta:cuenta, factura:(requiereFactura?'Sí':'No'), conciliado:false});
+  if(requiereFactura){ agregarFacturaPendiente(x.c, n, monto, fecha); }
+  closeModal('m-ses-editar');
+  recomputeCliente(x.c);
+  renderClientes(); renderNav();
+  toast('Cobro de '+money(monto)+' registrado'+(requiereFactura?' · factura en cola':''));
+  var ahora = new Date().toISOString();
+  var sesId = 's-'+clienteId+'-'+n;
+  gs('updateSesion', {id:sesId, estado:'done', fecha:fecha, precio:monto,
+    cobrada:'Sí', facturaRequerida:(requiereFactura?'Sí':'No'), actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] updateSesion next:',e); });
+  gs('createCobro', {
+    id:uid('co'), clienteId:x.c.id, sesionId:sesId,
+    sesionN:n, monto:monto, fecha:fecha, metodo:metodo, cuenta:cuenta,
+    facturaRequerida:(requiereFactura?'Sí':'No'), creadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] createCobro next:',e); });
+  gs('updateCliente', {id:x.c.id, cobrado:x.c.cobrado, porCobrar:x.c.porCobrar, actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] updateCliente next:',e); });
+  if(requiereFactura){
+    gs('createFactura', {
+      id:uid('f'), clienteId:x.c.id, clienteNombre:x.c.nombre,
+      sesionId:sesId, sesionN:n, monto:monto, fecha:fecha,
+      estatus:'Por crear', folio:'',
+      rfc:x.c.rfc||'', razonSocial:x.c.razonSocial||'', usoCFDI:x.c.usoCFDI||'',
+      creadoEn:ahora, actualizadoEn:ahora
+    }).catch(function(e){ console.error('[CDC GS] createFactura next:',e); });
+  }
+}
+
+function editarCobroDone(){
+  var x = _curSes(); if(!x){ closeModal('m-ses-editar'); return; }
+  var nuevoMonto = Number(document.getElementById('edit-cb-monto').value) || 0;
+  var nuevaFecha = document.getElementById('edit-cb-fecha').value || x.s.fecha;
+  if(nuevoMonto <= 0){ toast('Captura un monto válido'); return; }
+  var diff = nuevoMonto - x.s.precio;
+  x.s.precio = nuevoMonto;
+  x.s.fecha  = nuevaFecha;
+  // Actualizar montos del cliente
+  x.c.cobrado   = (x.c.cobrado   || 0) + diff;
+  x.c.porCobrar = Math.max(0, (x.c.porCobrar || 0) - diff);
+  closeModal('m-ses-editar');
+  recomputeCliente(x.c);
+  renderClientes(); renderNav();
+  toast('Cobro actualizado a ' + money(nuevoMonto));
+  // Guardar en Sheets
+  var ahora = new Date().toISOString();
+  var sesId = 's-' + sesionCtx.clienteId + '-' + sesionCtx.n;
+  gs('updateSesion', { id: sesId, precio: nuevoMonto, fecha: nuevaFecha, actualizadoEn: ahora })
+    .catch(function(e){ console.error('[CDC GS] updateSesion editarCobro:', e); });
+  gs('updateCliente', { id: x.c.id, cobrado: x.c.cobrado, porCobrar: x.c.porCobrar, actualizadoEn: ahora })
+    .catch(function(e){ console.error('[CDC GS] updateCliente editarCobro:', e); });
 }
 
 function _curSes(){ if(!sesionCtx) return null; var c=getCliente(sesionCtx.clienteId); if(!c) return null; return {c:c, s:c.sesiones[sesionCtx.n-1]}; }
