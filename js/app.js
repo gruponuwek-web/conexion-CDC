@@ -1531,36 +1531,9 @@ function clickDot(clienteId, n){
     foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
     foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Marcar impartida</button>';
   } else if(s.estado==='next'){
-    var cuentasDefault = cuentasPorMetodo['Transferencia'] || [];
-    var cuentasOpts = cuentasDefault.map(function(c){ return '<option>'+c+'</option>'; }).join('');
-    cobroPanel = '<div class="panel panel-blue">'
-      + '<div class="panel-title">'+ico('cobro')+'Registrar cobro</div>'
-      + '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">'
-        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
-          + '<label style="font-size:11px">Monto <span style="color:var(--ink-3);font-weight:400">(sugerido: '+money(s.precio)+')</span></label>'
-          + '<input id="inline-cb-monto" type="number" min="0" value="'+s.precio+'" style="margin-top:4px">'
-        + '</div>'
-        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
-          + '<label style="font-size:11px">Fecha</label>'
-          + '<input id="inline-cb-fecha" type="date" value="'+new Date().toISOString().slice(0,10)+'" style="margin-top:4px">'
-        + '</div>'
-      + '</div>'
-      + '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">'
-        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
-          + '<label style="font-size:11px">M\u00e9todo</label>'
-          + '<select id="inline-cb-metodo" onchange="inlineCuentaUpdate()" style="margin-top:4px"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select>'
-        + '</div>'
-        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
-          + '<label style="font-size:11px">Cuenta</label>'
-          + '<select id="inline-cb-cuenta" style="margin-top:4px">'+cuentasOpts+'</select>'
-        + '</div>'
-      + '</div>'
-      + '<div style="margin-top:10px">'
-        + '<label style="font-size:11px">\u00bfRequiere factura?</label>'
-        + '<select id="inline-cb-factura" style="margin-top:4px;width:140px"><option>No</option><option>S\u00ed</option></select>'
-      + '</div>'
-      + '</div>';
-    foot += '<button class="btn btn-primary" onclick="registrarCobroInline(\''+clienteId+'\','+n+')">Confirmar cobro</button>';
+    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Cobro pendiente</div>'
+      + '<div style="font-size:13px;color:var(--ink-2)">Sesión impartida. Registra el cobro de <b>'+money(s.precio)+'</b> para completarla.</div></div>';
+    foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
   } else { // done
     cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada</div>'
       + '<div style="font-size:13px;color:var(--ink-2)">Impartida y cobrada ('+money(s.precio)+').</div></div>';
