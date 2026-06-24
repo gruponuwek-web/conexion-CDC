@@ -1531,9 +1531,36 @@ function clickDot(clienteId, n){
     foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
     foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Marcar impartida</button>';
   } else if(s.estado==='next'){
-    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Cobro pendiente</div>'
-      + '<div style="font-size:13px;color:var(--ink-2)">Sesión impartida. Registra el cobro de <b>'+money(s.precio)+'</b> para completarla.</div></div>';
-    foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
+    var cuentasDefault = cuentasPorMetodo['Transferencia'] || [];
+    var cuentasOpts = cuentasDefault.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+    cobroPanel = '<div class="panel panel-blue">'
+      + '<div class="panel-title">'+ico('cobro')+'Registrar cobro</div>'
+      + '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:8px">'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">Monto <span style="color:var(--ink-3);font-weight:400">(sugerido: '+money(s.precio)+')</span></label>'
+          + '<input id="inline-cb-monto" type="number" min="0" value="'+s.precio+'" style="margin-top:4px">'
+        + '</div>'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">Fecha</label>'
+          + '<input id="inline-cb-fecha" type="date" value="'+new Date().toISOString().slice(0,10)+'" style="margin-top:4px">'
+        + '</div>'
+      + '</div>'
+      + '<div style="display:flex;gap:12px;flex-wrap:wrap;margin-top:10px">'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">M\u00e9todo</label>'
+          + '<select id="inline-cb-metodo" onchange="inlineCuentaUpdate()" style="margin-top:4px"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select>'
+        + '</div>'
+        + '<div class="field" style="flex:1;min-width:120px;margin-bottom:0">'
+          + '<label style="font-size:11px">Cuenta</label>'
+          + '<select id="inline-cb-cuenta" style="margin-top:4px">'+cuentasOpts+'</select>'
+        + '</div>'
+      + '</div>'
+      + '<div style="margin-top:10px">'
+        + '<label style="font-size:11px">\u00bfRequiere factura?</label>'
+        + '<select id="inline-cb-factura" style="margin-top:4px;width:140px"><option>No</option><option>S\u00ed</option></select>'
+      + '</div>'
+      + '</div>';
+    foot += '<button class="btn btn-primary" onclick="registrarCobroInline(''+clienteId+'','+n+')">Confirmar cobro</button>';
   } else { // done
     cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada</div>'
       + '<div style="font-size:13px;color:var(--ink-2)">Impartida y cobrada ('+money(s.precio)+').</div></div>';
@@ -1576,6 +1603,60 @@ function marcarImpartida(){
 }
 
 /* ----- Cobro (R4) ----- */
+function inlineCuentaUpdate(){
+  var metodo = document.getElementById('inline-cb-metodo');
+  var cuenta  = document.getElementById('inline-cb-cuenta');
+  if(!metodo || !cuenta) return;
+  var cuentas = cuentasPorMetodo[metodo.value] || [];
+  cuenta.innerHTML = cuentas.map(function(c){ return '<option>'+c+'</option>'; }).join('');
+}
+
+function registrarCobroInline(clienteId, n){
+  var monto   = Number(document.getElementById('inline-cb-monto').value)  || 0;
+  var fecha   = document.getElementById('inline-cb-fecha').value           || new Date().toISOString().slice(0,10);
+  var metodo  = document.getElementById('inline-cb-metodo').value          || 'Transferencia';
+  var cuenta  = document.getElementById('inline-cb-cuenta').value          || '';
+  var factura = document.getElementById('inline-cb-factura').value         || 'No';
+  if(monto <= 0){ toast('Captura un monto válido'); return; }
+  // Reutilizar sesionCtx ya establecido por clickDot
+  sesionCtx = { clienteId: clienteId, n: n };
+  var x = _curSes(); if(!x){ closeModal('m-ses-editar'); return; }
+  var requiereFactura = (factura === 'Sí');
+  x.s.estado = 'done';
+  x.s.fecha  = x.s.fecha || fecha;
+  x.s.precio = monto;
+  var actId = 'cobro-'+clienteId+'-'+n;
+  var act = getActividad(actId); if(act) act.done = true;
+  ingresosData.push({id:uid('in'), cliente:x.c.nombre, concepto:'Sesión '+n+' · EMT', monto:monto, fecha:fecha, metodo:metodo, cuenta:cuenta, factura:(requiereFactura?'Sí':'No'), conciliado:false});
+  if(requiereFactura){ agregarFacturaPendiente(x.c, n, monto, fecha); }
+  closeModal('m-ses-editar');
+  recomputeCliente(x.c);
+  renderClientes(); renderNav();
+  toast('Cobro de '+money(monto)+' registrado'+(requiereFactura?' · factura en cola':''));
+  // Guardar en Sheets
+  var ahora = new Date().toISOString();
+  var sesId = 's-'+clienteId+'-'+n;
+  gs('updateSesion', {id:sesId, estado:'done', fecha:x.s.fecha, precio:monto,
+    cobrada:'Sí', facturaRequerida:(requiereFactura?'Sí':'No'), actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] updateSesion cobro inline:',e); });
+  gs('createCobro', {
+    id:uid('co'), clienteId:x.c.id, sesionId:sesId,
+    sesionN:n, monto:monto, fecha:fecha, metodo:metodo, cuenta:cuenta,
+    facturaRequerida:(requiereFactura?'Sí':'No'), creadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] createCobro inline:',e); });
+  gs('updateCliente', {id:x.c.id, cobrado:x.c.cobrado, porCobrar:x.c.porCobrar, actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] updateCliente cobro inline:',e); });
+  if(requiereFactura){
+    gs('createFactura', {
+      id:uid('f'), clienteId:x.c.id, clienteNombre:x.c.nombre,
+      sesionId:sesId, sesionN:n, monto:monto, fecha:fecha,
+      estatus:'Por crear', folio:'',
+      rfc:x.c.rfc||'', razonSocial:x.c.razonSocial||'', usoCFDI:x.c.usoCFDI||'',
+      creadoEn:ahora, actualizadoEn:ahora
+    }).catch(function(e){ console.error('[CDC GS] createFactura inline:',e); });
+  }
+}
+
 function cbActualizarCuenta(){
   var metodo = $('cb-metodo').value;
   var cuentas = cuentasPorMetodo[metodo] || [];
