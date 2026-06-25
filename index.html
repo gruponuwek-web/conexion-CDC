@@ -10,7 +10,46 @@
 <link rel="stylesheet" href="./css/styles.css">
 </head>
 <body>
-<div class="app">
+<!-- PANTALLA DE LOGIN -->
+<div id="login-screen" style="display:none;position:fixed;inset:0;background:var(--bg,#F5F3EE);z-index:9999;align-items:center;justify-content:center;flex-direction:column">
+  <div style="background:var(--surface,#fff);border:1px solid var(--line,#E2DDD4);border-radius:16px;padding:40px 44px;width:100%;max-width:380px;box-shadow:0 8px 40px rgba(0,0,0,.10)">
+    <!-- Logo -->
+    <div style="display:flex;align-items:center;gap:12px;margin-bottom:32px">
+      <div style="width:44px;height:44px;background:linear-gradient(135deg,#1AA398,#0E6E66);border-radius:12px;display:flex;align-items:center;justify-content:center">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="#fff" stroke-width="1.8" stroke-linecap="round" stroke-linejoin="round" style="width:24px;height:24px"><path d="M12 5a3 3 0 0 0-3 3 2.5 2.5 0 0 0-2 4 2.5 2.5 0 0 0 1 4.5A2.5 2.5 0 0 0 12 19zM12 5a3 3 0 0 1 3 3 2.5 2.5 0 0 1 2 4 2.5 2.5 0 0 1-1 4.5A2.5 2.5 0 0 1 12 19zM12 5v14"/></svg>
+      </div>
+      <div>
+        <div style="font-size:16px;font-weight:800;color:var(--ink,#1A1A1A)">Clínica del Cerebro</div>
+        <div style="font-size:12px;color:var(--ink-3,#7C8784);font-weight:500">CRM · ERP · Grupo Nuwek</div>
+      </div>
+    </div>
+    <!-- Formulario -->
+    <div style="margin-bottom:16px">
+      <label style="font-size:12px;font-weight:600;color:var(--ink-3,#7C8784);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px">Usuario</label>
+      <select id="login-user" style="width:100%;padding:10px 14px;border:1.5px solid var(--line,#E2DDD4);border-radius:9px;font-size:14px;background:var(--surface,#fff);color:var(--ink,#1A1A1A);outline:none">
+        <option value="willy">Dr. Willy</option>
+        <option value="vicky">Sra. Vicky</option>
+      </select>
+    </div>
+    <div style="margin-bottom:24px">
+      <label style="font-size:12px;font-weight:600;color:var(--ink-3,#7C8784);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px">Contraseña</label>
+      <input id="login-pass" type="password" placeholder="••••••••" onkeydown="loginKeydown(event)"
+        style="width:100%;padding:10px 14px;border:1.5px solid var(--line,#E2DDD4);border-radius:9px;font-size:14px;background:var(--surface,#fff);color:var(--ink,#1A1A1A);outline:none;box-sizing:border-box">
+    </div>
+    <!-- Error -->
+    <div id="login-error" style="display:none;align-items:center;gap:8px;background:#FFF0F0;border:1px solid #FFCCCC;border-radius:8px;padding:10px 14px;margin-bottom:16px;font-size:13px;color:#C43D3D">
+      <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>
+      Usuario o contraseña incorrectos
+    </div>
+    <!-- Botón -->
+    <button onclick="loginSubmit()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1AA398,#0E6E66);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.02em">
+      Entrar
+    </button>
+  </div>
+  <div style="margin-top:20px;font-size:12px;color:var(--ink-3,#9AA3A0)">Acceso restringido · Solo personal autorizado</div>
+</div>
+
+<div id="app-root"><div class="app">
   <aside class="sidebar">
     <div class="brand">
       <div class="mark"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.7" stroke-linecap="round" stroke-linejoin="round"><path d="M12 5a3 3 0 0 0-3 3 2.5 2.5 0 0 0-2 4 2.5 2.5 0 0 0 1 4.5A2.5 2.5 0 0 0 12 19zM12 5a3 3 0 0 1 3 3 2.5 2.5 0 0 1 2 4 2.5 2.5 0 0 1-1 4.5A2.5 2.5 0 0 1 12 19zM12 5v14M9 9h.01M15 9h.01M8.5 13h.01M15.5 13h.01"/></svg></div>
@@ -26,7 +65,7 @@
       <div class="usercard">
         <div class="who"><b id="user-name">Dr. Willy</b><br><span id="user-role">Acceso total</span></div>
         <div class="av" id="user-av" style="background:linear-gradient(135deg,#1AA398,#0E6E66)">DW</div>
-        <select id="user-sel" onchange="changeUser(this.value)"><option value="willy">Dr. Willy</option><option value="vicky">Sra. Vicky</option></select>
+        <select id="user-sel" onchange="changeUser(this.value)"><option value="willy">Dr. Willy</option><option value="vicky">Sra. Vicky</option></select><button onclick="cerrarSesion()" title="Cerrar sesión" style="margin-left:8px;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--ink-3);font-weight:600">Salir</button>
       </div>
     </header>
     <main class="content">
@@ -113,6 +152,7 @@
     </main>
   </div>
 </div>
+</div><!-- /app-root -->
 <div class="toast" id="toast"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg><span id="toast-msg"></span></div>
 <!-- m-pipe-detalle -->
 <div class="modal" id="m-pipe-detalle">
@@ -540,6 +580,6 @@
   </div>
 </div>
 <script src="./js/vendor/chart.umd.min.js"></script>
-<script src="./js/app.js?v=202606251910"></script>
+<script src="./js/app.js?v=202606251919"></script>
 </body>
 </html>
