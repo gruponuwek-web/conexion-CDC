@@ -251,6 +251,11 @@ async function cargarTodo() {
     renderEgresos();
     renderFacturas();
     renderNav();
+    // Inyectar filtros ahora que hay datos
+    var fg = $('fin-filtro-global');
+    if(fg) fg.innerHTML = finFiltroHtml();
+    var dg = $('dash-filtro');
+    if(dg) dg.innerHTML = dashFiltroHtml();
 
   } catch (err) {
     mostrarError('Error de conexión con Google Sheets: ' + err.toString());
@@ -2704,9 +2709,9 @@ function renderTableros(){
   $('tableros-lock').style.display='none';
   $('tableros-content').style.display='';
   buildDashPanes();
+  var dg = $('dash-filtro');
+  if(dg) dg.innerHTML = dashFiltroHtml();
   renderDashTabs();
-  var fg = $('dash-filtro');
-  if(fg) fg.innerHTML = dashFiltroHtml();
   buildCharts(dashTabActual);
 }
 
