@@ -2105,6 +2105,55 @@ document.addEventListener('click', function(e){
   if(!e.target.closest('.fdd')) document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); });
 });
 
+// ── Filtros cruzados ─────────────────────────────────────────
+function limpiarCrossFilter(){
+  dashCrossFilter = { etapa: null, mes: null, estadoCli: null };
+  buildCharts('general');
+}
+window.limpiarCrossFilter = limpiarCrossFilter;
+
+function actualizarCrossHint(){
+  var hint = $('dash-cross-hint');
+  var txt  = $('dash-cross-txt');
+  var panel = $('dash-detalle-panel');
+  if(!hint) return;
+  var filtros = [];
+  if(dashCrossFilter.etapa)   filtros.push('Etapa: <b>'+dashCrossFilter.etapa+'</b>');
+  if(dashCrossFilter.mes)     filtros.push('Mes: <b>'+MESES_CORTO[parseInt(dashCrossFilter.mes,10)-1]+'</b>');
+  if(dashCrossFilter.estadoCli) filtros.push('Estado: <b>'+dashCrossFilter.estadoCli+'</b>');
+  if(filtros.length > 0){
+    hint.style.display = 'flex';
+    txt.innerHTML = 'Filtro activo → ' + filtros.join(' · ');
+    // Mostrar cobros del mes seleccionado
+    if(dashCrossFilter.mes && panel){
+      var m = dashCrossFilter.mes;
+      var cobsMes = ingresosData.filter(function(r){
+        var f=(r.fecha||'').slice(0,10);
+        return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
+      });
+      if(cobsMes.length > 0){
+        var rows = cobsMes.map(function(c){
+          return '<div style="display:flex;gap:12px;align-items:center;padding:8px 0;border-bottom:1px solid var(--line)">'
+            + '<div style="flex:1;font-size:13px;font-weight:600">'+esc(c.cliente)+'</div>'
+            + '<div style="font-size:12px;color:var(--ink-3)">'+esc(c.concepto)+'</div>'
+            + '<div style="font-size:13px;font-weight:700;color:var(--green)">'+money(c.monto)+'</div>'
+            + '</div>';
+        }).join('');
+        panel.style.display = 'block';
+        panel.innerHTML = '<div style="font-size:13px;font-weight:700;margin-bottom:10px">Cobros de '+MESES_CORTO[parseInt(m,10)-1]+' '+dashFiltroAnio+' — '+cobsMes.length+' registro'+(cobsMes.length!==1?'s':'')+'</div>' + rows;
+      } else {
+        panel.style.display = 'block';
+        panel.innerHTML = '<div style="font-size:13px;color:var(--ink-3);text-align:center;padding:16px">Sin cobros registrados en '+MESES_CORTO[parseInt(m,10)-1]+' '+dashFiltroAnio+'</div>';
+      }
+    } else {
+      if(panel) panel.style.display = 'none';
+    }
+  } else {
+    hint.style.display = 'none';
+    if(panel) panel.style.display = 'none';
+  }
+}
+
 function fddToggle(el){
   document.querySelectorAll('.fdd.open').forEach(function(d){ if(d!==el) d.classList.remove('open'); });
   el.classList.toggle('open');
@@ -2595,13 +2644,19 @@ function chartCard(titulo, sub, canvasId, tall){
 function buildDashPanes(){
   setHtml('dash-general',
     '<div id="dash-kpis-general" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px"></div>'
+    + '<div id="dash-cross-hint" style="display:none;padding:8px 14px;background:var(--primary-l);border:1px solid var(--primary);border-radius:8px;font-size:12.5px;color:var(--primary-d);margin-bottom:12px;display:flex;align-items:center;gap:8px">'
+      + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:14px;height:14px;flex-shrink:0"><circle cx="12" cy="12" r="9"/><path d="M12 8v4M12 16h.01"/></svg>'
+      + '<span id="dash-cross-txt">Haz clic en una barra o segmento para filtrar</span>'
+      + '<button onclick="limpiarCrossFilter()" style="margin-left:auto;background:none;border:none;color:var(--primary);font-weight:700;cursor:pointer;font-size:13px">× Limpiar</button>'
+    + '</div>'
     + '<div class="dash-grid" style="margin-bottom:16px">'
-    + chartCard('Ingresos vs Egresos','Comparativo mensual del período seleccionado','ch-ing-egr', true)
+    + chartCard('Ingresos vs Egresos','Clic en un mes para ver detalle • filtrado por período','ch-ing-egr', true)
     + '</div>'
     + '<div class="dash-grid cols-2">'
-    + chartCard('Embudo de pipeline','Leads por etapa comercial','ch-pipeline')
-    + chartCard('Cartera de clientes','Distribución por estado','ch-cartera-gen')
-    + '</div>');
+    + chartCard('Embudo de pipeline','Clic en etapa para filtrar','ch-pipeline')
+    + chartCard('Cartera de clientes','Clic en segmento para filtrar','ch-cartera-gen')
+    + '</div>'
+    + '<div id="dash-detalle-panel" style="display:none;margin-top:16px;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:18px;box-shadow:var(--shadow-sm)"></div>');
   setHtml('dash-leads',
     '<div class="dash-grid cols-2">'
     + chartCard('Leads por canal','Origen de los prospectos','ch-canales')
@@ -2694,13 +2749,43 @@ function buildCharts(tab){
     + kpiCard(utilidad>=0?'#0E6E66':'#C2820B', svgUt, money(utilidad), 'Utilidad neta', utilidad>=0?'Positiva ↑':'Negativa ↓')
     + kpiCard('#C2820B', svgCob, money(cobPend),  'Por cobrar', 'Cartera activa');
 
-    // ── Embudo de pipeline ──────────────────────────────────────
-    safeChart('ch-pipeline', {type:'bar', data:{labels:ETAPAS, datasets:[{label:'Leads', data:dataPipeline(), backgroundColor:[CL.gray,CL.blue,CL.amber,CL.violet,CL.green,CL.red,CL.gray], borderRadius:8, maxBarThickness:54}]},
-      options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0,color:CL.ink3},grid:{color:CL.grid},border:{display:false}},x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}}}});
+    // ── Embudo de pipeline (interactivo) ────────────────────────
+    var pipeColors = ETAPAS.map(function(e){
+      return dashCrossFilter.etapa === e ? CL.accent : [CL.gray,CL.blue,CL.amber,CL.violet,CL.green,CL.red,CL.gray][ETAPAS.indexOf(e)];
+    });
+    var chartPipe = safeChart('ch-pipeline', {type:'bar',
+      data:{labels:ETAPAS, datasets:[{label:'Leads', data:dataPipeline(), backgroundColor:pipeColors, borderRadius:8, maxBarThickness:54, hoverBackgroundColor:CL.accent}]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:false},tooltip:{callbacks:{title:function(ctx){return ctx[0].label;},label:function(ctx){return ' '+ctx.raw+' lead'+(ctx.raw!==1?'s':'');}}},},
+        scales:{y:{beginAtZero:true,ticks:{precision:0,color:CL.ink3},grid:{color:CL.grid},border:{display:false}},x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}},
+        onClick:function(evt, items){
+          if(!items.length){ dashCrossFilter.etapa=null; }
+          else { var etapa=ETAPAS[items[0].index]; dashCrossFilter.etapa=(dashCrossFilter.etapa===etapa?null:etapa); }
+          buildCharts('general');
+        },
+        onHover:function(evt){ evt.native.target.style.cursor = 'pointer'; }
+      }});
 
-    // ── Cartera de clientes (donut) ─────────────────────────────
-    safeChart('ch-cartera-gen', {type:'doughnut', data:{labels:['Activo','En onboarding','Pausado','Completado','Cancelado'], datasets:[{data:dataCartera(), backgroundColor:[CL.green,CL.amber,CL.violet,CL.emerald,CL.red], borderWidth:2, borderColor:'#fff'}]},
-      options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right'}}}});
+    // Actualizar hint y panel de detalle
+    actualizarCrossHint();
+
+    // ── Cartera de clientes (interactivo) ───────────────────────
+    var estadosCli = ['Activo','En onboarding','Pausado','Completado','Cancelado'];
+    var carteraColors = estadosCli.map(function(e,i){
+      var cols = [CL.green,CL.amber,CL.violet,CL.emerald,CL.red];
+      return dashCrossFilter.estadoCli === e ? CL.accent : cols[i];
+    });
+    safeChart('ch-cartera-gen', {type:'doughnut',
+      data:{labels:estadosCli, datasets:[{data:dataCartera(), backgroundColor:carteraColors, borderWidth:2, borderColor:'#fff', hoverBorderWidth:3}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'62%',
+        plugins:{legend:{position:'right'},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.label+': '+ctx.raw+' cliente'+(ctx.raw!==1?'s':'');}}}},
+        onClick:function(evt, items){
+          if(!items.length){ dashCrossFilter.estadoCli=null; }
+          else { var est=estadosCli[items[0].index]; dashCrossFilter.estadoCli=(dashCrossFilter.estadoCli===est?null:est); }
+          buildCharts('general');
+        },
+        onHover:function(evt){ evt.native.target.style.cursor='pointer'; }
+      }});
 
     // Siempre mostrar barras por mes para comparación clara
     var mesesActivos = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
@@ -2717,15 +2802,30 @@ function buildCharts(tab){
         return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
       }).reduce(function(s,r){return s+(r.monto||0);},0);
     });
+    // Resaltar mes seleccionado
+    var inColors = mesesActivos.map(function(m){ return dashCrossFilter.mes===m ? '#0B5E3A' : CL.green; });
+    var egColors = mesesActivos.map(function(m){ return dashCrossFilter.mes===m ? '#8B1A1A' : CL.red; });
     safeChart('ch-ing-egr', {type:'bar',
       data:{labels:labMeses, datasets:[
-        {label:'Ingresos', data:dataIn, backgroundColor:CL.green, borderRadius:6, maxBarThickness:40},
-        {label:'Egresos',  data:dataEg, backgroundColor:CL.red,   borderRadius:6, maxBarThickness:40}
+        {label:'Ingresos', data:dataIn, backgroundColor:inColors, borderRadius:6, maxBarThickness:40},
+        {label:'Egresos',  data:dataEg, backgroundColor:egColors, borderRadius:6, maxBarThickness:40}
       ]},
       options:{responsive:true,maintainAspectRatio:false,
-        plugins:{legend:{display:true,position:'top'},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': $'+Number(ctx.raw).toLocaleString('es-MX');}}}},
+        plugins:{legend:{display:true,position:'top'},
+          tooltip:{callbacks:{label:function(ctx){
+            var util=dataIn[ctx.dataIndex]-dataEg[ctx.dataIndex];
+            var extra = ctx.datasetIndex===1 ? ' | Utilidad: $'+util.toLocaleString('es-MX') : '';
+            return ' '+ctx.dataset.label+': $'+Number(ctx.raw).toLocaleString('es-MX')+extra;
+          }}}},
         scales:{y:{beginAtZero:true,ticks:{color:CL.ink3,callback:function(v){return '$'+(v/1000)+'k';}},grid:{color:CL.grid},border:{display:false}},
-                x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}}}});
+                x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}},
+        onClick:function(evt,items){
+          if(!items.length){ dashCrossFilter.mes=null; }
+          else { var mx=mesesActivos[items[0].index]; dashCrossFilter.mes=(dashCrossFilter.mes===mx?null:mx); }
+          buildCharts('general');
+        },
+        onHover:function(evt){ evt.native.target.style.cursor='pointer'; }
+      }});
   }
   else if(tab==='leads'){
     var canales = dataCanales();
@@ -2781,6 +2881,8 @@ function buildCharts(tab){
 /* ---------- Pestañas de tableros ---------- */
 var DASH_TABS = [['general','General'],['leads','Leads'],['clientes','Clientes'],['sesiones','Sesiones'],['financiero','Financiero']];
 var dashTabActual = 'general';
+// Filtros cruzados entre gráficas
+var dashCrossFilter = { etapa: null, mes: null, estadoCli: null };
 
 function renderDashTabs(){
   var html = DASH_TABS.map(function(t){
