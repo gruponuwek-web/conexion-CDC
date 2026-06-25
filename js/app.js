@@ -2566,40 +2566,30 @@ function buildCharts(tab){
   if(tab==='general'){
     safeChart('ch-pipeline', {type:'bar', data:{labels:ETAPAS, datasets:[{label:'Leads', data:dataPipeline(), backgroundColor:[CL.gray,CL.blue,CL.amber,CL.violet,CL.green], borderRadius:8, maxBarThickness:54}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0,color:CL.ink3},grid:{color:CL.grid},border:{display:false}},x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}}}});
-    var mesesActivos = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : [];
-    var multiMes = mesesActivos.length > 1;
-
-    if(multiMes){
-      var labMeses = mesesActivos.map(function(m){ return MESES_CORTO[parseInt(m,10)-1]; });
-      var dataIn = mesesActivos.map(function(m){
-        return ingresosData.filter(function(r){
-          var f=(r.fecha||'').slice(0,10);
-          return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
-        }).reduce(function(s,r){return s+(r.monto||0);},0);
-      });
-      var dataEg = mesesActivos.map(function(m){
-        return historialEgresos.filter(function(r){
-          var f=(r.fecha||'').slice(0,10);
-          return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
-        }).reduce(function(s,r){return s+(r.monto||0);},0);
-      });
-      safeChart('ch-ing-egr', {type:'bar',
-        data:{labels:labMeses, datasets:[
-          {label:'Ingresos', data:dataIn, backgroundColor:CL.green, borderRadius:6, maxBarThickness:40},
-          {label:'Egresos',  data:dataEg, backgroundColor:CL.red,   borderRadius:6, maxBarThickness:40}
-        ]},
-        options:{responsive:true,maintainAspectRatio:false,
-          plugins:{legend:{display:true,position:'top'},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': $'+Number(ctx.raw).toLocaleString('es-MX');}}}},
-          scales:{y:{beginAtZero:true,ticks:{color:CL.ink3,callback:function(v){return '$'+(v/1000)+'k';}},grid:{color:CL.grid},border:{display:false}},
-                  x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}}}});
-    } else {
-      var inFilt = dashFiltrar(ingresosData);
-      var egFilt = dashFiltrar(historialEgresos);
-      var ingresos = inFilt.reduce(function(s,i){return s+(i.monto||0);},0);
-      var egresos  = egFilt.reduce(function(s,e){return s+(e.monto||0);},0);
-      safeChart('ch-ing-egr', {type:'bar', data:{labels:['Ingresos','Egresos','Utilidad'], datasets:[{data:[ingresos, egresos, ingresos-egresos], backgroundColor:[CL.green, CL.red, CL.primary], borderRadius:8, maxBarThickness:70}]},
-        options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false},tooltip:{callbacks:{label:function(ctx){return ' $'+Number(ctx.raw).toLocaleString('es-MX');}}}},scales:{y:{beginAtZero:true,ticks:{color:CL.ink3,callback:function(v){return '$'+(v/1000)+'k';}},grid:{color:CL.grid},border:{display:false}},x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}}}});
-    }
+    // Siempre mostrar barras por mes para comparación clara
+    var mesesActivos = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
+    var labMeses = mesesActivos.map(function(m){ return MESES_CORTO[parseInt(m,10)-1]; });
+    var dataIn = mesesActivos.map(function(m){
+      return ingresosData.filter(function(r){
+        var f=(r.fecha||'').slice(0,10);
+        return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
+      }).reduce(function(s,r){return s+(r.monto||0);},0);
+    });
+    var dataEg = mesesActivos.map(function(m){
+      return historialEgresos.filter(function(r){
+        var f=(r.fecha||'').slice(0,10);
+        return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
+      }).reduce(function(s,r){return s+(r.monto||0);},0);
+    });
+    safeChart('ch-ing-egr', {type:'bar',
+      data:{labels:labMeses, datasets:[
+        {label:'Ingresos', data:dataIn, backgroundColor:CL.green, borderRadius:6, maxBarThickness:40},
+        {label:'Egresos',  data:dataEg, backgroundColor:CL.red,   borderRadius:6, maxBarThickness:40}
+      ]},
+      options:{responsive:true,maintainAspectRatio:false,
+        plugins:{legend:{display:true,position:'top'},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.dataset.label+': $'+Number(ctx.raw).toLocaleString('es-MX');}}}},
+        scales:{y:{beginAtZero:true,ticks:{color:CL.ink3,callback:function(v){return '$'+(v/1000)+'k';}},grid:{color:CL.grid},border:{display:false}},
+                x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}}}});
   }
   else if(tab==='leads'){
     var canales = dataCanales();
