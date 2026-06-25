@@ -925,7 +925,7 @@ function nav(key){
   if(key==='clientes') renderClientes();
   if(key==='egresos'){ renderFinanzas(); var fg=$('fin-filtro-global'); if(fg) fg.innerHTML=finFiltroHtml(); }
   if(key==='facturas') renderFacturas();
-  if(key==='tableros'){ setTimeout(function(){ if(typeof renderTableros==='function') renderTableros(); }, 0); }
+  if(key==='tableros') renderTableros();
 }
 
 /* ---------- Control de acceso (R8) ---------- */
@@ -2110,7 +2110,6 @@ function fddToggle(el){
   el.classList.toggle('open');
 }
 window.fddToggle = fddToggle;
-window.renderTableros = function(){ renderTableros(); };
 window.setFinFiltroMes = function(v){ finFiltroMes = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFinanzas(); };
 window.setFinFiltroAnio = function(v){ finFiltroAnio = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFinanzas(); };
 window.limpiarFinFiltro = function(){ finFiltroMes=''; finFiltroAnio=''; renderFinanzas(); };
@@ -2595,8 +2594,7 @@ function chartCard(titulo, sub, canvasId, tall){
 /* ---------- Layout de cada pestaña ---------- */
 function buildDashPanes(){
   setHtml('dash-general',
-    '<div id="dash-kpis-general" class="kpis" style="margin-bottom:20px"></div>'
-    + '<div class="dash-grid cols-2">'
+    '<div class="dash-grid cols-2">'
     + chartCard('Embudo de pipeline','Leads por etapa comercial','ch-pipeline')
     + chartCard('Ingresos vs egresos','Comparativo por mes del período','ch-ing-egr')
     + '</div>');
@@ -2658,26 +2656,6 @@ function buildCharts(tab){
   if(tab==='general'){
     safeChart('ch-pipeline', {type:'bar', data:{labels:ETAPAS, datasets:[{label:'Leads', data:dataPipeline(), backgroundColor:[CL.gray,CL.blue,CL.amber,CL.violet,CL.green], borderRadius:8, maxBarThickness:54}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0,color:CL.ink3},grid:{color:CL.grid},border:{display:false}},x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}}}});
-    // KPIs numéricos del período
-    var mesesKpi = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
-    var totalIn = ingresosData.filter(function(r){
-      var f=(r.fecha||'').slice(0,10);
-      return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
-    }).reduce(function(s,r){return s+(r.monto||0);},0);
-    var totalEg = historialEgresos.filter(function(r){
-      var f=(r.fecha||'').slice(0,10);
-      return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
-    }).reduce(function(s,r){return s+(r.monto||0);},0);
-    var utilidad = totalIn - totalEg;
-    var cobPend  = clientesData.reduce(function(s,c){return s+(c.porCobrar||0);},0);
-    var kpiHtml = ''
-      + '<div class="kpi x-green"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div><div class="val">'+money(totalIn)+'</div><div class="lbl">Ingresos del período</div></div>'
-      + '<div class="kpi x-red"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg></div><div class="val">'+money(totalEg)+'</div><div class="lbl">Egresos del período</div></div>'
-      + '<div class="kpi '+(utilidad>=0?'x-primary':'x-amber')+'"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg></div><div class="val">'+money(utilidad)+'</div><div class="lbl">Utilidad neta</div></div>'
-      + '<div class="kpi x-amber"><div class="ic"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg></div><div class="val">'+money(cobPend)+'</div><div class="lbl">Por cobrar (cartera)</div></div>';
-    var kpiCont = $('dash-kpis-general');
-    if(kpiCont) kpiCont.innerHTML = kpiHtml;
-
     // Siempre mostrar barras por mes para comparación clara
     var mesesActivos = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
     var labMeses = mesesActivos.map(function(m){ return MESES_CORTO[parseInt(m,10)-1]; });
