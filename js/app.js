@@ -60,6 +60,9 @@ function mostrarError(msg) {
 
 // ── Filtro Tableros ─────────────────────────────────────────────
 var MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+var dashFiltroAnio  = new Date().getFullYear().toString();
+var dashFiltroMeses = []; // [] = todos los meses
+
 
 function dashFiltroHtml(){
   var anios = [];
@@ -2750,8 +2753,6 @@ function buildCharts(tab){
 /* ---------- Pestañas de tableros ---------- */
 var DASH_TABS = [['general','General'],['leads','Leads'],['clientes','Clientes'],['sesiones','Sesiones'],['financiero','Financiero']];
 var dashTabActual = 'general';
-var dashFiltroAnio  = new Date().getFullYear().toString();
-var dashFiltroMeses = []; // [] = todos los meses
 
 function renderDashTabs(){
   var html = DASH_TABS.map(function(t){
