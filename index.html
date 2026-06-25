@@ -65,7 +65,7 @@
       <div class="usercard">
         <div class="who"><b id="user-name">Dr. Willy</b><br><span id="user-role">Acceso total</span></div>
         <div class="av" id="user-av" style="background:linear-gradient(135deg,#1AA398,#0E6E66)">DW</div>
-        <select id="user-sel" onchange="changeUser(this.value)"><option value="willy">Dr. Willy</option><option value="vicky">Sra. Vicky</option></select><button onclick="cerrarSesion()" title="Cerrar sesión" style="margin-left:8px;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--ink-3);font-weight:600">Salir</button>
+        <!-- selector de usuario deshabilitado — login maneja acceso --><button onclick="cerrarSesion()" title="Cerrar sesión" style="margin-left:8px;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--ink-3);font-weight:600">Salir</button>
       </div>
     </header>
     <main class="content">
@@ -608,6 +608,6 @@ function loginSubmit(){
 function loginKeydown(e){ if(e.key==='Enter') loginSubmit(); }
 </script>
 <script src="./js/vendor/chart.umd.min.js"></script>
-<script src="./js/app.js?v=202606251932"></script>
+<script src="./js/app.js?v=202606251938"></script>
 </body>
 </html>
