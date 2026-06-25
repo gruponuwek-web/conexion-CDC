@@ -304,3 +304,10 @@ table.tbl{width:100%;border-collapse:collapse}
 .fdd-item:hover{background:var(--primary-l);color:var(--primary-d)}
 .fdd-item.selected{background:var(--primary);color:#fff;font-weight:600}
 .fdd-item.selected:hover{background:var(--primary-d)}
+
+/* ── Filtro Tableros chips de meses ──────────────────────── */
+.dash-filtro-bar{display:flex;align-items:center;gap:10px;flex-wrap:wrap;background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:10px 16px;margin-bottom:4px;box-shadow:var(--shadow-sm)}
+.dash-mes-chips{display:flex;gap:5px;flex-wrap:wrap}
+.dash-mes-chip{padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink-3);cursor:pointer;transition:.14s;line-height:1}
+.dash-mes-chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-l)}
+.dash-mes-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
