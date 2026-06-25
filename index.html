@@ -33,7 +33,7 @@
     </div>
     <div style="margin-bottom:24px">
       <label style="font-size:12px;font-weight:600;color:var(--ink-3,#7C8784);text-transform:uppercase;letter-spacing:.04em;display:block;margin-bottom:6px">Contraseña</label>
-      <input id="login-pass" type="password" placeholder="••••••••" onkeydown="if(window.loginKeydown) window.loginKeydown(event)"
+      <input id="login-pass" type="password" placeholder="••••••••" onkeydown="loginKeydown(event)"
         style="width:100%;padding:10px 14px;border:1.5px solid var(--line,#E2DDD4);border-radius:9px;font-size:14px;background:var(--surface,#fff);color:var(--ink,#1A1A1A);outline:none;box-sizing:border-box">
     </div>
     <!-- Error -->
@@ -42,7 +42,7 @@
       Usuario o contraseña incorrectos
     </div>
     <!-- Botón -->
-    <button onclick="if(window.loginSubmit) window.loginSubmit()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1AA398,#0E6E66);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.02em">
+    <button onclick="loginSubmit()" style="width:100%;padding:12px;background:linear-gradient(135deg,#1AA398,#0E6E66);color:#fff;border:none;border-radius:10px;font-size:15px;font-weight:700;cursor:pointer;letter-spacing:.02em">
       Entrar
     </button>
   </div>
@@ -65,7 +65,7 @@
       <div class="usercard">
         <div class="who"><b id="user-name">Dr. Willy</b><br><span id="user-role">Acceso total</span></div>
         <div class="av" id="user-av" style="background:linear-gradient(135deg,#1AA398,#0E6E66)">DW</div>
-        <select id="user-sel" onchange="changeUser(this.value)"><option value="willy">Dr. Willy</option><option value="vicky">Sra. Vicky</option></select><button onclick="if(window.cerrarSesion) window.cerrarSesion()" title="Cerrar sesión" style="margin-left:8px;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--ink-3);font-weight:600">Salir</button>
+        <select id="user-sel" onchange="changeUser(this.value)"><option value="willy">Dr. Willy</option><option value="vicky">Sra. Vicky</option></select><button onclick="cerrarSesion()" title="Cerrar sesión" style="margin-left:8px;background:none;border:1px solid var(--line);border-radius:8px;padding:5px 10px;cursor:pointer;font-size:12px;color:var(--ink-3);font-weight:600">Salir</button>
       </div>
     </header>
     <main class="content">
@@ -580,6 +580,6 @@
   </div>
 </div>
 <script src="./js/vendor/chart.umd.min.js"></script>
-<script src="./js/app.js?v=202606251923"></script>
+<script src="./js/app.js?v=202606251926"></script>
 </body>
 </html>
