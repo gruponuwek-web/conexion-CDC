@@ -2594,9 +2594,13 @@ function chartCard(titulo, sub, canvasId, tall){
 /* ---------- Layout de cada pestaña ---------- */
 function buildDashPanes(){
   setHtml('dash-general',
-    '<div class="dash-grid cols-2">'
+    '<div id="dash-kpis-general" style="display:grid;grid-template-columns:repeat(4,1fr);gap:14px;margin-bottom:20px"></div>'
+    + '<div class="dash-grid" style="margin-bottom:16px">'
+    + chartCard('Ingresos vs Egresos','Comparativo mensual del período seleccionado','ch-ing-egr', true)
+    + '</div>'
+    + '<div class="dash-grid cols-2">'
     + chartCard('Embudo de pipeline','Leads por etapa comercial','ch-pipeline')
-    + chartCard('Ingresos vs egresos','Comparativo por mes del período','ch-ing-egr')
+    + chartCard('Cartera de clientes','Distribución por estado','ch-cartera-gen')
     + '</div>');
   setHtml('dash-leads',
     '<div class="dash-grid cols-2">'
@@ -2654,8 +2658,50 @@ function dataEgCat(){
 function buildCharts(tab){
   var gridCfg = { grid:{color:CL.grid}, ticks:{color:CL.ink3}, border:{display:false} };
   if(tab==='general'){
-    safeChart('ch-pipeline', {type:'bar', data:{labels:ETAPAS, datasets:[{label:'Leads', data:dataPipeline(), backgroundColor:[CL.gray,CL.blue,CL.amber,CL.violet,CL.green], borderRadius:8, maxBarThickness:54}]},
+    // ── KPIs numéricos del período ──────────────────────────────
+    var mesesKpi = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
+    var totalIn = ingresosData.filter(function(r){
+      var f=(r.fecha||'').slice(0,10);
+      return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
+    }).reduce(function(s,r){return s+(r.monto||0);},0);
+    var totalEg = historialEgresos.filter(function(r){
+      var f=(r.fecha||'').slice(0,10);
+      return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
+    }).reduce(function(s,r){return s+(r.monto||0);},0);
+    var utilidad = totalIn - totalEg;
+    var cobPend  = clientesData.reduce(function(s,c){return s+(c.porCobrar||0);},0);
+
+    function kpiCard(color, icon, valor, label, sub){
+      return '<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:18px 20px;box-shadow:var(--shadow-sm)">'
+        + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
+          + '<div style="width:36px;height:36px;border-radius:9px;background:'+color+'22;display:flex;align-items:center;justify-content:center;color:'+color+'">'+icon+'</div>'
+          + '<span style="font-size:12px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em">'+label+'</span>'
+        + '</div>'
+        + '<div style="font-size:28px;font-weight:800;color:var(--ink);letter-spacing:-.5px;line-height:1">'+valor+'</div>'
+        + (sub ? '<div style="font-size:12px;color:var(--ink-3);margin-top:5px">'+sub+'</div>' : '')
+        + '</div>';
+    }
+
+    var svgIn  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+    var svgEg  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>';
+    var svgUt  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>';
+    var svgCob = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+
+    var kpiCont = $('dash-kpis-general');
+    if(kpiCont) kpiCont.innerHTML =
+      kpiCard('#1F8A4C', svgIn,  money(totalIn),  'Ingresos', mesesKpi.length+' mes'+(mesesKpi.length!==1?'es':''))
+    + kpiCard('#C43D3D', svgEg,  money(totalEg),  'Egresos',  dashFiltroAnio)
+    + kpiCard(utilidad>=0?'#0E6E66':'#C2820B', svgUt, money(utilidad), 'Utilidad neta', utilidad>=0?'Positiva ↑':'Negativa ↓')
+    + kpiCard('#C2820B', svgCob, money(cobPend),  'Por cobrar', 'Cartera activa');
+
+    // ── Embudo de pipeline ──────────────────────────────────────
+    safeChart('ch-pipeline', {type:'bar', data:{labels:ETAPAS, datasets:[{label:'Leads', data:dataPipeline(), backgroundColor:[CL.gray,CL.blue,CL.amber,CL.violet,CL.green,CL.red,CL.gray], borderRadius:8, maxBarThickness:54}]},
       options:{responsive:true,maintainAspectRatio:false,plugins:{legend:{display:false}},scales:{y:{beginAtZero:true,ticks:{precision:0,color:CL.ink3},grid:{color:CL.grid},border:{display:false}},x:{grid:{display:false},ticks:{color:CL.ink3},border:{display:false}}}}});
+
+    // ── Cartera de clientes (donut) ─────────────────────────────
+    safeChart('ch-cartera-gen', {type:'doughnut', data:{labels:['Activo','En onboarding','Pausado','Completado','Cancelado'], datasets:[{data:dataCartera(), backgroundColor:[CL.green,CL.amber,CL.violet,CL.emerald,CL.red], borderWidth:2, borderColor:'#fff'}]},
+      options:{responsive:true,maintainAspectRatio:false,cutout:'62%',plugins:{legend:{position:'right'}}}});
+
     // Siempre mostrar barras por mes para comparación clara
     var mesesActivos = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
     var labMeses = mesesActivos.map(function(m){ return MESES_CORTO[parseInt(m,10)-1]; });
