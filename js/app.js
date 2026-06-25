@@ -2753,6 +2753,7 @@ function buildCharts(tab){
       options:{responsive:true,maintainAspectRatio:false,cutout:'58%',plugins:{legend:{position:'right'},tooltip:{callbacks:{label:function(ctx){return ' '+ctx.label+': $'+Number(ctx.raw).toLocaleString('es-MX');}}}}}});
   }
 
+}
 /* ---------- Pestañas de tableros ---------- */
 var DASH_TABS = [['general','General'],['leads','Leads'],['clientes','Clientes'],['sesiones','Sesiones'],['financiero','Financiero']];
 var dashTabActual = 'general';
@@ -2799,5 +2800,3 @@ window.addEventListener('DOMContentLoaded', async function(){
   // Cargar todos los datos desde Google Sheets
   await cargarTodo();
 });
-
-}
