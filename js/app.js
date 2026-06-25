@@ -344,6 +344,8 @@ async function cargarTodo() {
       var dg = $('dash-filtro');
       if(dg && typeof dashFiltroHtml === 'function') dg.innerHTML = dashFiltroHtml();
     } catch(e) { console.warn('[CDC] filtros:', e); }
+    // Re-renderizar tableros si está activo
+    if(pantallaActual==='tableros' && typeof renderTableros==='function') renderTableros();
 
   } catch (err) {
     mostrarError('Error de conexión con Google Sheets: ' + err.toString());
@@ -923,7 +925,7 @@ function nav(key){
   if(key==='clientes') renderClientes();
   if(key==='egresos'){ renderFinanzas(); var fg=$('fin-filtro-global'); if(fg) fg.innerHTML=finFiltroHtml(); }
   if(key==='facturas') renderFacturas();
-  if(key==='tableros'){ if(typeof renderTableros === 'function') renderTableros(); }
+  if(key==='tableros'){ setTimeout(function(){ if(typeof renderTableros==='function') renderTableros(); }, 0); }
 }
 
 /* ---------- Control de acceso (R8) ---------- */
