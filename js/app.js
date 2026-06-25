@@ -2173,19 +2173,15 @@ function finTab(which){
   var egF=$('fin-filtro-egresos'), inF=$('fin-filtro-ingresos');
   if(egC) egC.style.display = which==='egresos'?'':'none';
   if(inC) inC.style.display = which==='ingresos'?'':'none';
-  if(egF) egF.style.display = which==='egresos'?'':'none';
-  if(inF) inF.style.display = which==='ingresos'?'':'none';
+  // filtro global — siempre visible
   setText('fin-head', which==='ingresos'?'Ingresos':'Egresos');
   var btn=$('fin-nuevo-btn'); if(btn) btn.style.display = which==='ingresos'?'none':'';
   renderFinKpis(which);
 }
 function renderFinanzas(){
-  // Insertar selector de filtro en ambas secciones
-  var filtroHtml = finFiltroHtml();
-  var fe = $('fin-filtro-egresos');
-  var fi = $('fin-filtro-ingresos');
-  if(fe) fe.innerHTML = filtroHtml;
-  if(fi) fi.innerHTML = filtroHtml;
+  // Insertar filtro global (arriba de los tabs)
+  var fg = $('fin-filtro-global');
+  if(fg) fg.innerHTML = finFiltroHtml();
   renderEgresos();
   renderIngresos();
   finTab(finTabActual);
