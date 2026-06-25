@@ -579,7 +579,14 @@
     <div class="modal-foot" id="fd-footer"></div>
   </div>
 </div>
+<script>
+// Wrappers globales para botones del login y header
+// (app.js los sobreescribe una vez cargado)
+function cerrarSesion(){ if(window._cerrarSesion) window._cerrarSesion(); }
+function loginSubmit(){ if(window._loginSubmit) window._loginSubmit(); }
+function loginKeydown(e){ if(window._loginKeydown) window._loginKeydown(e); }
+</script>
 <script src="./js/vendor/chart.umd.min.js"></script>
-<script src="./js/app.js?v=202606251926"></script>
+<script src="./js/app.js?v=202606251928"></script>
 </body>
 </html>
