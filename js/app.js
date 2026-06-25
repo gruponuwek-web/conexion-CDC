@@ -2763,7 +2763,7 @@ function buildCharts(tab){
           else { var etapa=ETAPAS[items[0].index]; dashCrossFilter.etapa=(dashCrossFilter.etapa===etapa?null:etapa); }
           buildCharts('general');
         },
-        onHover:function(evt){ evt.native.target.style.cursor = 'pointer'; }
+        onHover:function(evt,items){ if(evt.native) evt.native.target.style.cursor=(items.length?'pointer':'default'); }
       }});
 
     // Actualizar hint y panel de detalle
@@ -2784,7 +2784,7 @@ function buildCharts(tab){
           else { var est=estadosCli[items[0].index]; dashCrossFilter.estadoCli=(dashCrossFilter.estadoCli===est?null:est); }
           buildCharts('general');
         },
-        onHover:function(evt){ evt.native.target.style.cursor='pointer'; }
+        onHover:function(evt,items){ if(evt.native) evt.native.target.style.cursor=(items.length?'pointer':'default'); }
       }});
 
     // Siempre mostrar barras por mes para comparación clara
@@ -2824,7 +2824,7 @@ function buildCharts(tab){
           else { var mx=mesesActivos[items[0].index]; dashCrossFilter.mes=(dashCrossFilter.mes===mx?null:mx); }
           buildCharts('general');
         },
-        onHover:function(evt){ evt.native.target.style.cursor='pointer'; }
+        onHover:function(evt,items){ if(evt.native) evt.native.target.style.cursor=(items.length?'pointer':'default'); }
       }});
   }
   else if(tab==='leads'){
