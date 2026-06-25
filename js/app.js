@@ -14,6 +14,54 @@
 //  POST con URLSearchParams → x-www-form-urlencoded → sin preflight
 // ════════════════════════════════════════════════════════════════
 
+// ── LOGIN ────────────────────────────────────────────────────────
+// Credenciales cargadas desde auth.js (edita ese archivo para cambiar contraseñas)
+var USUARIOS = (typeof CDC_USUARIOS !== 'undefined') ? CDC_USUARIOS : {
+  'willy': { pass: 'Willy2026', nombre: 'Dr. Willy',  rol: 'Acceso total', av: 'DW', color: 'linear-gradient(135deg,#1AA398,#0E6E66)' },
+  'vicky': { pass: 'Vicky2026', nombre: 'Sra. Vicky', rol: 'Operativo',    av: 'SV', color: 'linear-gradient(135deg,#D9742A,#C2820B)' }
+};
+var sesionActiva = false;
+
+function loginSubmit(){
+  var usr  = document.getElementById('login-user').value;
+  var pass = document.getElementById('login-pass').value;
+  var err  = document.getElementById('login-error');
+  var u = USUARIOS[usr];
+  if(!u || u.pass !== pass){
+    err.style.display = 'flex';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+    return;
+  }
+  err.style.display = 'none';
+  sesionActiva = true;
+  // Ocultar login, mostrar app
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = '';
+  // Iniciar sesión con el usuario correcto
+  changeUser(usr);
+  nav('hoy');
+  cargarTodo();
+}
+
+function loginKeydown(e){
+  if(e.key === 'Enter') loginSubmit();
+}
+
+function cerrarSesion(){
+  sesionActiva = false;
+  document.getElementById('app-root').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-pass').value = '';
+  document.getElementById('login-error').style.display = 'none';
+}
+window.loginSubmit   = loginSubmit;
+window.loginKeydown  = loginKeydown;
+window.cerrarSesion  = cerrarSesion;
+window._cerrarSesion = cerrarSesion;
+window._loginSubmit  = loginSubmit;
+window._loginKeydown = loginKeydown;
+
 // ── 0. URL del Apps Script (ÚNICO lugar donde se configura) ──────
 var GS_URL = 'https://script.google.com/macros/s/AKfycbwh9YoKdHeFM4aNXTgeYE4d7JhAh2cyl7Bt20JInEw_D1ey7t7pK69RN1mblEiwCdU9Nw/exec';
 
@@ -2762,8 +2810,7 @@ function buildCharts(tab){
           if(!items.length){ dashCrossFilter.etapa=null; }
           else { var etapa=ETAPAS[items[0].index]; dashCrossFilter.etapa=(dashCrossFilter.etapa===etapa?null:etapa); }
           buildCharts('general');
-        },
-        onHover:function(evt,items){ if(evt.native) evt.native.target.style.cursor=(items.length?'pointer':'default'); }
+        }
       }});
 
     // Actualizar hint y panel de detalle
@@ -2783,8 +2830,7 @@ function buildCharts(tab){
           if(!items.length){ dashCrossFilter.estadoCli=null; }
           else { var est=estadosCli[items[0].index]; dashCrossFilter.estadoCli=(dashCrossFilter.estadoCli===est?null:est); }
           buildCharts('general');
-        },
-        onHover:function(evt,items){ if(evt.native) evt.native.target.style.cursor=(items.length?'pointer':'default'); }
+        }
       }});
 
     // Siempre mostrar barras por mes para comparación clara
@@ -2823,8 +2869,7 @@ function buildCharts(tab){
           if(!items.length){ dashCrossFilter.mes=null; }
           else { var mx=mesesActivos[items[0].index]; dashCrossFilter.mes=(dashCrossFilter.mes===mx?null:mx); }
           buildCharts('general');
-        },
-        onHover:function(evt,items){ if(evt.native) evt.native.target.style.cursor=(items.length?'pointer':'default'); }
+        }
       }});
   }
   else if(tab==='leads'){
@@ -2916,13 +2961,9 @@ function renderTableros(){
 /* ============================================================
    INIT — único punto de arranque
    ============================================================ */
-window.addEventListener('DOMContentLoaded', async function(){
-  // usuario inicial (sin toast)
-  usuarioActual = 'willy';
-  setText('user-name','Dr. Willy'); setText('user-role','Acceso total'); setText('user-av','DW');
-  renderNav();
-  renderActChips();
-  nav('hoy');
-  // Cargar todos los datos desde Google Sheets
-  await cargarTodo();
+window.addEventListener('DOMContentLoaded', function(){
+  // Mostrar pantalla de login, ocultar app
+  document.getElementById('app-root').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  document.getElementById('login-user').focus();
 });
