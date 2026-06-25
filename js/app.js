@@ -923,7 +923,7 @@ function nav(key){
   if(key==='clientes') renderClientes();
   if(key==='egresos'){ renderFinanzas(); var fg=$('fin-filtro-global'); if(fg) fg.innerHTML=finFiltroHtml(); }
   if(key==='facturas') renderFacturas();
-  if(key==='tableros') renderTableros();
+  if(key==='tableros'){ if(typeof renderTableros === 'function') renderTableros(); }
 }
 
 /* ---------- Control de acceso (R8) ---------- */
@@ -2108,6 +2108,7 @@ function fddToggle(el){
   el.classList.toggle('open');
 }
 window.fddToggle = fddToggle;
+window.renderTableros = function(){ renderTableros(); };
 window.setFinFiltroMes = function(v){ finFiltroMes = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFinanzas(); };
 window.setFinFiltroAnio = function(v){ finFiltroAnio = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFinanzas(); };
 window.limpiarFinFiltro = function(){ finFiltroMes=''; finFiltroAnio=''; renderFinanzas(); };
