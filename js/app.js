@@ -58,6 +58,89 @@ function mostrarError(msg) {
   if (el) { el.textContent = msg; el.style.display = 'block'; }
 }
 
+// ── Filtro Tableros ─────────────────────────────────────────────
+var MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function dashFiltroHtml(){
+  var anios = [];
+  var todas = ingresosData.concat(historialEgresos);
+  todas.forEach(function(r){
+    var a = (r.fecha||'').slice(0,4);
+    if(a && anios.indexOf(a)===-1) anios.push(a);
+  });
+  anios.sort().reverse();
+  if(anios.indexOf(new Date().getFullYear().toString())===-1)
+    anios.unshift(new Date().getFullYear().toString());
+
+  var anioOpts = anios.map(function(a){
+    return '<option value="'+a+'"'+(dashFiltroAnio===a?' selected':'')+'>'+a+'</option>';
+  }).join('');
+
+  var chips = MESES_CORTO.map(function(m, i){
+    var num = (i+1).toString().padStart(2,'0');
+    var sel = dashFiltroMeses.length===0 || dashFiltroMeses.indexOf(num)!==-1;
+    return '<button class="dash-mes-chip'+(sel?' active':'')+'" onclick="toggleDashMes(\'' + num + '\')" data-mes="'+num+'">'+m+'</button>';
+  }).join('');
+
+  return '<div class="dash-filtro-bar">'
+    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px;color:var(--ink-3);flex-shrink:0"><path d="M3 4h18M7 10h10M10 16h4"/></svg>'
+    + '<span class="fin-filtro-label">Año</span>'
+    + '<select class="fin-filtro-sel" style="min-width:100px" onchange="setDashAnio(this.value)">'+anioOpts+'</select>'
+    + '<span class="fin-filtro-label" style="margin-left:4px">Meses</span>'
+    + '<div class="dash-mes-chips">'+chips+'</div>'
+    + '<button class="btn btn-ghost btn-sm fin-filtro-clear" onclick="limpiarDashFiltro()">Todos</button>'
+    + '</div>';
+}
+
+function setDashAnio(v){
+  dashFiltroAnio = v;
+  var fg = $('dash-filtro');
+  if(fg) fg.innerHTML = dashFiltroHtml();
+  buildCharts(dashTabActual);
+}
+
+function toggleDashMes(num){
+  if(dashFiltroMeses.length===0){
+    // Todos activos → seleccionar solo este
+    dashFiltroMeses = [num];
+  } else {
+    var idx = dashFiltroMeses.indexOf(num);
+    if(idx===-1){
+      dashFiltroMeses.push(num);
+    } else {
+      dashFiltroMeses.splice(idx,1);
+      if(dashFiltroMeses.length===0) dashFiltroMeses = []; // vuelve a "todos"
+    }
+  }
+  var fg = $('dash-filtro');
+  if(fg) fg.innerHTML = dashFiltroHtml();
+  buildCharts(dashTabActual);
+}
+
+function limpiarDashFiltro(){
+  dashFiltroMeses = [];
+  dashFiltroAnio = new Date().getFullYear().toString();
+  var fg = $('dash-filtro');
+  if(fg) fg.innerHTML = dashFiltroHtml();
+  buildCharts(dashTabActual);
+}
+
+// Filtrar array por período de tableros
+function dashFiltrar(rows){
+  return rows.filter(function(r){
+    var fecha = (r.fecha||'').length > 10 ? (r.fecha||'').slice(0,10) : (r.fecha||'');
+    var anio = fecha.slice(0,4);
+    var mes  = fecha.slice(5,7);
+    if(dashFiltroAnio && anio !== dashFiltroAnio) return false;
+    if(dashFiltroMeses.length > 0 && dashFiltroMeses.indexOf(mes)===-1) return false;
+    return true;
+  });
+}
+window.setDashAnio    = setDashAnio;
+window.toggleDashMes  = toggleDashMes;
+window.limpiarDashFiltro = limpiarDashFiltro;
+
+
 // ── 4. Carga inicial de todos los módulos ────────────────────────
 async function cargarTodo() {
   mostrarLoader(true);
@@ -252,10 +335,12 @@ async function cargarTodo() {
     renderFacturas();
     renderNav();
     // Inyectar filtros ahora que hay datos
-    var fg = $('fin-filtro-global');
-    if(fg) fg.innerHTML = finFiltroHtml();
-    var dg = $('dash-filtro');
-    if(dg) dg.innerHTML = dashFiltroHtml();
+    try {
+      var fg = $('fin-filtro-global');
+      if(fg && typeof finFiltroHtml === 'function') fg.innerHTML = finFiltroHtml();
+      var dg = $('dash-filtro');
+      if(dg && typeof dashFiltroHtml === 'function') dg.innerHTML = dashFiltroHtml();
+    } catch(e) { console.warn('[CDC] filtros:', e); }
 
   } catch (err) {
     mostrarError('Error de conexión con Google Sheets: ' + err.toString());
@@ -2667,88 +2752,6 @@ var DASH_TABS = [['general','General'],['leads','Leads'],['clientes','Clientes']
 var dashTabActual = 'general';
 var dashFiltroAnio  = new Date().getFullYear().toString();
 var dashFiltroMeses = []; // [] = todos los meses
-
-// ── Filtro Tableros ─────────────────────────────────────────────
-var MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
-
-function dashFiltroHtml(){
-  var anios = [];
-  var todas = ingresosData.concat(historialEgresos);
-  todas.forEach(function(r){
-    var a = (r.fecha||'').slice(0,4);
-    if(a && anios.indexOf(a)===-1) anios.push(a);
-  });
-  anios.sort().reverse();
-  if(anios.indexOf(new Date().getFullYear().toString())===-1)
-    anios.unshift(new Date().getFullYear().toString());
-
-  var anioOpts = anios.map(function(a){
-    return '<option value="'+a+'"'+(dashFiltroAnio===a?' selected':'')+'>'+a+'</option>';
-  }).join('');
-
-  var chips = MESES_CORTO.map(function(m, i){
-    var num = (i+1).toString().padStart(2,'0');
-    var sel = dashFiltroMeses.length===0 || dashFiltroMeses.indexOf(num)!==-1;
-    return '<button class="dash-mes-chip'+(sel?' active':'')+'" onclick="toggleDashMes(\'' + num + '\')" data-mes="'+num+'">'+m+'</button>';
-  }).join('');
-
-  return '<div class="dash-filtro-bar">'
-    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px;color:var(--ink-3);flex-shrink:0"><path d="M3 4h18M7 10h10M10 16h4"/></svg>'
-    + '<span class="fin-filtro-label">Año</span>'
-    + '<select class="fin-filtro-sel" style="min-width:100px" onchange="setDashAnio(this.value)">'+anioOpts+'</select>'
-    + '<span class="fin-filtro-label" style="margin-left:4px">Meses</span>'
-    + '<div class="dash-mes-chips">'+chips+'</div>'
-    + '<button class="btn btn-ghost btn-sm fin-filtro-clear" onclick="limpiarDashFiltro()">Todos</button>'
-    + '</div>';
-}
-
-function setDashAnio(v){
-  dashFiltroAnio = v;
-  var fg = $('dash-filtro');
-  if(fg) fg.innerHTML = dashFiltroHtml();
-  buildCharts(dashTabActual);
-}
-
-function toggleDashMes(num){
-  if(dashFiltroMeses.length===0){
-    // Todos activos → seleccionar solo este
-    dashFiltroMeses = [num];
-  } else {
-    var idx = dashFiltroMeses.indexOf(num);
-    if(idx===-1){
-      dashFiltroMeses.push(num);
-    } else {
-      dashFiltroMeses.splice(idx,1);
-      if(dashFiltroMeses.length===0) dashFiltroMeses = []; // vuelve a "todos"
-    }
-  }
-  var fg = $('dash-filtro');
-  if(fg) fg.innerHTML = dashFiltroHtml();
-  buildCharts(dashTabActual);
-}
-
-function limpiarDashFiltro(){
-  dashFiltroMeses = [];
-  dashFiltroAnio = new Date().getFullYear().toString();
-  var fg = $('dash-filtro');
-  if(fg) fg.innerHTML = dashFiltroHtml();
-  buildCharts(dashTabActual);
-}
-
-// Filtrar array por período de tableros
-function dashFiltrar(rows){
-  return rows.filter(function(r){
-    var fecha = (r.fecha||'').length > 10 ? (r.fecha||'').slice(0,10) : (r.fecha||'');
-    var anio = fecha.slice(0,4);
-    var mes  = fecha.slice(5,7);
-    if(dashFiltroAnio && anio !== dashFiltroAnio) return false;
-    if(dashFiltroMeses.length > 0 && dashFiltroMeses.indexOf(mes)===-1) return false;
-    return true;
-  });
-}
-window.setDashAnio    = setDashAnio;
-window.toggleDashMes  = toggleDashMes;
-window.limpiarDashFiltro = limpiarDashFiltro;
 
 function renderDashTabs(){
   var html = DASH_TABS.map(function(t){
