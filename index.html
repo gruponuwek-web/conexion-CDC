@@ -580,13 +580,34 @@
   </div>
 </div>
 <script>
-// Wrappers globales para botones del login y header
-// (app.js los sobreescribe una vez cargado)
-function cerrarSesion(){ if(window._cerrarSesion) window._cerrarSesion(); }
-function loginSubmit(){ if(window._loginSubmit) window._loginSubmit(); }
-function loginKeydown(e){ if(window._loginKeydown) window._loginKeydown(e); }
+function cerrarSesion(){
+  document.getElementById('app-root').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'flex';
+  var passEl = document.getElementById('login-pass');
+  var errEl  = document.getElementById('login-error');
+  if(passEl) passEl.value = '';
+  if(errEl)  errEl.style.display = 'none';
+}
+function loginSubmit(){
+  var usr  = document.getElementById('login-user').value;
+  var pass = document.getElementById('login-pass').value;
+  var PASS = { willy:'Willy2026', vicky:'Vicky2026' };
+  if(!PASS[usr] || PASS[usr] !== pass){
+    document.getElementById('login-error').style.display = 'flex';
+    document.getElementById('login-pass').value = '';
+    document.getElementById('login-pass').focus();
+    return;
+  }
+  document.getElementById('login-error').style.display = 'none';
+  document.getElementById('login-screen').style.display = 'none';
+  document.getElementById('app-root').style.display = '';
+  if(window.changeUser) window.changeUser(usr);
+  if(window.nav) window.nav('hoy');
+  if(window.cargarTodo) window.cargarTodo();
+}
+function loginKeydown(e){ if(e.key==='Enter') loginSubmit(); }
 </script>
 <script src="./js/vendor/chart.umd.min.js"></script>
-<script src="./js/app.js?v=202606251928"></script>
+<script src="./js/app.js?v=202606251932"></script>
 </body>
 </html>
