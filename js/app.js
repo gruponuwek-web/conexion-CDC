@@ -828,7 +828,7 @@ function nav(key){
   if(key==='hoy'){ renderActividades(actFiltro); renderActChips(); }
   if(key==='leads') renderLeads();
   if(key==='clientes') renderClientes();
-  if(key==='egresos') renderFinanzas();
+  if(key==='egresos'){ renderFinanzas(); var fg=$('fin-filtro-global'); if(fg) fg.innerHTML=finFiltroHtml(); }
   if(key==='facturas') renderFacturas();
   if(key==='tableros') renderTableros();
 }
@@ -2179,7 +2179,6 @@ function finTab(which){
   renderFinKpis(which);
 }
 function renderFinanzas(){
-  // Insertar filtro global (arriba de los tabs)
   var fg = $('fin-filtro-global');
   if(fg) fg.innerHTML = finFiltroHtml();
   renderEgresos();
