@@ -1726,11 +1726,9 @@ function clickDot(clienteId, n){
   if(s.estado==='pending'){
     foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
   } else if(s.estado==='scheduled'){
-    foot += '<button class="btn btn-ghost" onclick="reprogramarSesion()">Reprogramar</button>';
     foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
     foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Confirmar</button>';
   } else if(s.estado==='next'){
-    foot += '<button class="btn btn-ghost" onclick="reprogramarSesion()">Reprogramar</button>';
     cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Cobro pendiente</div>'
       + '<div style="font-size:13px;color:var(--ink-2)">Sesión impartida. Registra el cobro de <b>'+money(s.precio)+'</b> para completarla.</div></div>';
     foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
