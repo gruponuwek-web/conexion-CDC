@@ -1589,7 +1589,7 @@ function sesTrackHtml(c){
   var leg = '<div class="ses-legend">'
     + '<span><i style="background:var(--green)"></i>Cobrada</span>'
     + '<span><i style="background:var(--blue)"></i>Por cobrar</span>'
-    + '<span><i style="background:var(--amber)"></i>Por confirmar</span>'
+    + '<span><i style="background:var(--orange-bg);border:1px solid #EBC79B"></i>Por confirmar</span>'
     + '<span><i style="background:var(--gray-bg)"></i>Por agendar</span></div>';
   return '<div class="ses-track">'+dots+'</div>'+leg;
 }
