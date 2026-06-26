@@ -633,8 +633,58 @@ function loginSubmit(){
 }
 function loginKeydown(e){ if(e.key==='Enter') loginSubmit(); }
 </script>
+<!-- m-rses: reprogramar sesión -->
+<div class="modal" id="m-rses">
+  <div class="modal-bg" onclick="closeModal('m-rses')"></div>
+  <div class="modal-box">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--amber-bg);color:var(--amber)">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M16 18l2 2 4-4"/></svg>
+      </div>
+      <div>
+        <h3>Reprogramar sesión</h3>
+        <div class="mh-sub" id="rses-titulo"></div>
+      </div>
+      <button class="modal-x" onclick="closeModal('m-rses')">
+        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
+      </button>
+    </div>
+    <div class="modal-body">
+      <div class="panel panel-amber" style="margin-bottom:16px">
+        <div style="font-size:13px;color:var(--ink-2)">La sesión regresará a estado <b>Agendada</b> con la nueva fecha. Si hay un motivo, se generará una actividad de seguimiento.</div>
+      </div>
+      <div class="field-row">
+        <div class="field">
+          <label>Nueva fecha <span class="req">*</span></label>
+          <input id="rses-fecha" type="date">
+        </div>
+        <div class="field">
+          <label>Hora</label>
+          <input id="rses-hora" type="time">
+        </div>
+      </div>
+      <div class="field">
+        <label>Motivo de reprogramación <span style="color:var(--ink-3);font-weight:400">(opcional)</span></label>
+        <select id="rses-motivo-sel" onchange="document.getElementById('rses-motivo').value=this.value==='otro'?'':this.value">
+          <option value="">— Selecciona o escribe —</option>
+          <option value="Paciente canceló">Paciente canceló</option>
+          <option value="Paciente no se presentó">Paciente no se presentó</option>
+          <option value="Cambio de agenda del médico">Cambio de agenda del médico</option>
+          <option value="Problema técnico con equipo">Problema técnico con equipo</option>
+          <option value="otro">Otro (escribir)</option>
+        </select>
+        <input id="rses-motivo" type="text" placeholder="Detalla el motivo..." style="margin-top:8px">
+      </div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-rses')">Cancelar</button>
+      <button class="btn btn-primary" onclick="confirmarReprogSesion()">Confirmar reprogramación</button>
+    </div>
+  </div>
+</div>
+
 <script src="./js/auth.js"></script>
 <script src="./js/vendor/chart.umd.min.js"></script>
-<script src="./js/app.js?v=202606261526"></script>
+<script src="./js/app.js?v=202606261539"></script>
 </body>
 </html>

@@ -1726,9 +1726,11 @@ function clickDot(clienteId, n){
   if(s.estado==='pending'){
     foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
   } else if(s.estado==='scheduled'){
+    foot += '<button class="btn btn-ghost" onclick="reprogramarSesion()">Reprogramar</button>';
     foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
     foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Marcar impartida</button>';
   } else if(s.estado==='next'){
+    foot += '<button class="btn btn-ghost" onclick="reprogramarSesion()">Reprogramar</button>';
     cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Cobro pendiente</div>'
       + '<div style="font-size:13px;color:var(--ink-2)">Sesión impartida. Registra el cobro de <b>'+money(s.precio)+'</b> para completarla.</div></div>';
     foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
@@ -1816,6 +1818,84 @@ function editarCobroDone(){
   gs('updateCliente', { id: x.c.id, cobrado: x.c.cobrado, porCobrar: x.c.porCobrar, actualizadoEn: ahora })
     .catch(function(e){ console.error('[CDC GS] updateCliente editarCobro:', e); });
 }
+
+var reprogSesCtx = null; // contexto de reprogramación de sesión
+
+function reprogramarSesion(){
+  var x = _curSes(); if(!x){ return; }
+  reprogSesCtx = { clienteId: sesionCtx.clienteId, n: sesionCtx.n };
+  // Poblar modal
+  document.getElementById('rses-titulo').textContent = 'Sesión '+sesionCtx.n+' · '+x.c.nombre;
+  document.getElementById('rses-fecha').value = x.s.fecha || '';
+  document.getElementById('rses-hora').value  = x.s.hora  || '10:00';
+  document.getElementById('rses-motivo').value = '';
+  closeModal('m-ses-editar');
+  openModal('m-rses');
+}
+
+function confirmarReprogSesion(){
+  if(!reprogSesCtx) return;
+  var nueva  = document.getElementById('rses-fecha').value;
+  var hora   = document.getElementById('rses-hora').value || '10:00';
+  var motivo = document.getElementById('rses-motivo').value.trim();
+  if(!nueva){ toast('Selecciona una nueva fecha'); return; }
+
+  var c = getCliente(reprogSesCtx.clienteId);
+  if(!c) return;
+  var s = c.sesiones[reprogSesCtx.n - 1];
+  if(!s) return;
+
+  var prev = s.fecha;
+  s.fecha = nueva;
+  s.hora  = hora;
+  s.estado = 'scheduled';
+
+  // Agregar nota al historial del cliente si hay motivo
+  if(motivo){
+    if(!c.notas) c.notas = '';
+    c.notas += '\n['+nueva+'] Sesi\u00f3n '+reprogSesCtx.n+' reprogramada: '+motivo;
+  }
+
+  closeModal('m-rses');
+  renderClientes();
+  toast('Sesi\u00f3n '+reprogSesCtx.n+' reprogramada para '+fechaLarga(nueva)+(motivo?' · '+motivo:''));
+
+  // Crear actividad de seguimiento por cancelación
+  if(motivo){
+    var ahora = new Date().toISOString();
+    var hoy   = ahora.slice(0,10);
+    var actId = 'reprg-'+reprogSesCtx.clienteId+'-'+reprogSesCtx.n+'-'+Date.now();
+    var activa = {
+      id:actId, prospecto:c.nombre,
+      refTipo:'cliente', refId:reprogSesCtx.clienteId,
+      tipo:'Seguimiento reprogramaci\u00f3n sesi\u00f3n '+reprogSesCtx.n,
+      fecha:nueva, hora:'10:00',
+      grupo:clasificarGrupo(nueva),
+      done:false, urgente:false,
+      contexto:'Sesi\u00f3n '+reprogSesCtx.n+' reprogramada de '+fechaLarga(prev)+' a '+fechaLarga(nueva)+'. Motivo: '+motivo+'.'
+    };
+    actividadesData.push(activa);
+    gs('createCita', {
+      id:actId, prospecto:c.nombre,
+      refTipo:'cliente', refId:reprogSesCtx.clienteId,
+      tipo:activa.tipo, fecha:nueva, hora:'10:00',
+      grupo:activa.grupo, done:'No', urgente:'No',
+      contexto:activa.contexto,
+      creadoEn:ahora, actualizadoEn:ahora
+    }).catch(function(e){ console.error('[CDC GS] createCita reprg:',e); });
+    renderActChips(); renderNav();
+  }
+
+  // Actualizar en Sheets
+  var ahora2 = new Date().toISOString();
+  gs('updateSesion', {
+    id:'s-'+reprogSesCtx.clienteId+'-'+reprogSesCtx.n,
+    estado:'scheduled', fecha:nueva, hora:hora,
+    actualizadoEn:ahora2
+  }).catch(function(e){ console.error('[CDC GS] updateSesion reprg:',e); });
+}
+window.confirmarReprogSesion = confirmarReprogSesion;
+window.reprogramarSesion = reprogramarSesion;
 
 function _curSes(){ if(!sesionCtx) return null; var c=getCliente(sesionCtx.clienteId); if(!c) return null; return {c:c, s:c.sesiones[sesionCtx.n-1]}; }
 
