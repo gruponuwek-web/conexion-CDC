@@ -938,6 +938,30 @@ function navBadge(key){
   return 0;
 }
 
+// ── Menú inferior móvil ──────────────────────────────────────
+function isMobile(){ return window.innerWidth <= 768; }
+
+function renderMobNav(){
+  var mobNav = document.getElementById('mob-nav');
+  if(!mobNav) return;
+  // Mostrar solo en móvil
+  mobNav.style.display = isMobile() ? 'flex' : 'none';
+  // Marcar activo
+  ['hoy','leads','clientes','finanzas','tableros'].forEach(function(k){
+    var btn = document.getElementById('mob-'+k);
+    var key = k==='finanzas' ? 'egresos' : k;
+    if(btn) btn.classList.toggle('active', pantallaActual===key);
+  });
+  // Badge leads
+  var bl = document.getElementById('mob-badge-leads');
+  if(bl){
+    var n = leadsData.filter(function(l){return l.etapa!=='Ganado';}).length;
+    bl.style.display = n>0 ? '' : 'none';
+    bl.textContent = n;
+  }
+}
+window.addEventListener('resize', renderMobNav);
+
 function renderNav(){
   var html = '';
   NAV.forEach(function(item){
@@ -968,6 +992,7 @@ function nav(key){
   var t = PAGE_TITLES[key] || [key,''];
   setText('page-title', t[0]); setText('page-sub', t[1]);
   renderNav();
+  renderMobNav();
   if(key==='hoy'){ renderActividades(actFiltro); renderActChips(); }
   if(key==='leads') renderLeads();
   if(key==='clientes') renderClientes();

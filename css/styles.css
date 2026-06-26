@@ -311,3 +311,130 @@ table.tbl{width:100%;border-collapse:collapse}
 .dash-mes-chip{padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink-3);cursor:pointer;transition:.14s;line-height:1}
 .dash-mes-chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-l)}
 .dash-mes-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+
+/* ══════════════════════════════════════════════════════════════
+   RESPONSIVE — Móvil & Tablet
+   Grupo Nuwek · CDC CRM · Junio 2026
+   ══════════════════════════════════════════════════════════════ */
+
+/* ── Tablet (≤ 1024px) ─────────────────────────────────────── */
+@media (max-width:1024px){
+  .sidebar{width:220px}
+  .main{margin-left:220px}
+  .kpis{grid-template-columns:repeat(2,1fr)}
+  .kanban{gap:10px}
+  .kcol{min-width:200px}
+  .modal-box{max-width:96vw}
+  .modal-box.wide{max-width:98vw}
+  .dash-grid.cols-2{grid-template-columns:1fr}
+  .acc-right .acc-mini{display:none}
+}
+
+/* ── Móvil (≤ 768px) ──────────────────────────────────────── */
+@media (max-width:768px){
+  /* Ocultar sidebar lateral */
+  .sidebar{display:none}
+  .main{margin-left:0}
+
+  /* Topbar compacto */
+  .topbar{padding:10px 14px;gap:8px}
+  .page-title{font-size:17px}
+  .page-sub{display:none}
+  .usercard .who{display:none}
+  .usercard{gap:6px}
+
+  /* Menú inferior fijo */
+  #mob-nav{
+    display:flex;
+    position:fixed;bottom:0;left:0;right:0;
+    background:var(--surface);
+    border-top:1px solid var(--line);
+    z-index:50;
+    padding:0 4px;
+    padding-bottom:env(safe-area-inset-bottom, 0px);
+    box-shadow:0 -2px 12px rgba(27,42,40,.08);
+  }
+  .mob-nav-item{
+    flex:1;display:flex;flex-direction:column;align-items:center;
+    gap:3px;padding:8px 4px 6px;
+    font-size:10px;font-weight:600;color:var(--ink-3);
+    cursor:pointer;border:none;background:none;
+    transition:.14s;border-top:2px solid transparent;
+  }
+  .mob-nav-item svg{width:20px;height:20px;opacity:.7}
+  .mob-nav-item.active{color:var(--primary);border-top-color:var(--primary)}
+  .mob-nav-item.active svg{opacity:1}
+  .mob-nav-item .mob-badge{
+    position:absolute;top:6px;right:calc(50% - 18px);
+    background:var(--red);color:#fff;
+    font-size:9px;font-weight:700;line-height:1;
+    padding:2px 4px;border-radius:10px;min-width:14px;text-align:center;
+  }
+
+  /* Contenido con espacio para menú inferior */
+  .content{padding-bottom:70px}
+
+  /* KPIs 2 columnas */
+  .kpis{grid-template-columns:repeat(2,1fr);gap:10px}
+  .kpi{padding:14px}
+  .kpi .val{font-size:22px}
+
+  /* Cards apiladas */
+  .dash-grid,.dash-grid.cols-2{grid-template-columns:1fr;gap:12px}
+  .chart-card{padding:14px}
+
+  /* Kanban scroll horizontal */
+  .kanban{flex-wrap:nowrap;overflow-x:auto;-webkit-overflow-scrolling:touch;gap:10px;padding-bottom:8px;scroll-snap-type:x mandatory}
+  .kcol{min-width:260px;scroll-snap-align:start;flex-shrink:0}
+
+  /* Modales full-width */
+  .modal-box{
+    width:100vw;max-width:100vw;
+    margin:0;border-radius:var(--r-lg) var(--r-lg) 0 0;
+    position:fixed;bottom:0;left:0;right:0;
+    max-height:92vh;overflow-y:auto;
+  }
+  .modal-box.wide{max-width:100vw}
+  .modal{align-items:flex-end}
+  .modal-bg{background:rgba(0,0,0,.45)}
+
+  /* Acordeones */
+  .acc-head{gap:10px;padding:12px}
+  .acc-av{width:36px;height:36px;font-size:13px}
+  .acc-right{gap:8px}
+  .acc-right .badge{display:none}
+
+  /* Tabla leads scroll */
+  .tbl-wrap{overflow-x:auto;-webkit-overflow-scrolling:touch}
+  .tbl{min-width:500px}
+
+  /* Filtros compactos */
+  .fin-filtro-bar,.dash-filtro-bar{padding:8px 12px;gap:6px}
+  .fin-filtro-sel,.fdd-val{min-width:120px;font-size:12px}
+  .dash-mes-chips{gap:4px}
+  .dash-mes-chip{padding:4px 8px;font-size:11px}
+
+  /* Sesiones dots más pequeños */
+  .ses-track{gap:5px}
+  .ses-dot{width:28px;height:28px;font-size:11px}
+
+  /* Subgrid 2 columnas en móvil */
+  .subgrid{grid-template-columns:repeat(2,1fr)}
+
+  /* Login en móvil */
+  #login-screen > div{
+    margin:16px;padding:28px 22px;border-radius:16px;
+    width:calc(100% - 32px);max-width:none;
+  }
+
+  /* Tablero filtro fila wrap */
+  .dash-filtro-bar{flex-wrap:wrap}
+}
+
+/* ── Móvil pequeño (≤ 390px — iPhone SE, mini) ──────────────── */
+@media (max-width:390px){
+  .kpis{grid-template-columns:1fr 1fr}
+  .kpi .val{font-size:19px}
+  .mob-nav-item{font-size:9px}
+  .mob-nav-item svg{width:18px;height:18px}
+}
