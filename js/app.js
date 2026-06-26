@@ -1842,9 +1842,73 @@ function marcarImpartida(){
   x.s.notas=$('ses-ed-notas').value;
   x.s.estado='next';
   closeModal('m-ses-editar'); renderClientes();
-  toast('Sesión '+sesionCtx.n+' marcada como impartida · pendiente de cobro');
+  toast('Sesi\u00f3n '+sesionCtx.n+' marcada como impartida · pendiente de cobro');
+
+  var ahora = new Date().toISOString();
+  var hoy   = ahora.slice(0,10);
+
+  // ── Recordatorio 1: Cobro pendiente ──────────────────────────
+  var idCobro = 'cobro-'+sesionCtx.clienteId+'-'+sesionCtx.n;
+  if(!getActividad(idCobro)){
+    var actCobro = {
+      id: idCobro,
+      prospecto: x.c.nombre,
+      refTipo: 'cliente', refId: sesionCtx.clienteId,
+      tipo: 'Cobrar sesi\u00f3n '+sesionCtx.n,
+      fecha: hoy, hora: '10:00',
+      grupo: 'hoy', done: false, urgente: true,
+      contexto: 'Sesi\u00f3n '+sesionCtx.n+' impartida. Cobro pendiente de '+money(x.s.precio||x.c.precioSes||0)+'.'
+    };
+    actividadesData.push(actCobro);
+    gs('createCita', {
+      id:idCobro, prospecto:x.c.nombre,
+      refTipo:'cliente', refId:sesionCtx.clienteId,
+      tipo:'Cobrar sesi\u00f3n '+sesionCtx.n,
+      fecha:hoy, hora:'10:00', grupo:'hoy',
+      done:'No', urgente:'S\u00ed',
+      contexto:actCobro.contexto,
+      creadoEn:ahora, actualizadoEn:ahora
+    }).catch(function(e){ console.error('[CDC GS] createCita cobro:',e); });
+  }
+
+  // ── Recordatorio 2: Siguiente sesión ─────────────────────────
+  var sigN = sesionCtx.n + 1;
+  var sigSes = x.c.sesiones ? x.c.sesiones[sigN-1] : null;
+  if(sigSes && sigSes.estado !== 'done'){
+    var idSig = 'sig-ses-'+sesionCtx.clienteId+'-'+sigN;
+    if(!getActividad(idSig)){
+      // Calcular fecha sugerida: 3 días después de hoy
+      var fechaSig = new Date(hoy+'T00:00:00');
+      fechaSig.setDate(fechaSig.getDate()+3);
+      var fechaSigStr = fechaSig.toISOString().slice(0,10);
+      var actSig = {
+        id: idSig,
+        prospecto: x.c.nombre,
+        refTipo: 'cliente', refId: sesionCtx.clienteId,
+        tipo: 'Agendar sesi\u00f3n '+sigN,
+        fecha: fechaSigStr, hora: '10:00',
+        grupo: clasificarGrupo(fechaSigStr),
+        done: false, urgente: false,
+        contexto: 'Agendar sesi\u00f3n '+sigN+' de '+x.c.sesiones.length+' para '+esc(x.c.nombre)+'.'
+      };
+      actividadesData.push(actSig);
+      gs('createCita', {
+        id:idSig, prospecto:x.c.nombre,
+        refTipo:'cliente', refId:sesionCtx.clienteId,
+        tipo:'Agendar sesi\u00f3n '+sigN,
+        fecha:fechaSigStr, hora:'10:00',
+        grupo:actSig.grupo, done:'No', urgente:'No',
+        contexto:actSig.contexto,
+        creadoEn:ahora, actualizadoEn:ahora
+      }).catch(function(e){ console.error('[CDC GS] createCita sig:',e); });
+    }
+  }
+
+  renderNav(); renderActChips();
+  if(pantallaActual==='hoy') renderActividades(actFiltro);
+
   gs('updateSesion', {id:'s-'+sesionCtx.clienteId+'-'+sesionCtx.n,
-    estado:'next', notas:x.s.notas, actualizadoEn:new Date().toISOString()
+    estado:'next', notas:x.s.notas, actualizadoEn:ahora
   }).catch(function(e){ console.error('[CDC GS] updateSesion error:',e); });
 }
 
