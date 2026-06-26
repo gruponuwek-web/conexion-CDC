@@ -999,6 +999,7 @@ function nav(key){
   if(key==='egresos'){ renderFinanzas(); var fg=$('fin-filtro-global'); if(fg) fg.innerHTML=finFiltroHtml(); }
   if(key==='facturas') renderFacturas();
   if(key==='tableros') renderTableros();
+  setTimeout(renderMobNav, 50);
 }
 
 /* ---------- Control de acceso (R8) ---------- */
@@ -2972,6 +2973,7 @@ function renderTableros(){
   if(usuarioActual!=='willy'){
     $('tableros-lock').style.display='';
     $('tableros-content').style.display='none';
+    renderMobNav();
     return;
   }
   $('tableros-lock').style.display='none';
@@ -2981,6 +2983,7 @@ function renderTableros(){
   if(dg) dg.innerHTML = dashFiltroHtml();
   renderDashTabs();
   buildCharts(dashTabActual);
+  renderMobNav();
 }
 
 /* ============================================================

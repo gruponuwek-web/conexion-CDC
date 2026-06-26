@@ -438,3 +438,10 @@ table.tbl{width:100%;border-collapse:collapse}
   .mob-nav-item{font-size:9px}
   .mob-nav-item svg{width:18px;height:18px}
 }
+
+/* Fix menú inferior siempre visible */
+@media (max-width:768px){
+  #mob-nav{display:flex !important}
+  #screen-tableros{padding-bottom:70px}
+  #screen-tableros #tableros-content{padding-bottom:0}
+}
