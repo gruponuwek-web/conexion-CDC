@@ -1781,6 +1781,7 @@ function registrarCobroNext(clienteId, n){
   x.s.estado = 'done';
   x.s.fecha  = fecha;
   x.s.precio = monto;
+  x.s.cobrada = 'Sí';
   var actId = 'cobro-'+clienteId+'-'+n;
   var act = getActividad(actId); if(act) act.done = true;
   ingresosData.push({id:uid('in'), cliente:x.c.nombre, concepto:'Sesión '+n+' · EMT', monto:monto, fecha:fecha, metodo:metodo, cuenta:cuenta, factura:(requiereFactura?'Sí':'No'), conciliado:false});
@@ -2117,6 +2118,7 @@ function registrarCobro(){
   x.s.estado='done';
   x.s.fecha = x.s.fecha || fecha;
   x.s.precio = monto;
+  x.s.cobrada = 'Sí';
   var actId = 'cobro-'+sesionCtx.clienteId+'-'+sesionCtx.n;
   var act = getActividad(actId); if(act) act.done=true;
   ingresosData.push({id:uid('in'), cliente:x.c.nombre, concepto:'Sesión '+sesionCtx.n+' · EMT', monto:monto, fecha:fecha, metodo:metodo, cuenta:cuenta, factura:(requiereFactura?'Sí':'No'), conciliado:false});
