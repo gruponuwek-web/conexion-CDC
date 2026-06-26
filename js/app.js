@@ -1738,8 +1738,9 @@ function clickDot(clienteId, n){
         + '<div style="font-size:13px;color:var(--ink-2)">Cobro registrado por <b>'+money(s.precio)+'</b>.</div></div>';
       foot += '<button class="btn btn-primary" onclick="guardarSesion()">Guardar notas</button>';
     } else {
-      cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Pendiente de cobro</div>'
-        + '<div style="font-size:13px;color:var(--ink-2)">Sesión realizada. Registra el pago de <b>'+money(s.precio)+'</b>.</div></div>';
+      // Sesión realizada, pendiente de cobro — mostrar panel de cobro al hacer clic
+      cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Paso 4 · Registrar cobro</div>'
+        + '<div style="font-size:13px;color:var(--ink-2)">Sesión realizada \u2713 Registra el pago de <b>'+money(s.precio||x&&x.c&&x.c.precioSes||0)+'</b> para completar el ciclo.</div></div>';
       foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar notas</button>';
       foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
     }
