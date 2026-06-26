@@ -1728,7 +1728,7 @@ function clickDot(clienteId, n){
   } else if(s.estado==='scheduled'){
     foot += '<button class="btn btn-ghost" onclick="reprogramarSesion()">Reprogramar</button>';
     foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
-    foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Marcar impartida</button>';
+    foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Confirmar</button>';
   } else if(s.estado==='next'){
     foot += '<button class="btn btn-ghost" onclick="reprogramarSesion()">Reprogramar</button>';
     cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Cobro pendiente</div>'
@@ -1824,11 +1824,12 @@ var reprogSesCtx = null; // contexto de reprogramación de sesión
 function reprogramarSesion(){
   var x = _curSes(); if(!x){ return; }
   reprogSesCtx = { clienteId: sesionCtx.clienteId, n: sesionCtx.n };
-  // Poblar modal
-  document.getElementById('rses-titulo').textContent = 'Sesión '+sesionCtx.n+' · '+x.c.nombre;
-  document.getElementById('rses-fecha').value = x.s.fecha || '';
-  document.getElementById('rses-hora').value  = x.s.hora  || '10:00';
-  document.getElementById('rses-motivo').value = '';
+  // Poblar modal con verificación
+  setText('rses-titulo', 'Sesión '+sesionCtx.n+' · '+x.c.nombre);
+  var rfecha = $('rses-fecha'); if(rfecha) rfecha.value = x.s.fecha || '';
+  var rhora  = $('rses-hora');  if(rhora)  rhora.value  = x.s.hora  || '10:00';
+  var rmot   = $('rses-motivo'); if(rmot)  rmot.value   = '';
+  var rsel   = $('rses-motivo-sel'); if(rsel) rsel.value = '';
   closeModal('m-ses-editar');
   openModal('m-rses');
 }
