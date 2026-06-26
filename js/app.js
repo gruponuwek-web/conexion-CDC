@@ -1721,7 +1721,7 @@ function clickDot(clienteId, n){
   setHtml('ses-ed-statusrow', '<span class="badge '+bcls+'">'+badgeTxt+'</span>');
 
   // panel de cobro y footer según estado
-  var foot = '<button class="btn btn-ghost" onclick="closeModal(\'m-ses-editar\')">Cerrar</button>';
+  var foot = '<button class="btn btn-ghost" onclick="closeModal(\'m-ses-editar\')">Concluir</button>';
   var cobroPanel = '';
   if(s.estado==='pending'){
     foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
@@ -1731,7 +1731,7 @@ function clickDot(clienteId, n){
   } else if(s.estado==='next'){
     cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Cobro pendiente</div>'
       + '<div style="font-size:13px;color:var(--ink-2)">Sesión impartida. Registra el cobro de <b>'+money(s.precio)+'</b> para completarla.</div></div>';
-    foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
+    foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar pago</button>';
   } else { // done
     cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada</div>'
       + '<div style="font-size:13px;color:var(--ink-2)">Impartida y cobrada ('+money(s.precio)+').</div></div>';
