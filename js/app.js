@@ -1717,7 +1717,7 @@ function clickDot(clienteId, n){
   // badge de estado
   var bcls = s.estado==='done'?'b-green':(s.estado==='next'?'b-blue':(s.estado==='scheduled'?'b-orange':'b-gray'));
   // R6: panel 'next' siempre arranca en "Por confirmar"
-  var badgeTxt = s.estado==='next' ? 'Por confirmar cobro' : dotLabel(s.estado);
+  var badgeTxt = s.estado==='next' ? 'Impartida · por confirmar' : dotLabel(s.estado);
   setHtml('ses-ed-statusrow', '<span class="badge '+bcls+'">'+badgeTxt+'</span>');
 
   // panel de cobro y footer según estado
@@ -1727,15 +1727,22 @@ function clickDot(clienteId, n){
     foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
   } else if(s.estado==='scheduled'){
     foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
-    foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Confirmar</button>';
+    foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Confirmar sesión</button>';
   } else if(s.estado==='next'){
-    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Cobro pendiente</div>'
-      + '<div style="font-size:13px;color:var(--ink-2)">Sesión impartida. Registra el cobro de <b>'+money(s.precio)+'</b> para completarla.</div></div>';
-    foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar pago</button>';
-  } else { // done
-    cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada</div>'
-      + '<div style="font-size:13px;color:var(--ink-2)">Impartida y cobrada ('+money(s.precio)+').</div></div>';
-    foot += '<button class="btn btn-primary" onclick="guardarSesion()">Guardar notas</button>';
+    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Sesi\u00f3n impartida</div>'
+      + '<div style="font-size:13px;color:var(--ink-2)">Confirma que la sesi\u00f3n fue realizada. El cobro se registrar\u00e1 en el siguiente paso.</div></div>';
+    foot += '<button class="btn btn-primary" onclick="sesionRealizada(\''+clienteId+'\','+n+')">Sesi\u00f3n realizada</button>';
+    var cobradaYa = (s.cobrada === 'Sí' || s.cobrada === true);
+    if(cobradaYa){
+      cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada y cobrada</div>'
+        + '<div style="font-size:13px;color:var(--ink-2)">Cobro registrado por <b>'+money(s.precio)+'</b>.</div></div>';
+      foot += '<button class="btn btn-primary" onclick="guardarSesion()">Guardar notas</button>';
+    } else {
+      cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Pendiente de cobro</div>'
+        + '<div style="font-size:13px;color:var(--ink-2)">Sesión realizada. Registra el pago de <b>'+money(s.precio)+'</b>.</div></div>';
+      foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar notas</button>';
+      foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
+    }
   }
   setHtml('ses-ed-foot', foot);
   openModal('m-ses-editar');
@@ -1896,6 +1903,54 @@ function confirmarReprogSesion(){
 window.confirmarReprogSesion = confirmarReprogSesion;
 window.reprogramarSesion = reprogramarSesion;
 
+function sesionRealizada(clienteId, n){
+  sesionCtx = { clienteId: clienteId, n: n };
+  var x = _curSes(); if(!x){ closeModal('m-ses-editar'); return; }
+  x.s.notas  = $('ses-ed-notas').value;
+  x.s.estado = 'done';
+  x.s.cobrada = 'No';
+  closeModal('m-ses-editar');
+  renderClientes(); renderNav();
+  toast('Sesi\u00f3n '+n+' realizada \u2713 Genera el recordatorio de cobro en Agenda');
+
+  var ahora = new Date().toISOString();
+  var hoy   = ahora.slice(0,10);
+
+  // ── Recordatorio de cobro (se crea aquí, al confirmar sesión realizada) ──
+  var idCobro = 'cobro-'+clienteId+'-'+n;
+  if(!getActividad(idCobro)){
+    var actCobro = {
+      id: idCobro,
+      prospecto: x.c.nombre,
+      refTipo: 'cliente', refId: clienteId,
+      tipo: 'Registrar cobro sesi\u00f3n '+n,
+      fecha: hoy, hora: '10:00',
+      grupo: 'hoy', done: false, urgente: true,
+      contexto: 'Sesi\u00f3n '+n+' realizada. Cobro pendiente de '+money(x.s.precio||x.c.precioSes||0)+'. Registrar el pago.'
+    };
+    actividadesData.push(actCobro);
+    gs('createCita', {
+      id:idCobro, prospecto:x.c.nombre,
+      refTipo:'cliente', refId:clienteId,
+      tipo:'Registrar cobro sesi\u00f3n '+n,
+      fecha:hoy, hora:'10:00', grupo:'hoy',
+      done:'No', urgente:'S\u00ed',
+      contexto:actCobro.contexto,
+      creadoEn:ahora, actualizadoEn:ahora
+    }).catch(function(e){ console.error('[CDC GS] createCita cobro:',e); });
+    renderActChips(); renderNav();
+    if(pantallaActual==='hoy') renderActividades(actFiltro);
+  }
+
+  gs('updateSesion', {
+    id: 's-'+clienteId+'-'+n,
+    estado: 'done', cobrada: 'No',
+    notas: x.s.notas,
+    actualizadoEn: ahora
+  }).catch(function(e){ console.error('[CDC GS] updateSesion sesionRealizada:',e); });
+}
+window.sesionRealizada = sesionRealizada;
+
 function _curSes(){ if(!sesionCtx) return null; var c=getCliente(sesionCtx.clienteId); if(!c) return null; return {c:c, s:c.sesiones[sesionCtx.n-1]}; }
 
 function agendarSesion(){
@@ -1926,31 +1981,8 @@ function marcarImpartida(){
   var ahora = new Date().toISOString();
   var hoy   = ahora.slice(0,10);
 
-  // ── Recordatorio 1: Cobro pendiente ──────────────────────────
-  var idCobro = 'cobro-'+sesionCtx.clienteId+'-'+sesionCtx.n;
-  if(!getActividad(idCobro)){
-    var actCobro = {
-      id: idCobro,
-      prospecto: x.c.nombre,
-      refTipo: 'cliente', refId: sesionCtx.clienteId,
-      tipo: 'Cobrar sesi\u00f3n '+sesionCtx.n,
-      fecha: hoy, hora: '10:00',
-      grupo: 'hoy', done: false, urgente: true,
-      contexto: 'Sesi\u00f3n '+sesionCtx.n+' impartida. Cobro pendiente de '+money(x.s.precio||x.c.precioSes||0)+'.'
-    };
-    actividadesData.push(actCobro);
-    gs('createCita', {
-      id:idCobro, prospecto:x.c.nombre,
-      refTipo:'cliente', refId:sesionCtx.clienteId,
-      tipo:'Cobrar sesi\u00f3n '+sesionCtx.n,
-      fecha:hoy, hora:'10:00', grupo:'hoy',
-      done:'No', urgente:'S\u00ed',
-      contexto:actCobro.contexto,
-      creadoEn:ahora, actualizadoEn:ahora
-    }).catch(function(e){ console.error('[CDC GS] createCita cobro:',e); });
-  }
-
-  // ── Recordatorio 2: Siguiente sesión ─────────────────────────
+  // ── Recordatorio: Siguiente sesión ──────────────────────────
+  // (el recordatorio de cobro se genera al marcar "Sesión realizada")
   var sigN = sesionCtx.n + 1;
   var sigSes = x.c.sesiones ? x.c.sesiones[sigN-1] : null;
   if(sigSes && sigSes.estado !== 'done'){
