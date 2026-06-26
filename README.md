@@ -8,6 +8,7 @@ Versión preparada para subir a GitHub Pages y conectar con Google Sheets vía G
 index.html
 css/styles.css
 js/app.js
+js/auth.js
 js/core/config.js
 js/core/state.js
 js/core/users.js
