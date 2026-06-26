@@ -1566,11 +1566,17 @@ function renderClientesKpis(){
   setText('ck-porcobrar', money(por));
 }
 
-function dotClass(estado){
-  return estado==='done'?'sd-done':(estado==='next'?'sd-next':(estado==='scheduled'?'sd-scheduled':'sd-pending'));
+function dotClass(estado, cobrada){
+  if(estado==='done') return (cobrada==='Sí'||cobrada===true||cobrada==='Si') ? 'sd-done' : 'sd-next';
+  if(estado==='next') return 'sd-scheduled'; // naranja — sesión impartida, confirmar
+  if(estado==='scheduled') return 'sd-scheduled';
+  return 'sd-pending';
 }
-function dotLabel(estado){
-  return estado==='done'?'Impartida y cobrada':(estado==='next'?'Impartida · por cobrar':(estado==='scheduled'?'Agendada · por confirmar':'Por agendar'));
+function dotLabel(estado, cobrada){
+  if(estado==='done') return (cobrada==='Sí'||cobrada===true||cobrada==='Si') ? 'Cobrada ✓' : 'Realizada · por cobrar';
+  if(estado==='next') return 'Impartida · por confirmar';
+  if(estado==='scheduled') return 'Agendada · por confirmar';
+  return 'Por agendar';
 }
 
 function sesTrackHtml(c){
@@ -1578,11 +1584,12 @@ function sesTrackHtml(c){
     return '<div style="font-size:12.5px;color:var(--ink-3);padding:6px 0">Aún sin sesiones. Completa el onboarding para activar el tratamiento.</div>';
   }
   var dots = c.sesiones.map(function(s){
-    return '<div class="ses-dot '+dotClass(s.estado)+'" title="Sesión '+s.n+' · '+dotLabel(s.estado)+'" onclick="clickDot(\''+c.id+'\','+s.n+')">'+s.n+'</div>';
+    return '<div class="ses-dot '+dotClass(s.estado,s.cobrada)+'" title="Sesión '+s.n+' · '+dotLabel(s.estado,s.cobrada)+'" onclick="clickDot(\''+c.id+'\','+s.n+')">'+s.n+'</div>';
   }).join('');
   var leg = '<div class="ses-legend">'
     + '<span><i style="background:var(--green)"></i>Cobrada</span>'
     + '<span><i style="background:var(--blue)"></i>Por cobrar</span>'
+    + '<span><i style="background:var(--amber)"></i>Por confirmar</span>'
     + '<span><i style="background:var(--orange-bg);border:1px solid #EBC79B"></i>Por confirmar</span>'
     + '<span><i style="background:var(--gray-bg)"></i>Por agendar</span></div>';
   return '<div class="ses-track">'+dots+'</div>'+leg;
@@ -1715,9 +1722,10 @@ function clickDot(clienteId, n){
   }
 
   // badge de estado
-  var bcls = s.estado==='done'?'b-green':(s.estado==='next'?'b-blue':(s.estado==='scheduled'?'b-orange':'b-gray'));
+  var cobradaYaBadge = (s.cobrada==='Sí'||s.cobrada===true||s.cobrada==='Si');
+  var bcls = s.estado==='done'?(cobradaYaBadge?'b-green':'b-blue'):(s.estado==='next'?'b-orange':(s.estado==='scheduled'?'b-orange':'b-gray'));
   // R6: panel 'next' siempre arranca en "Por confirmar"
-  var badgeTxt = s.estado==='next' ? 'Impartida · por confirmar' : dotLabel(s.estado);
+  var badgeTxt = dotLabel(s.estado, s.cobrada);
   setHtml('ses-ed-statusrow', '<span class="badge '+bcls+'">'+badgeTxt+'</span>');
 
   // panel de cobro y footer según estado
