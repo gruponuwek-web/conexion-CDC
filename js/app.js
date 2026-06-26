@@ -1725,22 +1725,25 @@ function clickDot(clienteId, n){
   var cobroPanel = '';
   if(s.estado==='pending'){
     foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
+
   } else if(s.estado==='scheduled'){
     foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
     foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Confirmar sesión</button>';
+
   } else if(s.estado==='next'){
-    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Sesi\u00f3n impartida</div>'
-      + '<div style="font-size:13px;color:var(--ink-2)">Confirma que la sesi\u00f3n fue realizada. El cobro se registrar\u00e1 en el siguiente paso.</div></div>';
-    foot += '<button class="btn btn-primary" onclick="sesionRealizada(\''+clienteId+'\','+n+')">Sesi\u00f3n realizada</button>';
-    var cobradaYa = (s.cobrada === 'Sí' || s.cobrada === true);
+    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Sesión impartida · Paso 3</div>'
+      + '<div style="font-size:13px;color:var(--ink-2)">Confirma que la sesión fue realizada. El cobro se registrará en el paso siguiente.</div></div>';
+    foot += '<button class="btn btn-primary" onclick="sesionRealizada(\''+clienteId+'\','+n+')">Sesión realizada</button>';
+
+  } else if(s.estado==='done'){
+    var cobradaYa = (s.cobrada === 'Sí' || s.cobrada === true || s.cobrada === 'Si');
     if(cobradaYa){
       cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada y cobrada</div>'
         + '<div style="font-size:13px;color:var(--ink-2)">Cobro registrado por <b>'+money(s.precio)+'</b>.</div></div>';
       foot += '<button class="btn btn-primary" onclick="guardarSesion()">Guardar notas</button>';
     } else {
-      // Sesión realizada, pendiente de cobro — mostrar panel de cobro al hacer clic
       cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Paso 4 · Registrar cobro</div>'
-        + '<div style="font-size:13px;color:var(--ink-2)">Sesión realizada \u2713 Registra el pago de <b>'+money(s.precio||x&&x.c&&x.c.precioSes||0)+'</b> para completar el ciclo.</div></div>';
+        + '<div style="font-size:13px;color:var(--ink-2)">Sesión realizada ✓ Registra el pago de <b>'+money(s.precio)+'</b> para completar el ciclo.</div></div>';
       foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar notas</button>';
       foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
     }
