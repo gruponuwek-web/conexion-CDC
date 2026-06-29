@@ -3443,6 +3443,45 @@ var LISTAS_CONFIG = [
 
 var adminListaCtx = null; // {key, label}
 
+var SELECT_MAP = {
+  'pd-padecimiento': {key:'padecimientos'},
+  'nl-padecimiento': {key:'padecimientos'},
+  'pd-genero':       {key:'generos',       empty:'— Sin especificar —'},
+  'nl-genero':       {key:'generos',       empty:'— Sin especificar —'},
+  'pd-temp':         {key:'temperaturas'},
+  'nl-temp':         {key:'temperaturas'},
+  'pd-canal':        {key:'canales'},
+  'nl-canal':        {key:'canales'},
+  'pd-sigact':       {key:'tiposActividad', empty:'— Ninguna —'},
+  'pd-etapa-select': {key:'etapas'},
+  'nl-etapa':        {key:'etapas'},
+  'ne-cat':          {key:'catEgresos'},
+  'pf-cat':          {key:'catEgresos'},
+  'ne-metodo':       {key:'metodosPago'},
+  'ne-rec-metodo':   {key:'metodosPago'},
+  'cb-metodo':       {key:'metodosPago'},
+  'ie-metodo':       {key:'metodosPago'},
+  'ied-metodo':      {key:'metodosPago'},
+  'pgd-metodo':      {key:'metodosPago'},
+  'egd-metodo':      {key:'metodosPago'},
+  'ie-cat':          {key:'catIngresosExtras'},
+  'ied-cat':         {key:'catIngresosExtras'},
+};
+
+function _poblarSelect(id){
+  var cfg = SELECT_MAP[id]; if(!cfg) return;
+  var el = $(id); if(!el) return;
+  var lista = LISTAS[cfg.key] || [];
+  var curVal = el.value;
+  var opts = cfg.empty ? '<option value="">'+cfg.empty+'</option>' : '';
+  opts += lista.map(function(v){ return '<option'+(v===curVal?' selected':'')+'>'+esc(v)+'</option>'; }).join('');
+  el.innerHTML = opts;
+}
+
+function _poblarTodosLosSelects(){
+  for(var id in SELECT_MAP){ _poblarSelect(id); }
+}
+
 function renderAdministracion(){
   var cont = $('admin-listas-cont'); if(!cont) return;
   var html = LISTAS_CONFIG.map(function(cfg){
