@@ -1744,7 +1744,7 @@ function renderCliFiltroChips(){
   // ── Selectores de año/mes ──
   var anios = [];
   clientesData.forEach(function(c){
-    var a = (c.fechaPrimera||'').slice(0,4);
+    var a = (c.creadoEn||'').slice(0,4);
     if(a && anios.indexOf(a)===-1) anios.push(a);
   });
   anios.sort().reverse();
@@ -1787,7 +1787,7 @@ function renderClientes(){
   var lista = clientesData.filter(function(c){
     if(cliFiltroEstado !== 'Todos' && c.estado !== cliFiltroEstado) return false;
     if(cliFiltroAnio || cliFiltroMes){
-      var fp = (c.fechaPrimera||'').slice(0,10);
+      var fp = (c.creadoEn||'').slice(0,10);
       if(cliFiltroAnio && fp.slice(0,4) !== cliFiltroAnio) return false;
       if(cliFiltroMes  && fp.slice(5,7) !== cliFiltroMes)  return false;
     }
