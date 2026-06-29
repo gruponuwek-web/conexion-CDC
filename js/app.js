@@ -1204,7 +1204,14 @@ function renderPipeline(){
   ETAPAS.forEach(function(et){
     var body = document.querySelector('#col-'+CSS.escape(et)+' .kcol-body');
     var col = $('col-'+et);
-    var leads = leadsData.filter(function(l){return l.etapa===et;});
+    var leads = leadsData.filter(function(l){
+      if(l.etapa !== et) return false;
+      if(et === 'Ganado'){
+        var cli = getCliente('c-' + l.id);
+        if(cli && cli.estado === 'Completado') return false;
+      }
+      return true;
+    });
     setText('cnt-'+et, leads.length);
     if(!body) return;
     if(leads.length===0){ body.innerHTML = '<div style="text-align:center;color:var(--ink-3);font-size:12px;padding:14px 0;opacity:.7">—</div>'; return; }
@@ -1689,6 +1696,7 @@ function cambiarEstadoCliente(id, estado){
   c.estado = estado;
   if(estado!=='Cancelado'){ c.razonCancel=null; c.razonOtro=null; }
   renderClientes();
+  if(estado==='Completado') renderPipeline();
   toast(c.nombre+' → '+estado);
   gs('updateCliente', {id:id, estado:estado, actualizadoEn:new Date().toISOString()})
     .catch(function(e){ console.error('[CDC GS] updateCliente estado:',e); });
