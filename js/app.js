@@ -809,14 +809,9 @@ function ordenarActs(list){ return list.slice().sort(function(a,b){ var ka=actKe
 var HOY = new Date().toISOString().slice(0,10);
 
 var BANCOS = ['BBVA 4521','HSBC 7832','Santander 1180','Banorte 3492'];
-var cuentasPorMetodo = {
-  'Efectivo': ['Efectivo caja'],
-  'Tarjeta': ['BBVA 4521','HSBC 7832','Santander 1180'],
-  'Transferencia': ['HSBC 7832','Banorte 3492'],
-  'Cheque': ['BBVA 4521','HSBC 7832']
-};
+var cuentasPorMetodo = LISTAS.cuentasPorMetodo;
 
-var ETAPAS = ['Nuevo','Contactado','Diagnóstico','Cotizado','Ganado','Perdido','No clasifica'];
+var ETAPAS = LISTAS.etapas;
 var ETAPA_COLOR = { 'Nuevo':'gray','Contactado':'blue','Diagnóstico':'amber','Cotizado':'violet','Ganado':'green','Perdido':'red','No clasifica':'gray' };
 var ETAPA_DESC = {
   'Nuevo':'Prospectos sin contactar aún',
@@ -835,10 +830,10 @@ var ETAPA_ACT_DEFAULT = {
   'Nuevo':'Llamada','Contactado':'Llamada','Diagnóstico':'Agendar cita',
   'Cotizado':'Seguimiento cotización','Perdido':'','No clasifica':''
 };
-var ETAPAS_OPCIONALES = ['Perdido','No clasifica'];
-var ACT_TIPOS = ['Llamada','Mensaje WhatsApp','Enviar cotización','Agendar cita','Seguimiento cotización','Enviar documento'];
-var PADECIMIENTOS = ['TDAH','Ansiedad','Depresión','Estrés crónico','Dislexia','Migraña','Cognitivo','Otro'];
-var CANALES = ['Instagram','Facebook','WhatsApp','Google','Referido','Otro'];
+var ETAPAS_OPCIONALES = LISTAS.etapasOpcionales;
+var ACT_TIPOS = LISTAS.tiposActividad;
+var PADECIMIENTOS = LISTAS.padecimientos;
+var CANALES = LISTAS.canales;
 
 var ESTADO_CLI = {
   'En onboarding': {cls:'st-onboarding', badge:'b-amber', label:'En onboarding'},
@@ -849,7 +844,7 @@ var ESTADO_CLI = {
   'Completado':    {cls:'st-completado', badge:'b-emerald',label:'Completado'}
 };
 
-var RAZONES_CANCEL = ['Costo / presupuesto','Distancia / traslado','Decidió otra clínica','Mejoría sin tratamiento','Falta de tiempo','Problemas de salud','Cambio de ciudad','Sin respuesta del paciente','Insatisfacción con resultados','Otro'];
+var RAZONES_CANCEL = LISTAS.razonesCancel;
 
 var ONB_CHECKS = [
   {fase:1, key:'contrato',   t:'Contrato firmado',                d:'Acuerdo de servicio aceptado'},
@@ -946,7 +941,8 @@ var NAV = [
   {key:'clientes', label:'Clientes', sub:'Cartera y sesiones',    icon:'<path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/>'},
   {key:'egresos',  label:'Finanzas', sub:'Ingresos y egresos',     icon:'<rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/>', soloWilly:true},
   {key:'facturas', label:'Facturas', sub:'Cola CFDI',             icon:'<path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/>', badge:'fact'},
-  {key:'tableros', label:'Tableros', sub:'Indicadores ejecutivos',icon:'<path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/>', soloWilly:true}
+  {key:'tableros', label:'Tableros', sub:'Indicadores ejecutivos',icon:'<path d="M3 3v18h18"/><rect x="7" y="10" width="3" height="7"/><rect x="12" y="6" width="3" height="11"/><rect x="17" y="13" width="3" height="4"/>', soloWilly:true},
+  {key:'admin',     label:'Config',   sub:'Listas y catálogos',        icon:'<circle cx="12" cy="12" r="3"/><path d="M19.07 4.93a10 10 0 0 1 0 14.14M4.93 4.93a10 10 0 0 0 0 14.14"/>', soloWilly:true}
 ];
 var PAGE_TITLES = {
   hoy:['Hoy','Centro de actividades'],
@@ -954,7 +950,8 @@ var PAGE_TITLES = {
   clientes:['Clientes','Cartera y sesiones'],
   egresos:['Finanzas','Ingresos y egresos'],
   facturas:['Facturas','Cola de timbrado CFDI'],
-  tableros:['Tableros','Indicadores ejecutivos']
+  tableros:['Tableros','Indicadores ejecutivos'],
+  admin:['Configuración','Listas y catálogos del sistema']
 };
 
 function navBadge(key){
@@ -1025,6 +1022,7 @@ function nav(key){
   if(key==='egresos'){ renderFinanzas(); var fg=$('fin-filtro-global'); if(fg) fg.innerHTML=finFiltroHtml(); }
   if(key==='facturas') renderFacturas();
   if(key==='tableros') renderTableros();
+  if(key==='admin') renderAdministracion();
   setTimeout(renderMobNav, 50);
 }
 
@@ -2719,8 +2717,8 @@ function getPorPagar(id){ for(var i=0;i<porPagarData.length;i++){if(porPagarData
 function getEgreso(id){ for(var i=0;i<historialEgresos.length;i++){if(historialEgresos[i].id===id)return historialEgresos[i];} return null; }
 function getIngreso(id){ for(var i=0;i<ingresosData.length;i++){if(ingresosData[i].id===id)return ingresosData[i];} return null; }
 
-var EG_CATS = ['Renta','Nómina','Servicios','Insumos','Equipo','Software','Marketing','Otro'];
-var EG_METODOS = ['Transferencia','Tarjeta','Efectivo','Cheque'];
+var EG_CATS = LISTAS.catEgresos;
+var EG_METODOS = LISTAS.metodosPago;
 function optionsHtml(arr, sel){
   return arr.map(function(o){ return '<option'+(o===sel?' selected':'')+'>'+esc(o)+'</option>'; }).join('');
 }
@@ -2918,7 +2916,7 @@ function avanzarFactura(id){
 /* ============================================================
    INGRESOS ADICIONALES — funciones
    ============================================================ */
-var IE_CATS = ['Consultoría','Venta de producto','Donativo','Patrocinio','Capacitación','Otro'];
+var IE_CATS = LISTAS.catIngresosExtras;
 var ingresoExtraCtx = null;
 
 function getIngresoExtra(id){ for(var i=0;i<ingresosExtras.length;i++){ if(ingresosExtras[i].id===id) return ingresosExtras[i]; } return null; }
@@ -3325,6 +3323,104 @@ function renderTableros(){
   buildCharts(dashTabActual);
   renderMobNav();
 }
+
+
+/* ============================================================
+   MÓDULO ADMINISTRACIÓN — Gestión de listas/catálogos
+   ============================================================ */
+
+// Mapa de listas editables con etiquetas para la UI
+var LISTAS_CONFIG = [
+  { key:'padecimientos',     label:'Padecimientos',              desc:'Diagnósticos del paciente en el formulario de leads' },
+  { key:'canales',           label:'Canales de captación',       desc:'Origen de los prospectos (Instagram, Google, etc.)' },
+  { key:'temperaturas',      label:'Temperaturas de lead',       desc:'Calificación de interés del prospecto' },
+  { key:'generos',           label:'Géneros',                    desc:'Opciones de género en el formulario' },
+  { key:'tiposActividad',    label:'Tipos de actividad',         desc:'Acciones de seguimiento en el pipeline' },
+  { key:'estadosCliente',    label:'Estados de cliente',         desc:'Fases del tratamiento del paciente' },
+  { key:'razonesCancel',     label:'Razones de cancelación',     desc:'Motivos de baja del paciente' },
+  { key:'catEgresos',        label:'Categorías de egresos',      desc:'Clasificación de gastos en Finanzas' },
+  { key:'metodosPago',       label:'Métodos de pago',            desc:'Formas de pago disponibles' },
+  { key:'catIngresosExtras', label:'Categorías ingresos extras', desc:'Tipos de ingresos adicionales' },
+  { key:'usosCFDI',          label:'Usos de CFDI',               desc:'Opciones fiscales para facturas' },
+  { key:'etapas',            label:'Etapas del pipeline',        desc:'Columnas del kanban de leads (requiere reload)' },
+  { key:'etapasOpcionales',  label:'Etapas sin actividad oblig.',desc:'Etapas donde el seguimiento es opcional' },
+];
+
+var adminListaCtx = null; // {key, label}
+
+function renderAdministracion(){
+  var cont = $('admin-listas-cont'); if(!cont) return;
+  var html = LISTAS_CONFIG.map(function(cfg){
+    var items = LISTAS[cfg.key];
+    if(!Array.isArray(items)) return '';
+    var chips = items.map(function(v){
+      return '<span class="admin-chip">'+esc(v)
+      +'<button onclick="eliminarItemLista_btn(this)" data-key="'+cfg.key+'" data-val="'+esc(v)+'" title="Eliminar">×</button></span>';
+    }).join('');
+    return '<div class="admin-lista-card">'
+      +'<div class="admin-lista-head">'
+        +'<div><div class="admin-lista-label">'+esc(cfg.label)+'</div>'
+        +'<div class="admin-lista-desc">'+esc(cfg.desc)+'</div></div>'
+      +'<button class="btn btn-soft btn-sm" onclick="abrirAgregarItem_btn(this)" data-key="'+cfg.key+'" data-label="'+esc(cfg.label)+'">&plus; Agregar</button>'
+      +'</div>'
+      +'<div class="admin-chips">'+chips+'</div>'
+      +'</div>';
+  }).join('');
+  cont.innerHTML = html;
+}
+
+function eliminarItemLista_btn(btn){
+  var key = btn.getAttribute('data-key');
+  var val = btn.getAttribute('data-val');
+  var lista = LISTAS[key];
+  if(!Array.isArray(lista)) return;
+  var idx = lista.indexOf(val);
+  if(idx === -1) return;
+  if(!confirm('¿Eliminar "'+val+'" de la lista?')) return;
+  lista.splice(idx, 1);
+  renderAdministracion();
+  toast('"'+val+'" eliminado');
+}
+
+function abrirAgregarItem_btn(btn){
+  var key = btn.getAttribute('data-key');
+  var label = btn.getAttribute('data-label');
+  abrirAgregarItem(key, label);
+}
+
+function abrirAgregarItem(key, label){
+  adminListaCtx = {key:key, label:label};
+  setText('adm-lista-nombre', label);
+  $('adm-nuevo-item').value = '';
+  openModal('m-admin-agregar');
+  setTimeout(function(){ $('adm-nuevo-item').focus(); }, 150);
+}
+
+function guardarNuevoItem(){
+  if(!adminListaCtx) return;
+  var val = $('adm-nuevo-item').value.trim();
+  if(!val){ toast('Escribe un valor'); return; }
+  var lista = LISTAS[adminListaCtx.key];
+  if(!Array.isArray(lista)){ toast('Lista no editable'); return; }
+  if(lista.indexOf(val) !== -1){ toast('Ya existe: '+val); return; }
+  lista.push(val);
+  closeModal('m-admin-agregar');
+  renderAdministracion();
+  toast('"'+val+'" agregado a '+adminListaCtx.label);
+}
+
+function eliminarItemLista(key, val){
+  var lista = LISTAS[key];
+  if(!Array.isArray(lista)) return;
+  var idx = lista.indexOf(val);
+  if(idx === -1) return;
+  if(!confirm('¿Eliminar "'+val+'" de la lista?')) return;
+  lista.splice(idx, 1);
+  renderAdministracion();
+  toast('"'+val+'" eliminado');
+}
+
+function adm_keydown(e){ if(e.key==='Enter') guardarNuevoItem(); }
 
 /* ============================================================
    INIT — único punto de arranque

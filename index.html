@@ -8,6 +8,16 @@
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Clínica del Cerebro · CRM/ERP</title>
 <link rel="stylesheet" href="./css/styles.css">
+<style>
+.admin-lista-card{background:var(--surface,#fff);border:1px solid var(--line,#E5E7EB);border-radius:12px;padding:16px 20px;margin-bottom:14px;}
+.admin-lista-head{display:flex;align-items:flex-start;justify-content:space-between;gap:12px;margin-bottom:12px;}
+.admin-lista-label{font-weight:700;font-size:0.95rem;color:var(--ink,#1a1a1a);}
+.admin-lista-desc{font-size:0.78rem;color:var(--ink-3,#6B7280);margin-top:2px;}
+.admin-chips{display:flex;flex-wrap:wrap;gap:8px;}
+.admin-chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2,#F3F4F6);border:1px solid var(--line,#E5E7EB);border-radius:20px;padding:4px 10px 4px 12px;font-size:0.82rem;color:var(--ink,#1a1a1a);}
+.admin-chip button{background:none;border:none;cursor:pointer;color:var(--ink-3,#6B7280);font-size:1rem;line-height:1;padding:0 0 0 2px;display:flex;align-items:center;}
+.admin-chip button:hover{color:var(--red,#C43D3D);}
+</style>
 </head>
 <body>
 <!-- PANTALLA DE LOGIN -->
@@ -685,6 +695,27 @@ function loginKeydown(e){ if(e.key==='Enter') loginSubmit(); }
 
 <script src="./js/auth.js"></script>
 <script src="./js/vendor/chart.umd.min.js"></script>
-<script src="./js/app.js?v=202606291100"></script>
+<script src="./js/listas.js?v=202606291200"></script>
+<script src="./js/app.js?v=202606291200"></script>
+
+<!-- m-admin-agregar -->
+<div class="modal" id="m-admin-agregar">
+  <div class="modal-bg" onclick="closeModal('m-admin-agregar')"></div>
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:#EEF3FF;color:var(--primary)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><circle cx="12" cy="12" r="3"/></svg></div>
+      <div><h3>Agregar opci&#243;n</h3><div class="mh-sub" id="adm-lista-nombre">Lista</div></div>
+      <button class="modal-x" onclick="closeModal('m-admin-agregar')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body">
+      <div class="field"><label>Nueva opci&#243;n <span class="req">*</span></label><input id="adm-nuevo-item" type="text" placeholder="Escribe el valor..." onkeydown="adm_keydown(event)"></div>
+      <div class="hint">Los cambios aplican en esta sesi&#243;n. Para permanentes edita <strong>listas.js</strong>.</div>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-admin-agregar')">Cancelar</button>
+      <button class="btn btn-primary" onclick="guardarNuevoItem()">Agregar</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
