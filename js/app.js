@@ -886,6 +886,9 @@ var ONB_CHECKS = [
 var usuarioActual = 'willy';
 var pantallaActual = 'hoy';
 var clienteAbiertoId = null;   // acordeón abierto
+var cliFiltroEstado  = 'Todos'; // filtro activo en cartera
+var cliFiltroAnio    = '';       // '' = todos los años
+var cliFiltroMes     = '';       // '' = todos los meses
 var pipeActualId = null;       // lead en modal pipe
 var sesionCtx = null;          // {clienteId, n}
 var onbCtx = null;             // {clienteId, checks:{}}
@@ -1727,12 +1730,74 @@ function accClienteHtml(c, open){
   return '<div class="acc '+st.cls+' open" id="acc-'+c.id+'">'+head+body+'</div>';
 }
 
+function renderCliFiltroChips(){
+  // ── Chips de estado ──
+  var estados = ['Todos'].concat(LISTAS.estadosCliente);
+  var chips = estados.map(function(e){
+    var active = cliFiltroEstado === e;
+    return '<button class="chip'+(active?' active':'')+'" data-est="'+e+'" onclick="setClifiltro_btn(this)">'
+      + e
+      + (e!=='Todos' ? '<span class="n">'+clientesData.filter(function(c){return c.estado===e;}).length+'</span>' : '')
+      + '</button>';
+  }).join('');
+
+  // ── Selectores de año/mes ──
+  var anios = [];
+  clientesData.forEach(function(c){
+    var a = (c.fechaPrimera||'').slice(0,4);
+    if(a && anios.indexOf(a)===-1) anios.push(a);
+  });
+  anios.sort().reverse();
+  if(anios.indexOf(new Date().getFullYear().toString())===-1)
+    anios.unshift(new Date().getFullYear().toString());
+
+  var MESES_LABEL = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+  var anioOpts = '<option value="">Todos los años</option>'
+    + anios.map(function(a){ return '<option value="'+a+'"'+(cliFiltroAnio===a?' selected':'')+'>'+a+'</option>'; }).join('');
+  var mesOpts = '<option value="">Todos los meses</option>'
+    + MESES_LABEL.map(function(m,i){
+        var num = (i+1).toString().padStart(2,'0');
+        return '<option value="'+num+'"'+(cliFiltroMes===num?' selected':'')+'>'+m+'</option>';
+      }).join('');
+
+  var selects = '<div style="display:flex;align-items:center;gap:6px;margin-left:auto">'
+    + '<select class="fin-filtro-sel" onchange="setCliFiltroAnio(this.value)" style="font-size:0.8rem;padding:5px 8px;border-radius:7px;border:1.5px solid var(--line,#E5E7EB)">'+anioOpts+'</select>'
+    + '<select class="fin-filtro-sel" onchange="setCliFiltroMes(this.value)" style="font-size:0.8rem;padding:5px 8px;border-radius:7px;border:1.5px solid var(--line,#E5E7EB)">'+mesOpts+'</select>'
+    + '</div>';
+
+  var el = $('cli-filtro-chips');
+  if(el) el.innerHTML = '<div style="display:flex;align-items:center;flex-wrap:wrap;gap:6px;width:100%">'
+    + '<div style="display:flex;flex-wrap:wrap;gap:6px;flex:1">'+chips+'</div>'
+    + selects
+    + '</div>';
+}
+
+function setClifiltro_btn(btn){ setClifiltro(btn.getAttribute('data-est')); }
+function setCliFiltroAnio(v){ cliFiltroAnio = v; renderClientes(); }
+function setCliFiltroMes(v){  cliFiltroMes  = v; renderClientes(); }
+
+function setClifiltro(estado){
+  cliFiltroEstado = estado;
+  renderClientes();
+}
+
 function renderClientes(){
   renderClientesKpis();
   var cont = $('clientes-acordeones'); if(!cont) return;
-  setText('cli-count', clientesData.length+' clientes');
+  var lista = clientesData.filter(function(c){
+    if(cliFiltroEstado !== 'Todos' && c.estado !== cliFiltroEstado) return false;
+    if(cliFiltroAnio || cliFiltroMes){
+      var fp = (c.fechaPrimera||'').slice(0,10);
+      if(cliFiltroAnio && fp.slice(0,4) !== cliFiltroAnio) return false;
+      if(cliFiltroMes  && fp.slice(5,7) !== cliFiltroMes)  return false;
+    }
+    return true;
+  });
+  setText('cli-count', lista.length+' cliente'+(lista.length!==1?'s':''));
+  renderCliFiltroChips();
   var html = '';
-  clientesData.forEach(function(c){ html += accClienteHtml(c, c.id===clienteAbiertoId); });
+  lista.forEach(function(c){ html += accClienteHtml(c, c.id===clienteAbiertoId); });
+  if(lista.length === 0) html = '<div class="empty" style="padding:32px"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"/><circle cx="12" cy="7" r="4"/></svg><div>Sin clientes con estado "'+esc(cliFiltroEstado)+'"</div></div>';
   cont.innerHTML = html;
 }
 
