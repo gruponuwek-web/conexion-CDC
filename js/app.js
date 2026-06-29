@@ -2423,7 +2423,7 @@ function actualizarCrossHint(){
     // Mostrar cobros del mes seleccionado
     if(dashCrossFilter.mes && panel){
       var m = dashCrossFilter.mes;
-      var cobsMes = ingresosData.filter(function(r){
+      var cobsMes = ingresosData.concat(ingresosExtras).filter(function(r){
         var f=(r.fecha||'').slice(0,10);
         return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
       });
@@ -3128,6 +3128,10 @@ function buildCharts(tab){
     var totalIn = ingresosData.filter(function(r){
       var f=(r.fecha||'').slice(0,10);
       return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
+    }).reduce(function(s,r){return s+(r.monto||0);},0)
+    + ingresosExtras.filter(function(r){
+      var f=(r.fecha||'').slice(0,10);
+      return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
     }).reduce(function(s,r){return s+(r.monto||0);},0);
     var totalEg = historialEgresos.filter(function(r){
       var f=(r.fecha||'').slice(0,10);
@@ -3199,7 +3203,7 @@ function buildCharts(tab){
     var mesesActivos = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
     var labMeses = mesesActivos.map(function(m){ return MESES_CORTO[parseInt(m,10)-1]; });
     var dataIn = mesesActivos.map(function(m){
-      return ingresosData.filter(function(r){
+      return ingresosData.concat(ingresosExtras).filter(function(r){
         var f=(r.fecha||'').slice(0,10);
         return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
       }).reduce(function(s,r){return s+(r.monto||0);},0);
@@ -3258,7 +3262,7 @@ function buildCharts(tab){
     var mesesFin = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
     var labFin = mesesFin.map(function(m){ return MESES_CORTO[parseInt(m,10)-1]; });
     var dataFinIn = mesesFin.map(function(m){
-      return ingresosData.filter(function(r){
+      return ingresosData.concat(ingresosExtras).filter(function(r){
         var f=(r.fecha||'').slice(0,10);
         return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
       }).reduce(function(s,r){return s+(r.monto||0);},0);
