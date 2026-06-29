@@ -1,3 +1,29 @@
+// ══════════════════════════════════════════════════════════════
+//  LISTAS — Catálogos editables del sistema
+//  Edita aquí para cambiar opciones de dropdowns sin tocar el resto del código
+// ══════════════════════════════════════════════════════════════
+var LISTAS = {
+  etapas:           ['Nuevo','Contactado','Diagnóstico','Cotizado','Ganado','Perdido','No clasifica'],
+  etapasOpcionales: ['Perdido','No clasifica'],
+  padecimientos:    ['TDAH','Ansiedad','Depresión','Estrés crónico','Dislexia','Migraña','Cognitivo','Otro'],
+  canales:          ['Instagram','Facebook','WhatsApp','Google','Referido','Otro'],
+  temperaturas:     ['Caliente','Tibio','Frío'],
+  generos:          ['Masculino','Femenino','Otro'],
+  tiposActividad:   ['Llamada','Mensaje WhatsApp','Enviar cotización','Agendar cita','Seguimiento cotización','Enviar documento'],
+  estadosCliente:   ['En onboarding','Activo','Pausado','Reagendado','Cancelado','Completado'],
+  razonesCancel:    ['Costo / presupuesto','Distancia / traslado','Decidió otra clínica','Mejoría sin tratamiento','Falta de tiempo','Problemas de salud','Cambio de ciudad','Sin respuesta del paciente','Insatisfacción con resultados','Otro'],
+  catEgresos:       ['Renta','Nómina','Servicios','Insumos','Equipo','Software','Marketing','Otro'],
+  metodosPago:      ['Transferencia','Tarjeta','Efectivo','Cheque'],
+  cuentasPorMetodo: {
+    'Efectivo':      ['Efectivo caja'],
+    'Tarjeta':       ['BBVA 4521','HSBC 7832','Santander 1180'],
+    'Transferencia': ['HSBC 7832','Banorte 3492'],
+    'Cheque':        ['BBVA 4521','HSBC 7832']
+  },
+  catIngresosExtras: ['Consultoría','Venta de producto','Donativo','Patrocinio','Capacitación','Otro'],
+  usosCFDI:          ['D01 · Honorarios médicos','G03 · Gastos en general','S01 · Sin efectos fiscales'],
+};
+
 // ════════════════════════════════════════════════════════════════
 //  CDC CRM · PARCHE DE INTEGRACIÓN GOOGLE SHEETS
 //  Grupo Nuwek · v1.0 · Junio 2026
