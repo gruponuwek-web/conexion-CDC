@@ -404,6 +404,9 @@ async function cargarTodo() {
       });
     }
 
+    // Cargar listas/catálogos desde Sheets (Config)
+    await _cargarListasSheets();
+
     // Ingresos extras desde Sheets
     console.log('[CDC] rIngExt:', JSON.stringify(rIngExt).slice(0,200));
     if(rIngExt && rIngExt.ok && rIngExt.data){
@@ -705,7 +708,8 @@ async function _recargarFacturas() {
 //  REEMPLAZO DEL DOMContentLoaded
 //
 //  En tu HTML, localiza:
-//    window.addEventListener('DOMContentLoaded', function(){ ... });
+//    window.addEventListener('DOMContentLoaded', function(){
+  _cargarListasLocal(); // restaurar listas guardadas ... });
 //
 //  Reemplaza TODA esa función por esto:
 // ════════════════════════════════════════════════════════════════
@@ -3460,6 +3464,47 @@ function renderAdministracion(){
   cont.innerHTML = html;
 }
 
+// ── Persistencia de LISTAS en localStorage ──────────────────────
+function _guardarListasLocal(){
+  try{ localStorage.setItem('cdc_listas', JSON.stringify(LISTAS)); } catch(e){}
+}
+function _cargarListasLocal(){
+  try{
+    var raw = localStorage.getItem('cdc_listas');
+    if(!raw) return;
+    var saved = JSON.parse(raw);
+    for(var k in saved){
+      if(Array.isArray(saved[k]) && Array.isArray(LISTAS[k])){
+        LISTAS[k] = saved[k];
+      }
+    }
+  } catch(e){}
+}
+
+// Guardar una lista en Google Sheets (hoja Config)
+function _guardarListaSheets(key){
+  var valor = JSON.stringify(LISTAS[key] || []);
+  gs('setConfig', { key: key, valor: valor })
+    .catch(function(e){ console.error('[CDC] setConfig error:', e); });
+}
+
+// Cargar todas las listas desde Google Sheets al arrancar
+async function _cargarListasSheets(){
+  try{
+    var r = await gs('getConfig');
+    if(!r.ok || !r.data) return;
+    r.data.forEach(function(row){
+      var k = row.key || row['key'];
+      var v = row.valor || row['valor'];
+      if(k && v && Array.isArray(LISTAS[k])){
+        try{ LISTAS[k] = JSON.parse(v); } catch(e){}
+      }
+    });
+    // Actualizar localStorage con lo de Sheets
+    _guardarListasLocal();
+  } catch(e){ console.warn('[CDC] _cargarListasSheets:', e); }
+}
+
 function eliminarItemLista_btn(btn){
   var key = btn.getAttribute('data-key');
   var val = btn.getAttribute('data-val');
@@ -3469,6 +3514,8 @@ function eliminarItemLista_btn(btn){
   if(idx === -1) return;
   if(!confirm('¿Eliminar "'+val+'" de la lista?')) return;
   lista.splice(idx, 1);
+  _guardarListasLocal();
+  _guardarListaSheets(key);
   renderAdministracion();
   toast('"'+val+'" eliminado');
 }
@@ -3495,6 +3542,8 @@ function guardarNuevoItem(){
   if(!Array.isArray(lista)){ toast('Lista no editable'); return; }
   if(lista.indexOf(val) !== -1){ toast('Ya existe: '+val); return; }
   lista.push(val);
+  _guardarListasLocal();
+  _guardarListaSheets(adminListaCtx.key);
   closeModal('m-admin-agregar');
   renderAdministracion();
   toast('"'+val+'" agregado a '+adminListaCtx.label);
