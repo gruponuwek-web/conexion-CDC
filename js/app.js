@@ -196,7 +196,7 @@ window.limpiarDashFiltro = limpiarDashFiltro;
 async function cargarTodo() {
   mostrarLoader(true);
   try {
-    var [rLeads, rClientes, rSes, rActs, rEg, rPF, rFact, rCobros] = await Promise.all([
+    var [rLeads, rClientes, rSes, rActs, rEg, rPF, rFact, rCobros, rIngExt] = await Promise.all([
       gs('getLeads'),
       gs('getClientes'),
       gs('getSesiones'),
@@ -204,7 +204,8 @@ async function cargarTodo() {
       gs('getEgresos'),
       gs('getPagosFijos'),
       gs('getFacturas'),
-      gs('getCobros')
+      gs('getCobros'),
+      gs('getIngresosExtras')
     ]);
 
     if (rLeads.ok)    CDC.leads = rLeads.data.map(function(l){
@@ -375,6 +376,43 @@ async function cargarTodo() {
           conciliado: (co.conciliado === 'Sí' || co.conciliado === true)
         };
       });
+    }
+
+    // Cargar ingresos extras desde Sheets
+    if(rIngExt && rIngExt.ok && rIngExt.data){
+      ingresosExtras = rIngExt.data.map(function(ie){
+        return {
+          id:         ie.id,
+          concepto:   ie.concepto  || '',
+          cliente:    ie.cliente   || '—',
+          monto:      Number(ie.monto) || 0,
+          fecha:      (ie.fecha||'').slice(0,10),
+          metodo:     ie.metodo    || '',
+          cuenta:     ie.cuenta    || '',
+          cat:        ie.cat       || '',
+          conciliado: (ie.conciliado==='Sí'||ie.conciliado===true)
+        };
+      });
+    }
+
+    // Ingresos extras desde Sheets
+    if(rIngExt && rIngExt.ok && rIngExt.data){
+      ingresosExtras = rIngExt.data.map(function(ie){
+        return {
+          id:         ie.id,
+          concepto:   ie.concepto   || '',
+          cliente:    ie.cliente    || '—',
+          monto:      Number(ie.monto) || 0,
+          fecha:      (ie.fecha||'').toString().slice(0,10),
+          metodo:     ie.metodo     || '',
+          cuenta:     ie.cuenta     || '',
+          cat:        ie.cat        || '',
+          conciliado: (ie.conciliado==='Sí'||ie.conciliado===true)
+        };
+      });
+      try{ localStorage.removeItem('cdc_ing_extras'); }catch(e){}
+    } else {
+      _cargarExtrasLocal();
     }
 
     // Re-render de todos los módulos
@@ -887,6 +925,9 @@ var porPagarData    = [];
 var historialEgresos= [];
 var ingresosData    = [];
 var ingresosExtras  = [];   // ingresos adicionales (no de sesiones)
+
+function _guardarExtrasLocal(){ /* reemplazado por Sheets */ }
+function _cargarExtrasLocal(){ /* reemplazado por Sheets */ }
 var facturasData    = [];
 
 var FACT_SEQ = ['Por crear','Creada','Enviada','Completada'];
@@ -2932,9 +2973,10 @@ function guardarIngresoExtra(){
   ingresosExtras.push(ie);
   closeModal('m-ingreso-extra');
   renderIngresos(); renderFinKpis('ingresos');
-  toast('Ingreso adicional registrado: '+money(monto));
+  toast('Ingreso adicional registrado: '+money(ie.monto));
   var ahora = new Date().toISOString();
-  gs('createIngresoExtra', {id:ie.id, concepto:ie.concepto, cliente:ie.cliente, monto:ie.monto,
+  gs('createIngresoExtra', {
+    id:ie.id, concepto:ie.concepto, cliente:ie.cliente||'', monto:ie.monto,
     fecha:ie.fecha, metodo:ie.metodo, cuenta:ie.cuenta, cat:ie.cat,
     conciliado:(ie.conciliado?'Sí':'No'), creadoEn:ahora, actualizadoEn:ahora
   }).catch(function(e){ console.error('[CDC GS] createIngresoExtra:',e); });
@@ -2981,7 +3023,8 @@ function guardarIngresoExtraDetalle(){
   closeModal('m-ingreso-extra-detalle');
   renderIngresos(); renderFinKpis('ingresos');
   toast('Ingreso adicional actualizado');
-  gs('updateIngresoExtra', {id:ie.id, monto:ie.monto, fecha:ie.fecha, metodo:ie.metodo,
+  gs('updateIngresoExtra', {
+    id:ie.id, monto:ie.monto, fecha:ie.fecha, metodo:ie.metodo,
     cuenta:ie.cuenta, cat:ie.cat, conciliado:(ie.conciliado?'Sí':'No'),
     actualizadoEn:new Date().toISOString()
   }).catch(function(e){ console.error('[CDC GS] updateIngresoExtra:',e); });
