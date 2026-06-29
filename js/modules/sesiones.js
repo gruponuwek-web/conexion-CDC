@@ -40,7 +40,7 @@ function clickDot(clienteId, n){
   setHtml('ses-ed-statusrow', '<span class="badge '+bcls+'">'+badgeTxt+'</span>');
 
   // panel de cobro y footer según estado
-  var foot = '<button class="btn btn-ghost" onclick="closeModal(\'m-ses-editar\')">Concluir</button>';
+  var foot = '<button class="btn btn-ghost" onclick="closeModal(\'m-ses-editar\')">Cerrar</button>';
   var cobroPanel = '';
   if(s.estado==='pending'){
     foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
