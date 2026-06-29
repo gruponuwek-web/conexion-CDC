@@ -886,6 +886,7 @@ var pagosFijos      = [];
 var porPagarData    = [];
 var historialEgresos= [];
 var ingresosData    = [];
+var ingresosExtras  = [];   // ingresos adicionales (no de sesiones)
 var facturasData    = [];
 
 var FACT_SEQ = ['Por crear','Creada','Enviada','Completada'];
@@ -2462,9 +2463,12 @@ function renderFinKpis(which){
   var cont = $('fin-kpis'); if(!cont) return;
   var html='';
   if(which==='ingresos'){
-    var inFilt = finFiltrar(ingresosData);
-    var totalIn = inFilt.reduce(function(s,i){return s+(i.monto||0);},0);
-    var sinConc = inFilt.filter(function(i){return !i.conciliado;}).length;
+    var inFilt  = finFiltrar(ingresosData);
+    var extFilt2 = finFiltrar(ingresosExtras);
+    var totalIn = inFilt.reduce(function(s,i){return s+(i.monto||0);},0)
+                + extFilt2.reduce(function(s,i){return s+(i.monto||0);},0);
+    var sinConc = inFilt.filter(function(i){return !i.conciliado;}).length
+                + extFilt2.filter(function(i){return !i.conciliado;}).length;
     var fact = inFilt.filter(function(i){return i.factura==='Sí';}).reduce(function(s,i){return s+(i.monto||0);},0);
     var lblPeriodo = (finFiltroMes||finFiltroAnio) ? 'en el período' : 'total';
     html += finKpiCard('x-green','cobro', money(totalIn), 'Ingresos '+lblPeriodo);
@@ -2541,7 +2545,7 @@ function renderEgresos(){
 }
 
 function concBtn(tipo, id, conc){
-  var fn = tipo==='ingreso' ? 'toggleConciliarIngreso' : 'toggleConciliarEgreso';
+  var fn = tipo==='ingreso' ? 'toggleConciliarIngreso' : (tipo==='ingresoExtra' ? 'toggleConciliarIngresoExtra' : 'toggleConciliarEgreso');
   if(conc){
     return '<button class="btn btn-sm" style="background:var(--green-bg);color:var(--green);border-color:transparent" onclick="event.stopPropagation();'+fn+'(\''+id+'\')">✓ Conciliado</button>';
   }
@@ -2573,6 +2577,18 @@ function renderIngresos(){
       + concBtn('ingreso', i.id, i.conciliado)+'</div>';
   }).join('') : '<div class="empty" style="padding:18px">Sin ingresos'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
   var html = egSection('Historial de ingresos', 'Cobros recibidos de clientes', ingresosData.length, rows, '');
+
+  // ── Ingresos adicionales ──────────────────────────────────────
+  var extFilt = finFiltrar(ingresosExtras);
+  var extRows = extFilt.length ? extFilt.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).map(function(i){
+    return '<div class="histrow" style="cursor:pointer" onclick="abrirIngresoExtraDetalle(\''+i.id+'\')"><div class="act-ico" style="width:34px;height:34px;background:var(--emerald-bg,#D1FAE5);color:var(--emerald,#0E8F73)">'+ico('cobro')+'</div>'
+      + '<div style="flex:1"><b style="font-weight:650">'+esc(i.concepto)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+fechaLarga(i.fecha)+' · '+esc(i.cliente||'—')+' · '+esc(i.metodo)+' · '+esc(i.cat)+'</div></div>'
+      + '<div style="font-weight:700;color:var(--green);margin-right:10px">'+money(i.monto)+'</div>'
+      + concBtn('ingresoExtra', i.id, i.conciliado)+'</div>';
+  }).join('') : '<div class="empty" style="padding:18px">Sin ingresos adicionales'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
+  var btnExtra = '<button class="btn btn-soft btn-sm" onclick="event.stopPropagation();openNuevoIngresoExtra()">+ Agregar</button>';
+  html += egSection('Ingresos adicionales', 'Consultoría, ventas, donativos, otros', extFilt.length, extRows, btnExtra);
+
   cont.innerHTML = html;
 }
 var finTabActual = 'egresos';
@@ -2874,6 +2890,103 @@ function avanzarFactura(id){
   gs('updateFactura', {id:id, estatus:sig, folio:f.folio||'', actualizadoEn:new Date().toISOString()})
     .catch(function(e){ console.error('[CDC GS] updateFactura:',e); });
 }
+/* ============================================================
+   INGRESOS ADICIONALES — funciones
+   ============================================================ */
+var IE_CATS = ['Consultoría','Venta de producto','Donativo','Patrocinio','Capacitación','Otro'];
+var ingresoExtraCtx = null;
+
+function getIngresoExtra(id){ for(var i=0;i<ingresosExtras.length;i++){ if(ingresosExtras[i].id===id) return ingresosExtras[i]; } return null; }
+
+function openNuevoIngresoExtra(){
+  $('ie-concepto').value=''; $('ie-cliente').value=''; $('ie-monto').value='';
+  $('ie-fecha').value=HOY; $('ie-metodo').value='Transferencia';
+  $('ie-cat').value='Consultoría';
+  var cr=$('ie-conciliado-row'); if(cr) cr.classList.remove('on');
+  ieActualizarCuenta();
+  openModal('m-ingreso-extra');
+}
+
+function ieActualizarCuenta(){
+  var metodo = $('ie-metodo').value;
+  var cuentas = cuentasPorMetodo[metodo] || [];
+  setHtml('ie-cuenta', cuentas.map(function(c){return '<option>'+esc(c)+'</option>';}).join(''));
+}
+
+function guardarIngresoExtra(){
+  var concepto = $('ie-concepto').value.trim();
+  var monto    = Number($('ie-monto').value)||0;
+  if(!concepto){ toast('Captura el concepto'); return; }
+  if(monto<=0){  toast('Captura un monto válido'); return; }
+  var ie = {
+    id:         uid('ie'),
+    concepto:   concepto,
+    cliente:    $('ie-cliente').value.trim()||'—',
+    monto:      monto,
+    fecha:      $('ie-fecha').value||HOY,
+    metodo:     $('ie-metodo').value,
+    cuenta:     $('ie-cuenta').value||'',
+    cat:        $('ie-cat').value,
+    conciliado: !!($('ie-conciliado-row').classList.contains('on'))
+  };
+  ingresosExtras.push(ie);
+  closeModal('m-ingreso-extra');
+  renderIngresos(); renderFinKpis('ingresos');
+  toast('Ingreso adicional registrado: '+money(monto));
+  var ahora = new Date().toISOString();
+  gs('createIngresoExtra', {id:ie.id, concepto:ie.concepto, cliente:ie.cliente, monto:ie.monto,
+    fecha:ie.fecha, metodo:ie.metodo, cuenta:ie.cuenta, cat:ie.cat,
+    conciliado:(ie.conciliado?'Sí':'No'), creadoEn:ahora, actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] createIngresoExtra:',e); });
+}
+
+function toggleConciliarIngresoExtra(id){
+  var ie=getIngresoExtra(id); if(!ie) return;
+  ie.conciliado=!ie.conciliado;
+  renderIngresos(); renderFinKpis('ingresos');
+  toast(ie.conciliado?'Ingreso adicional conciliado':'Ingreso marcado como pendiente');
+  gs('updateIngresoExtra', {id:id, conciliado:(ie.conciliado?'Sí':'No'), actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] updateIngresoExtra:',e); });
+}
+
+function abrirIngresoExtraDetalle(id){
+  var ie=getIngresoExtra(id); if(!ie) return;
+  ingresoExtraCtx = id;
+  setText('ied-titulo', ie.concepto);
+  setText('ied-sub', fechaLarga(ie.fecha)+' · '+ie.cat+' · '+(ie.cliente||'—'));
+  $('ied-monto').value  = ie.monto;
+  $('ied-fecha').value  = ie.fecha;
+  $('ied-metodo').value = ie.metodo;
+  $('ied-cat').value    = ie.cat;
+  var cr=$('ied-conciliado'); if(cr) cr.classList.toggle('on', !!ie.conciliado);
+  iedActualizarCuenta(ie.cuenta);
+  openModal('m-ingreso-extra-detalle');
+}
+
+function iedActualizarCuenta(keep){
+  var metodo = $('ied-metodo').value;
+  var cuentas = cuentasPorMetodo[metodo]||[];
+  setHtml('ied-cuenta', cuentas.map(function(c){return '<option>'+esc(c)+'</option>';}).join(''));
+  if(keep && cuentas.indexOf(keep)>=0) $('ied-cuenta').value=keep;
+}
+
+function guardarIngresoExtraDetalle(){
+  var ie=getIngresoExtra(ingresoExtraCtx); if(!ie){closeModal('m-ingreso-extra-detalle');return;}
+  ie.monto  = Number($('ied-monto').value)||0;
+  ie.fecha  = $('ied-fecha').value;
+  ie.metodo = $('ied-metodo').value;
+  ie.cuenta = $('ied-cuenta').value;
+  ie.cat    = $('ied-cat').value;
+  ie.conciliado = !!($('ied-conciliado').classList.contains('on'));
+  closeModal('m-ingreso-extra-detalle');
+  renderIngresos(); renderFinKpis('ingresos');
+  toast('Ingreso adicional actualizado');
+  gs('updateIngresoExtra', {id:ie.id, monto:ie.monto, fecha:ie.fecha, metodo:ie.metodo,
+    cuenta:ie.cuenta, cat:ie.cat, conciliado:(ie.conciliado?'Sí':'No'),
+    actualizadoEn:new Date().toISOString()
+  }).catch(function(e){ console.error('[CDC GS] updateIngresoExtra:',e); });
+}
+
 /* ============================================================
    Bloque 5 — MÓDULO TABLEROS (Chart.js) + INIT
    ============================================================ */
