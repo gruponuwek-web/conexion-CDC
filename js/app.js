@@ -3462,6 +3462,7 @@ function renderAdministracion(){
       +'</div>';
   }).join('');
   cont.innerHTML = html;
+  _poblarTodosLosSelects();
 }
 
 // ── Persistencia de LISTAS en localStorage ──────────────────────
