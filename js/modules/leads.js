@@ -190,8 +190,27 @@ function guardarPipe(){
   if(cambioEtapa){
     cambiarEtapaLead(l.id, nuevaEtapa, false);
   } else {
+    // Si hay siguiente actividad definida, sincronizar a Agenda
+    if(l.sigAct && l.sigFecha){
+      var nuevaAct = setLeadActividad(l, l.sigAct, l.sigFecha, l.sigHora||'10:00', l.nota||'');
+      if(nuevaAct){
+        var ahoraUpd = new Date().toISOString();
+        gs('createCita', {
+          id:nuevaAct.id, prospecto:nuevaAct.prospecto,
+          refTipo:'lead', refId:String(nuevaAct.refId),
+          tipo:nuevaAct.tipo, fecha:nuevaAct.fecha, hora:nuevaAct.hora||'',
+          grupo:nuevaAct.grupo, done:'No',
+          urgente:(nuevaAct.urgente?'Sí':'No'),
+          contexto:nuevaAct.contexto||'',
+          creadoEn:ahoraUpd, actualizadoEn:ahoraUpd
+        }).catch(function(e){ console.error('[CDC GS] createCita lead upd:',e); });
+        renderActChips();
+        toast('Actividad "'+l.sigAct+'" agendada · '+fechaHoraTxt(l.sigFecha, l.sigHora||'10:00'));
+      }
+    } else {
+      toast('Lead actualizado');
+    }
     renderLeads(); renderNav();
-    toast('Lead actualizado');
   }
   // Guardar cambios en Google Sheets
   gs('updateLead', {
@@ -372,11 +391,31 @@ function guardarNuevoLead(){
   };
   // Guardar en memoria local inmediatamente (UI responsiva)
   leadsData.push(l);
+
+  // Actividad inicial de seguimiento
+  var actPrimero = {
+    id: uid('a'), prospecto: l.nombre,
+    refTipo: 'lead', refId: l.id,
+    tipo: 'Primer contacto',
+    fecha: HOY, hora: '10:00',
+    grupo: 'hoy', done: false, urgente: true,
+    contexto: esc(l.padecimiento) + ' · Lead nuevo desde ' + esc(l.canal) + '. Hacer primer contacto.'
+  };
+  actividadesData.push(actPrimero);
+
   closeModal('m-nuevo-lead');
-  renderLeads(); renderNav();
+  renderLeads(); renderActChips(); renderNav();
   toast('Lead "'+nombre+'" agregado al pipeline');
   // Guardar en Google Sheets (campos exactos del Sheet)
   var ahora = new Date().toISOString();
+  gs('createCita', {
+    id:actPrimero.id, prospecto:actPrimero.prospecto,
+    refTipo:'lead', refId:String(l.id),
+    tipo:'Primer contacto', fecha:HOY, hora:'10:00',
+    grupo:'hoy', done:'No', urgente:'Sí',
+    contexto:actPrimero.contexto,
+    creadoEn:ahora, actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] createCita primer contacto:',e); });
   gs('createLead', {
     id:           l.id,
     nombre:       l.nombre,
