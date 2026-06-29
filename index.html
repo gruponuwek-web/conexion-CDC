@@ -685,64 +685,6 @@ function loginKeydown(e){ if(e.key==='Enter') loginSubmit(); }
 
 <script src="./js/auth.js"></script>
 <script src="./js/vendor/chart.umd.min.js"></script>
-<script src="./js/app.js?v=202606261938"></script>
-
-<!-- m-ingreso-extra -->
-<div class="modal" id="m-ingreso-extra">
-  <div class="modal-bg" onclick="closeModal('m-ingreso-extra')"></div>
-  <div class="modal-box">
-    <div class="modal-head">
-      <div class="mh-ic" style="background:#D1FAE5;color:#0E8F73"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-      <div><h3>Ingreso adicional</h3><div class="mh-sub">Consultoría, venta, donativo u otro ingreso no EMT</div></div>
-      <button class="modal-x" onclick="closeModal('m-ingreso-extra')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="field"><label>Concepto <span class="req">*</span></label><input id="ie-concepto" type="text" placeholder="Ej. Consultoría nutricional"></div>
-      <div class="field"><label>Cliente / fuente</label><input id="ie-cliente" type="text" placeholder="Nombre o empresa (opcional)"></div>
-      <div class="field-row">
-        <div class="field"><label>Monto <span class="req">*</span></label><input id="ie-monto" type="number" min="0" placeholder="0"></div>
-        <div class="field"><label>Categoría</label><select id="ie-cat"><option>Consultoría</option><option>Venta de producto</option><option>Donativo</option><option>Patrocinio</option><option>Capacitación</option><option>Otro</option></select></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Fecha</label><input id="ie-fecha" type="date"></div>
-        <div class="field"><label>Método</label><select id="ie-metodo" onchange="ieActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
-      </div>
-      <div class="field"><label>Cuenta</label><select id="ie-cuenta"></select></div>
-      <label class="checkrow" id="ie-conciliado-row" onclick="this.classList.toggle('on')"><span class="cbox"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><span class="ct">Conciliado con banco</span></span></label>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal('m-ingreso-extra')">Cancelar</button>
-      <button class="btn btn-primary" onclick="guardarIngresoExtra()">Guardar ingreso</button>
-    </div>
-  </div>
-</div>
-
-<!-- m-ingreso-extra-detalle -->
-<div class="modal" id="m-ingreso-extra-detalle">
-  <div class="modal-bg" onclick="closeModal('m-ingreso-extra-detalle')"></div>
-  <div class="modal-box">
-    <div class="modal-head">
-      <div class="mh-ic" style="background:#D1FAE5;color:#0E8F73"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg></div>
-      <div><h3 id="ied-titulo">Ingreso adicional</h3><div class="mh-sub" id="ied-sub"></div></div>
-      <button class="modal-x" onclick="closeModal('m-ingreso-extra-detalle')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
-    </div>
-    <div class="modal-body">
-      <div class="field-row">
-        <div class="field"><label>Monto</label><input id="ied-monto" type="number" min="0"></div>
-        <div class="field"><label>Fecha</label><input id="ied-fecha" type="date"></div>
-      </div>
-      <div class="field-row">
-        <div class="field"><label>Método</label><select id="ied-metodo" onchange="iedActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
-        <div class="field"><label>Cuenta</label><select id="ied-cuenta"></select></div>
-      </div>
-      <div class="field"><label>Categoría</label><select id="ied-cat"><option>Consultoría</option><option>Venta de producto</option><option>Donativo</option><option>Patrocinio</option><option>Capacitación</option><option>Otro</option></select></div>
-      <label class="checkrow" id="ied-conciliado" onclick="this.classList.toggle('on')"><span class="cbox"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span><span><span class="ct">Conciliado con banco</span></span></label>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal('m-ingreso-extra-detalle')">Cerrar</button>
-      <button class="btn btn-primary" onclick="guardarIngresoExtraDetalle()">Guardar cambios</button>
-    </div>
-  </div>
-</div>
+<script src="./js/app.js?v=202606291100"></script>
 </body>
 </html>
