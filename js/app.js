@@ -63,7 +63,7 @@ window._loginSubmit  = loginSubmit;
 window._loginKeydown = loginKeydown;
 
 // ── 0. URL del Apps Script (ÚNICO lugar donde se configura) ──────
-var GS_URL = 'https://script.google.com/macros/s/AKfycbwh9YoKdHeFM4aNXTgeYE4d7JhAh2cyl7Bt20JInEw_D1ey7t7pK69RN1mblEiwCdU9Nw/exec';
+var GS_URL = 'https://script.google.com/macros/s/AKfycbwSIiqSjkppTOgHPLm87gPrmsfhltMktdic6KwZHzVkdIDKOw0z9Y0Y2w0Cl3tRrZVRyw/exec';
 
 // ── 1. Helper universal de conexión ─────────────────────────────
 //     Sin headers → sin preflight → sin error CORS
@@ -378,24 +378,8 @@ async function cargarTodo() {
       });
     }
 
-    // Cargar ingresos extras desde Sheets
-    if(rIngExt && rIngExt.ok && rIngExt.data){
-      ingresosExtras = rIngExt.data.map(function(ie){
-        return {
-          id:         ie.id,
-          concepto:   ie.concepto  || '',
-          cliente:    ie.cliente   || '—',
-          monto:      Number(ie.monto) || 0,
-          fecha:      (ie.fecha||'').slice(0,10),
-          metodo:     ie.metodo    || '',
-          cuenta:     ie.cuenta    || '',
-          cat:        ie.cat       || '',
-          conciliado: (ie.conciliado==='Sí'||ie.conciliado===true)
-        };
-      });
-    }
-
     // Ingresos extras desde Sheets
+    console.log('[CDC] rIngExt:', JSON.stringify(rIngExt).slice(0,200));
     if(rIngExt && rIngExt.ok && rIngExt.data){
       ingresosExtras = rIngExt.data.map(function(ie){
         return {
