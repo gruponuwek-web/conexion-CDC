@@ -122,7 +122,7 @@ function avanzarFactura(id){
   renderFacturas(); renderNav();
   abrirFacturaDetalle(id);
   toast('Factura de '+f.cliente+' → '+sig);
-  gs('updateFactura', {id:id, estatus:sig, folio:f.folio||'', actualizadoEn:new Date().toISOString()})
+  gs('updateFactura', {IDFactura:id, estatus:sig, folio:f.folio||'', actualizadoEn:new Date().toISOString()})
     .catch(function(e){ console.error('[CDC GS] updateFactura:',e); });
 }
 
