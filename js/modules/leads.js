@@ -371,8 +371,8 @@ function guardarEtapaActividad(){
     toast(l.nombre+' → '+etapaActCtx.etapa);
   }
   closeModal('m-etapa-actividad');
-  renderLeads(); renderNav();
-  if(pantallaActual==='hoy'){ renderActividades(actFiltro); renderActChips(); }
+  renderLeads(); renderNav(); renderActChips();
+  if(pantallaActual==='hoy') renderActividades(actFiltro);
 }
 
 function openNuevoLead(){
