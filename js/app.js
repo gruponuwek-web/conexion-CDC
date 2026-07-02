@@ -1192,7 +1192,9 @@ async function _syncBackground() {
   _ultimoSync = ahora;
   try {
     await cargarTodo(true); // silent: sin loader ni error visible
-    nav(pantallaActual);    // re-renderizar pantalla actual con datos frescos
+    // no re-renderizar si hay un modal abierto (perdería datos del formulario)
+    var modalAbierto = document.querySelector('.modal.open');
+    if (!modalAbierto) nav(pantallaActual);
   } catch(e) {
     console.warn('[CDC Sync] Error en sync background:', e);
   } finally {
