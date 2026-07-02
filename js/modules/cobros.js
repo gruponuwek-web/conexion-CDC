@@ -51,6 +51,7 @@ function registrarCobroInline(clienteId, n){
   recomputeCliente(x.c);
   renderClientes(); renderNav();
   toast('Cobro de '+money(monto)+' registrado'+(requiereFactura?' · factura en cola':''));
+  if(requiereFactura) setTimeout(function(){ toast('Genera la factura en el módulo Facturas'); }, 2800);
   // Guardar en Sheets
   var ahora = new Date().toISOString();
   var sesId = 's-'+clienteId+'-'+n;
@@ -115,7 +116,24 @@ function registrarCobro(){
   toast('Cobro de '+money(monto)+' registrado'+(requiereFactura?' · factura en cola':''));
   // Guardar en Sheets
   var ahora = new Date().toISOString();
+  var hoy = ahora.slice(0,10);
   var sesId = 's-'+sesionCtx.clienteId+'-'+sesionCtx.n;
+  if(requiereFactura){
+    var idFactAct = 'fact-'+sesionCtx.clienteId+'-'+sesionCtx.n;
+    if(!getActividad(idFactAct)){
+      var actFact = {id:idFactAct, prospecto:x.c.nombre, refTipo:'cliente', refId:sesionCtx.clienteId,
+        tipo:'Generar factura sesión '+sesionCtx.n, fecha:hoy, hora:'10:00',
+        grupo:'hoy', done:false, urgente:false,
+        contexto:'Sesión '+sesionCtx.n+' cobrada por '+money(monto)+'. Factura CFDI pendiente de generar en módulo Facturas.'};
+      actividadesData.push(actFact);
+      gs('createCita', {id:idFactAct, prospecto:x.c.nombre, refTipo:'cliente', refId:sesionCtx.clienteId,
+        tipo:'Generar factura sesión '+sesionCtx.n, fecha:hoy, hora:'10:00', grupo:'hoy',
+        done:'No', urgente:'No', contexto:actFact.contexto, creadoEn:ahora, actualizadoEn:ahora
+      }).catch(function(e){ console.error('[CDC GS] createCita factura:',e); });
+      renderActChips(); renderNav();
+      if(pantallaActual==='hoy') renderActividades(actFiltro);
+    }
+  }
   gs('updateSesion', {id:sesId, estado:'done', fecha:x.s.fecha,
     precio:monto, cobrada:'Sí', facturaRequerida:(requiereFactura?'Sí':'No'),
     actualizadoEn:ahora

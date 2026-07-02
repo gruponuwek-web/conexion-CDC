@@ -1,34 +1,31 @@
 // ══════════════════════════════════════════════════════════════
 //  CDC CRM/ERP · Clínica del Cerebro · Apps Script Backend
 //  Patrón: Grupo Nuwek CORS Guide · e.parameter.data
+//  Todos los IDs usan campo 'id' minúscula (alineado con app.js)
 // ══════════════════════════════════════════════════════════════
 
 const SHEET_NAMES = {
-  leads:    'Leads',
-  clientes: 'Clientes',
-  agenda:   'Agenda',
-  sesiones: 'Sesiones',
-  cobros:   'Cobros',
-  egresos:  'Egresos',
-  facturas: 'Facturas',
-  usuarios: 'Usuarios',
-  config:   'Config',
-  listas:   'Listas',
+  leads:          'Leads',
+  clientes:       'Clientes',
+  agenda:         'Agenda',
+  sesiones:       'Sesiones',
+  cobros:         'Cobros',
+  egresos:        'Egresos',
+  facturas:       'Facturas',
+  ingresosExtras: 'IngresosExtras',
+  usuarios:       'Usuarios',
+  config:         'Config',
+  listas:         'Listas',
 };
 
-// ── Entradas ────────────────────────────────────────────────────
 function doGet(e)  { return handle(e); }
 function doPost(e) { return handle(e); }
 
-// ── Router principal (patrón exacto del PDF Grupo Nuwek) ────────
 function handle(e) {
   const p = (e && e.parameter) || {};
 
-  // Leer data desde e.parameter.data (URLSearchParams desde el front)
   let data = {};
   try { if (p.data) data = JSON.parse(p.data); } catch (_) {}
-
-  // Fallback: si alguien manda JSON crudo en el body
   if (e && e.postData && e.postData.contents && !p.data) {
     try { data = JSON.parse(e.postData.contents); } catch (_) {}
   }
@@ -36,39 +33,57 @@ function handle(e) {
   let out;
   try {
     switch (p.action) {
-      case 'ping':          out = { status: 'Clínica del Cerebro API activa', version: '2.0.0' }; break;
+      case 'ping':
+        out = { status: 'Clínica del Cerebro API activa', version: '3.0.1' };
+        break;
 
-      case 'getLeads':      out = getRows(SHEET_NAMES.leads);                                      break;
-      case 'createLead':    out = appendRow(SHEET_NAMES.leads, data);                              break;
-      case 'updateLead':    out = updateRowById(SHEET_NAMES.leads, 'IDLead', data.IDLead, data);   break;
+      // ── LEADS ─────────────────────────────────────────────────
+      case 'getLeads':      out = getRows(SHEET_NAMES.leads);                              break;
+      case 'createLead':    out = appendRow(SHEET_NAMES.leads, data);                      break;
+      case 'updateLead':    out = updateById(SHEET_NAMES.leads, data);                     break;
 
-      case 'getClientes':   out = getRows(SHEET_NAMES.clientes);                                   break;
-      case 'createCliente': out = appendRow(SHEET_NAMES.clientes, normalizeCliente(data));         break;
-      case 'updateCliente': out = updateRowById(SHEET_NAMES.clientes, 'IDCliente', data.IDCliente, normalizeCliente(data)); break;
+      // ── CLIENTES ──────────────────────────────────────────────
+      case 'getClientes':   out = getRows(SHEET_NAMES.clientes);                           break;
+      case 'createCliente': out = appendRow(SHEET_NAMES.clientes, data);                   break;
+      case 'updateCliente': out = updateById(SHEET_NAMES.clientes, data);                  break;
 
-      case 'getAgenda':     out = getRows(SHEET_NAMES.agenda);                                     break;
-      case 'createCita':    out = appendRow(SHEET_NAMES.agenda, data);                             break;
-      case 'updateCita':    out = updateRowById(SHEET_NAMES.agenda, 'IDCita', data.IDCita, data);  break;
+      // ── AGENDA ────────────────────────────────────────────────
+      case 'getAgenda':
+      case 'getActividades':  out = getRows(SHEET_NAMES.agenda);                           break;
+      case 'createCita':      out = appendRow(SHEET_NAMES.agenda, data);                   break;
+      case 'updateCita':      out = updateById(SHEET_NAMES.agenda, data);                  break;
 
-      case 'getSesiones':   out = getRows(SHEET_NAMES.sesiones);                                   break;
-      case 'createSesion':  out = appendRow(SHEET_NAMES.sesiones, data);                           break;
-      case 'updateSesion':  out = updateRowById(SHEET_NAMES.sesiones, 'IDSesion', data.IDSesion, data); break;
+      // ── SESIONES ──────────────────────────────────────────────
+      case 'getSesiones':    out = getRows(SHEET_NAMES.sesiones);                          break;
+      case 'createSesion':   out = appendRow(SHEET_NAMES.sesiones, data);                  break;
+      case 'createSesiones': out = appendRows(SHEET_NAMES.sesiones, data.sesiones);        break;
+      case 'updateSesion':   out = updateById(SHEET_NAMES.sesiones, data);                 break;
 
-      case 'getCobros':     out = getRows(SHEET_NAMES.cobros);                                     break;
-      case 'createCobro':   out = appendRow(SHEET_NAMES.cobros, data);                             break;
-      case 'updateCobro':   out = updateRowById(SHEET_NAMES.cobros, 'IDCobro', data.IDCobro, data); break;
+      // ── COBROS ────────────────────────────────────────────────
+      case 'getCobros':     out = getRows(SHEET_NAMES.cobros);                             break;
+      case 'createCobro':   out = appendRow(SHEET_NAMES.cobros, data);                     break;
+      case 'updateCobro':   out = updateById(SHEET_NAMES.cobros, data);                    break;
 
-      case 'getEgresos':    out = getRows(SHEET_NAMES.egresos);                                    break;
-      case 'createEgreso':  out = appendRow(SHEET_NAMES.egresos, data);                            break;
-      case 'updateEgreso':  out = updateRowById(SHEET_NAMES.egresos, 'IDEgreso', data.IDEgreso, data); break;
+      // ── EGRESOS ───────────────────────────────────────────────
+      case 'getEgresos':    out = getRows(SHEET_NAMES.egresos);                            break;
+      case 'createEgreso':  out = appendRow(SHEET_NAMES.egresos, data);                    break;
+      case 'updateEgreso':  out = updateById(SHEET_NAMES.egresos, data);                   break;
 
-      case 'getFacturas':   out = getRows(SHEET_NAMES.facturas);                                   break;
-      case 'createFactura': out = appendRow(SHEET_NAMES.facturas, data);                           break;
-      case 'updateFactura': out = updateRowById(SHEET_NAMES.facturas, 'IDFactura', data.IDFactura, data); break;
+      // ── FACTURAS ──────────────────────────────────────────────
+      case 'getFacturas':   out = getRows(SHEET_NAMES.facturas);                           break;
+      case 'createFactura': out = appendRow(SHEET_NAMES.facturas, data);                   break;
+      case 'updateFactura': out = updateById(SHEET_NAMES.facturas, data);                  break;
 
-      case 'getUsuarios':   out = getRows(SHEET_NAMES.usuarios);                                   break;
-      case 'getConfig':     out = getRows(SHEET_NAMES.config);                                     break;
-      case 'getListas':     out = getRows(SHEET_NAMES.listas);                                     break;
+      // ── INGRESOS EXTRAS ───────────────────────────────────────
+      case 'getIngresosExtras':    out = getRows(SHEET_NAMES.ingresosExtras);              break;
+      case 'createIngresoExtra':   out = appendRow(SHEET_NAMES.ingresosExtras, data);      break;
+      case 'updateIngresoExtra':   out = updateById(SHEET_NAMES.ingresosExtras, data);     break;
+
+      // ── CATÁLOGOS ─────────────────────────────────────────────
+      case 'getUsuarios':   out = getRows(SHEET_NAMES.usuarios);                           break;
+      case 'getConfig':     out = getRows(SHEET_NAMES.config);                             break;
+      case 'setConfig':     out = upsertConfig(SHEET_NAMES.config, data.key, data.valor);  break;
+      case 'getListas':     out = getRows(SHEET_NAMES.listas);                             break;
 
       default:
         out = { ok: false, error: 'Accion no reconocida: ' + p.action };
@@ -79,11 +94,10 @@ function handle(e) {
     return jsonOut(JSON.stringify(out), p.callback);
   }
 
-  const json = JSON.stringify({ ok: true, data: out });
-  return jsonOut(json, p.callback);
+  return jsonOut(JSON.stringify({ ok: true, data: out }), p.callback);
 }
 
-// ── JSONP support (Plan B del PDF) ──────────────────────────────
+// ── JSONP support ────────────────────────────────────────────────
 function jsonOut(json, callback) {
   return callback
     ? ContentService.createTextOutput(callback + '(' + json + ')')
@@ -92,7 +106,9 @@ function jsonOut(json, callback) {
         .setMimeType(ContentService.MimeType.JSON);
 }
 
-// ── Utilidades de Sheets ─────────────────────────────────────────
+// ════════════════════════════════════════════════════════════════
+//  UTILIDADES DE SHEETS
+// ════════════════════════════════════════════════════════════════
 
 function getRows(sheetName) {
   const sheet = getSheet(sheetName);
@@ -101,12 +117,25 @@ function getRows(sheetName) {
   const headers = values[0];
   return values
     .slice(1)
-    .filter(row => row.some(Boolean))
+    .filter(row => row.some(v => v !== '' && v !== null && v !== undefined))
     .map(row => {
       const obj = {};
       headers.forEach((h, i) => { obj[h] = row[i]; });
       return obj;
     });
+}
+
+function appendRows(sheetName, rows) {
+  if (!rows || !rows.length) return { count: 0 };
+  var sheet = getSheet(sheetName);
+  var headers = sheet.getRange(1, 1, 1, sheet.getLastColumn()).getValues()[0];
+  var matrix = rows.map(function(data) {
+    return headers.map(function(h) {
+      return Object.prototype.hasOwnProperty.call(data, h) ? data[h] : '';
+    });
+  });
+  sheet.getRange(sheet.getLastRow() + 1, 1, matrix.length, headers.length).setValues(matrix);
+  return { count: matrix.length };
 }
 
 function appendRow(sheetName, data) {
@@ -116,27 +145,30 @@ function appendRow(sheetName, data) {
     Object.prototype.hasOwnProperty.call(data, h) ? data[h] : ''
   );
   sheet.appendRow(row);
-  return data;
+  return { id: data.id || '' };
 }
 
-function updateRowById(sheetName, idHeader, idValue, data) {
-  if (!idValue) throw new Error('Falta ID para actualizar');
+// updateById — busca siempre por columna 'id' (minúscula)
+function updateById(sheetName, data) {
+  if (!data.id) throw new Error('Falta campo id para actualizar en ' + sheetName);
+
   const sheet = getSheet(sheetName);
   const values = sheet.getDataRange().getValues();
   const headers = values[0];
-  const idCol = headers.indexOf(idHeader);
-  if (idCol < 0) throw new Error('No existe columna: ' + idHeader);
+  const idCol = headers.indexOf('id');
+
+  if (idCol < 0) throw new Error('No existe columna "id" en hoja: ' + sheetName);
 
   for (let i = 1; i < values.length; i++) {
-    if (String(values[i][idCol]) === String(idValue)) {
+    if (String(values[i][idCol]) === String(data.id)) {
       const newRow = headers.map((h, col) =>
         Object.prototype.hasOwnProperty.call(data, h) ? data[h] : values[i][col]
       );
       sheet.getRange(i + 1, 1, 1, headers.length).setValues([newRow]);
-      return data;
+      return { id: data.id };
     }
   }
-  throw new Error('Registro no encontrado: ' + idValue);
+  throw new Error('Registro no encontrado: ' + data.id + ' en ' + sheetName);
 }
 
 function getSheet(sheetName) {
@@ -145,25 +177,24 @@ function getSheet(sheetName) {
   return sheet;
 }
 
-function normalizeCliente(data) {
-  return {
-    IDCliente:           data.IDCliente || '',
-    IDLead:              data.IDLead || '',
-    FechaAltaCliente:    data.FechaAltaCliente || new Date(),
-    NombreContacto:      data.NombreContacto || '',
-    Correo:              data.Correo || '',
-    Celular:             data.Celular || '',
-    NombrePaciente:      data.NombrePaciente || '',
-    Servicio:            data.Servicio || '',
-    FechaInicio:         data.FechaInicio || '',
-    SesionesContratadas: data.SesionesContratadas || '',
-    SesionesRealizadas:  data.SesionesRealizadas || 0,
-    MontoTotal:          data.MontoTotal || 0,
-    TotalCobrado:        data.TotalCobrado || 0,
-    SaldoPendiente:      data.SaldoPendiente || 0,
-    Estado:              data.Estado || 'Activo',
-    Responsable:         data.Responsable || '',
-    Notas:               data.Notas || '',
-    FechaActualizacion:  new Date(),
-  };
+// upsertConfig — actualiza una fila si key existe, si no la crea
+function upsertConfig(sheetName, key, valor) {
+  if (!key) throw new Error('Falta key en setConfig');
+  const sheet = getSheet(sheetName);
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0]; // ['key','valor']
+  const keyCol = headers.indexOf('key');
+  const valCol = headers.indexOf('valor');
+  if (keyCol < 0 || valCol < 0) throw new Error('La hoja Config necesita columnas "key" y "valor"');
+  // Buscar fila existente
+  for (let i = 1; i < values.length; i++) {
+    if (String(values[i][keyCol]) === String(key)) {
+      sheet.getRange(i + 1, valCol + 1).setValue(valor);
+      return { key: key, action: 'updated' };
+    }
+  }
+  // No existe → agregar fila nueva
+  const newRow = headers.map(h => h === 'key' ? key : (h === 'valor' ? valor : ''));
+  sheet.appendRow(newRow);
+  return { key: key, action: 'created' };
 }

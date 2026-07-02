@@ -273,7 +273,7 @@ async function cargarTodo() {
     if (typeof actividades    !== 'undefined') actividades    = CDC.actividades;
     if (typeof egresosData    !== 'undefined') egresosData    = CDC.egresos;
     if (typeof pagosFijos     !== 'undefined') pagosFijos     = CDC.pagosFijos;
-    if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas;
+    if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas.map(function(f){ return {id:f.id, cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
 
     // Normalizar cobros → ingresosData
     // Construir índice clienteId → nombre para lookup rápido

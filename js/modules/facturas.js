@@ -35,7 +35,7 @@ async function _recargarFacturas() {
   var r = await gs('getFacturas');
   if (r.ok) {
     CDC.facturas = r.data;
-    if (typeof facturasData !== 'undefined') facturasData = CDC.facturas;
+    if (typeof facturasData !== 'undefined') facturasData = CDC.facturas.map(function(f){ return {id:f.id, cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
     if (typeof renderFacturas !== 'undefined') renderFacturas();
   }
 }
@@ -120,9 +120,14 @@ function avanzarFactura(id){
   }
   f.estado = sig;
   renderFacturas(); renderNav();
-  abrirFacturaDetalle(id);
-  toast('Factura de '+f.cliente+' → '+sig);
-  gs('updateFactura', {IDFactura:id, estatus:sig, folio:f.folio||'', actualizadoEn:new Date().toISOString()})
+  if(sig === FACT_SEQ[FACT_SEQ.length-1]){
+    closeModal('m-factura-detalle');
+    toast('Factura de '+f.cliente+' completada ✓');
+  } else {
+    abrirFacturaDetalle(id);
+    toast('Factura de '+f.cliente+' → '+sig);
+  }
+  gs('updateFactura', {id:id, estatus:sig, folio:f.folio||'', actualizadoEn:new Date().toISOString()})
     .catch(function(e){ console.error('[CDC GS] updateFactura:',e); });
 }
 

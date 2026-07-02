@@ -92,7 +92,24 @@ function registrarCobroNext(clienteId, n){
   renderClientes(); renderNav();
   toast('Cobro de '+money(monto)+' registrado'+(requiereFactura?' · factura en cola':''));
   var ahora = new Date().toISOString();
+  var hoy = ahora.slice(0,10);
   var sesId = 's-'+clienteId+'-'+n;
+  if(requiereFactura){
+    var idFactAct = 'fact-'+clienteId+'-'+n;
+    if(!getActividad(idFactAct)){
+      var actFact = {id:idFactAct, prospecto:x.c.nombre, refTipo:'cliente', refId:clienteId,
+        tipo:'Generar factura sesión '+n, fecha:hoy, hora:'10:00',
+        grupo:'hoy', done:false, urgente:false,
+        contexto:'Sesión '+n+' cobrada por '+money(monto)+'. Factura CFDI pendiente de generar en módulo Facturas.'};
+      actividadesData.push(actFact);
+      gs('createCita', {id:idFactAct, prospecto:x.c.nombre, refTipo:'cliente', refId:clienteId,
+        tipo:'Generar factura sesión '+n, fecha:hoy, hora:'10:00', grupo:'hoy',
+        done:'No', urgente:'No', contexto:actFact.contexto, creadoEn:ahora, actualizadoEn:ahora
+      }).catch(function(e){ console.error('[CDC GS] createCita factura:',e); });
+      renderActChips(); renderNav();
+      if(pantallaActual==='hoy') renderActividades(actFiltro);
+    }
+  }
   gs('updateSesion', {id:sesId, estado:'done', fecha:fecha, precio:monto,
     cobrada:'Sí', facturaRequerida:(requiereFactura?'Sí':'No'), actualizadoEn:ahora
   }).catch(function(e){ console.error('[CDC GS] updateSesion next:',e); });
@@ -347,7 +364,7 @@ function marcarImpartida(){
   x.s.notas=$('ses-ed-notas').value;
   x.s.estado='next';
   closeModal('m-ses-editar'); renderClientes();
-  toast('Sesi\u00f3n '+sesionCtx.n+' marcada como impartida · pendiente de cobro');
+  toast('Sesión '+sesionCtx.n+' confirmada ✓');
 
   var ahora = new Date().toISOString();
 

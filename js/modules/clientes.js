@@ -366,18 +366,14 @@ function activarCliente(){
     cobrado:0, porCobrar:mt, actualizadoEn:ahora
   }).then(function(r){ if(!r.ok) console.error('[CDC GS] updateCliente activar:',r.error); })
     .catch(function(e){ console.error('[CDC GS] updateCliente error:',e); });
-  // Crear todas las sesiones en una sola llamada (evita rate limiting)
-  var sesionesPayload = c.sesiones.map(function(s){
-    return {
-      id:'s-'+c.id+'-'+s.n, clienteId:c.id,
-      n:s.n, estado:s.estado, fecha:s.fecha||'',
-      hora:s.hora||'', notas:'', precio:s.precio,
-      cobrada:'No', facturaRequerida:'No', folioCFDI:'',
-      creadoEn:ahora, actualizadoEn:ahora
-    };
-  });
-  gs('createSesiones', { sesiones: sesionesPayload })
-    .then(function(r){ if(!r.ok) console.error('[CDC GS] createSesiones:', r.error); })
-    .catch(function(e){ console.error('[CDC GS] createSesiones error:',e); });
+  gs('createSesiones', {
+    sesiones: c.sesiones.map(function(s){
+      return {id:'s-'+c.id+'-'+s.n, clienteId:c.id,
+        n:s.n, estado:s.estado, fecha:s.fecha||'',
+        hora:s.hora||'', notas:'', precio:s.precio,
+        cobrada:'No', facturaRequerida:'No', folioCFDI:'',
+        creadoEn:ahora, actualizadoEn:ahora};
+    })
+  }).catch(function(e){ console.error('[CDC GS] createSesiones error:',e); });
 }
 
