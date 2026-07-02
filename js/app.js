@@ -138,8 +138,8 @@ var dashFiltroAnio  = new Date().getFullYear().toString();
 var dashFiltroMeses = []; // [] = todos los meses
 
 // ── 4. Carga inicial de todos los módulos ────────────────────────
-async function cargarTodo() {
-  mostrarLoader(true);
+async function cargarTodo(silent) {
+  if(!silent) mostrarLoader(true);
   try {
     var [rLeads, rClientes, rSes, rActs, rEg, rPF, rFact, rCobros, rIngExt] = await Promise.all([
       gs('getLeads'),
@@ -366,10 +366,10 @@ async function cargarTodo() {
     if(pantallaActual==='tableros' && typeof renderTableros==='function') renderTableros();
 
   } catch (err) {
-    mostrarError('Error de conexión con Google Sheets: ' + err.toString());
+    if(!silent) mostrarError('Error de conexión con Google Sheets: ' + err.toString());
     console.error('[CDC GS] cargarTodo falló:', err);
   }
-  mostrarLoader(false);
+  if(!silent) mostrarLoader(false);
 }
 
 // ════════════════════════════════════════════════════════════════
@@ -1176,6 +1176,37 @@ function eliminarItemLista(key, val){
 }
 
 function adm_keydown(e){ if(e.key==='Enter') guardarNuevoItem(); }
+
+/* ============================================================
+   SYNC — sincronización silenciosa en background cada 30s
+   ============================================================ */
+var _syncEnCurso = false;
+var _ultimoSync = 0;
+var SYNC_INTERVALO = 20000; // 20 segundos
+
+async function _syncBackground() {
+  if (!sesionActiva || _syncEnCurso) return;
+  var ahora = Date.now();
+  if (ahora - _ultimoSync < SYNC_INTERVALO) return; // throttle
+  _syncEnCurso = true;
+  _ultimoSync = ahora;
+  try {
+    await cargarTodo(true); // silent: sin loader ni error visible
+    nav(pantallaActual);    // re-renderizar pantalla actual con datos frescos
+  } catch(e) {
+    console.warn('[CDC Sync] Error en sync background:', e);
+  } finally {
+    _syncEnCurso = false;
+  }
+}
+
+// Sync cada 30 segundos
+setInterval(function(){ _syncBackground(); }, SYNC_INTERVALO);
+
+// Sync al recuperar foco (solo si pasaron 30s desde el último sync)
+window.addEventListener('visibilitychange', function(){
+  if (document.visibilityState === 'visible') _syncBackground();
+});
 
 /* ============================================================
    INIT — único punto de arranque
