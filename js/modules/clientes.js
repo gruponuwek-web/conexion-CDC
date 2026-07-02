@@ -267,6 +267,17 @@ function abrirOnboarding(clienteId, fresh, prevEtapa, leadId){
   openModal('m-onboarding');
 }
 
+function guardarOnboarding(){
+  closeModal('m-onboarding');
+  if(!onbCtx) return;
+  var c = getCliente(onbCtx.clienteId); if(!c) return;
+  gs('updateCliente', {
+    id: c.id,
+    onboarding: JSON.stringify(c.onboarding),
+    actualizadoEn: new Date().toISOString()
+  }).catch(function(e){ console.error('[CDC GS] guardarOnboarding:', e); });
+}
+
 function cancelarOnboarding(){
   if(!onbCtx){ closeModal('m-onboarding'); return; }
   if(onbCtx.fresh){

@@ -208,7 +208,10 @@ async function cargarTodo(silent) {
           c.cobrado   = doneN * c.precioSes;
           c.porCobrar = c.monto - c.cobrado;
         }
-        if (!c.onboarding) c.onboarding = {contrato:false,anticipo:false,consent:false,neurometria:false,expediente:false,protocolo:false,calendario:false};
+        // Parsear onboarding si viene de Sheets como JSON string
+        if (typeof c.onboarding === 'string') { try { c.onboarding = JSON.parse(c.onboarding); } catch(e) { c.onboarding = null; } }
+        if (!c.onboarding || typeof c.onboarding !== 'object' || Array.isArray(c.onboarding))
+          c.onboarding = {contrato:false,anticipo:false,consent:false,neurometria:false,expediente:false,protocolo:false,calendario:false};
         return c;
       });
       clientesData = CDC.clientes;
@@ -1193,7 +1196,21 @@ async function _syncBackground() {
   _syncEnCurso = true;
   _ultimoSync = ahora;
   try {
+    // Preservar estado del onboarding si el modal está abierto
+    var onbBackup = null;
+    if (typeof onbCtx !== 'undefined' && onbCtx && document.querySelector('#m-onboarding.open')) {
+      var _c = (typeof getCliente === 'function') ? getCliente(onbCtx.clienteId) : null;
+      if (_c && _c.onboarding) onbBackup = {clienteId: onbCtx.clienteId, onboarding: JSON.parse(JSON.stringify(_c.onboarding))};
+    }
+
     await cargarTodo(true); // silent: sin loader ni error visible
+
+    // Restaurar estado onboarding tras el sync
+    if (onbBackup) {
+      var _cr = (typeof getCliente === 'function') ? getCliente(onbBackup.clienteId) : null;
+      if (_cr) { _cr.onboarding = onbBackup.onboarding; if (typeof obRecalc === 'function') obRecalc(); }
+    }
+
     // no re-renderizar si hay un modal abierto (perdería datos del formulario)
     var modalAbierto = document.querySelector('.modal.open');
     if (!modalAbierto) nav(pantallaActual);
