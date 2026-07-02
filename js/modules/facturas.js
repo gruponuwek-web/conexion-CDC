@@ -40,6 +40,70 @@ async function _recargarFacturas() {
   }
 }
 
+// ── Estado de filtro de facturas ─────────────────────────────
+var factFiltroMes  = '';
+var factFiltroAnio = '';
+
+var FACT_MESES = [
+  ['','Todos los meses'],['01','Enero'],['02','Febrero'],['03','Marzo'],
+  ['04','Abril'],['05','Mayo'],['06','Junio'],['07','Julio'],
+  ['08','Agosto'],['09','Septiembre'],['10','Octubre'],
+  ['11','Noviembre'],['12','Diciembre']
+];
+var FACT_MESES_LABEL = ['','Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
+
+function factFiltroHtml(){
+  var anios = [];
+  facturasData.forEach(function(f){
+    var a = (f.fecha||'').slice(0,4);
+    if(a && anios.indexOf(a)===-1) anios.push(a);
+  });
+  anios.sort().reverse();
+  var hoyAnio = new Date().getFullYear().toString();
+  if(anios.indexOf(hoyAnio)===-1) anios.unshift(hoyAnio);
+
+  var activo = factFiltroMes || factFiltroAnio;
+  var badgeTxt = '';
+  if(factFiltroMes && factFiltroAnio) badgeTxt = FACT_MESES_LABEL[parseInt(factFiltroMes,10)]+' '+factFiltroAnio;
+  else if(factFiltroMes) badgeTxt = FACT_MESES[parseInt(factFiltroMes,10)][1];
+  else if(factFiltroAnio) badgeTxt = factFiltroAnio;
+
+  var chevSvg = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>';
+
+  var mesItems = FACT_MESES.map(function(m){
+    return '<div class="fdd-item'+(factFiltroMes===m[0]?' selected':'')+'" onclick="setFactFiltroMes(\''+m[0]+'\')">'+m[1]+'</div>';
+  }).join('');
+
+  var anioItems = '<div class="fdd-item'+(factFiltroAnio===''?' selected':'')+'" onclick="setFactFiltroAnio(\'\')">Todos los años</div>'
+    + anios.map(function(a){
+        return '<div class="fdd-item'+(factFiltroAnio===a?' selected':'')+'" onclick="setFactFiltroAnio(\''+a+'\')">'+a+'</div>';
+      }).join('');
+
+  var mesTxt  = factFiltroMes  ? FACT_MESES[parseInt(factFiltroMes,10)][1] : 'Todos los meses';
+  var anioTxt = factFiltroAnio ? factFiltroAnio : 'Todos los años';
+
+  return '<div class="fin-filtro-bar">'
+    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" class="fin-filtro-ico"><path d="M3 4h18M7 10h10M10 16h4"/></svg>'
+    + '<span class="fin-filtro-label">Período</span>'
+    + '<div class="fdd" onclick="fddToggle(this)">'
+        + '<div class="fdd-val">'+mesTxt+chevSvg+'</div>'
+        + '<div class="fdd-list">'+mesItems+'</div>'
+    + '</div>'
+    + '<div class="fdd" onclick="fddToggle(this)">'
+        + '<div class="fdd-val">'+anioTxt+chevSvg+'</div>'
+        + '<div class="fdd-list">'+anioItems+'</div>'
+    + '</div>'
+    + (activo
+        ? '<span class="badge b-primary" style="margin-left:4px">'+badgeTxt+'</span>'
+          + '<button class="btn btn-ghost btn-sm fin-filtro-clear" onclick="limpiarFactFiltro()">✕ Limpiar</button>'
+        : '')
+    + '</div>';
+}
+
+function setFactFiltroMes(v){ factFiltroMes = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFacturas(); }
+function setFactFiltroAnio(v){ factFiltroAnio = v; document.querySelectorAll('.fdd.open').forEach(function(d){ d.classList.remove('open'); }); renderFacturas(); }
+function limpiarFactFiltro(){ factFiltroMes=''; factFiltroAnio=''; renderFacturas(); }
+
 function renderFacturasKpis(){
   setText('fk-por-crear', facturasData.filter(function(f){return f.estado==='Por crear';}).length);
   setText('fk-por-enviar', facturasData.filter(function(f){return f.estado==='Creada';}).length);
@@ -50,11 +114,23 @@ function renderFacturasKpis(){
 
 function renderFacturas(){
   renderFacturasKpis();
+  // Render filtro
+  var fg = $('fact-filtro-global');
+  if(fg) fg.innerHTML = factFiltroHtml();
+
   var cont=$('facturas-list'); if(!cont) return;
-  if(facturasData.length===0){ cont.innerHTML='<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><div>Sin facturas en cola. Se generan automáticamente al registrar un cobro con factura.</div></div>'; return; }
+
+  // Aplicar filtro de fecha
+  var lista = facturasData.filter(function(f){
+    if(factFiltroAnio && (f.fecha||'').slice(0,4) !== factFiltroAnio) return false;
+    if(factFiltroMes  && (f.fecha||'').slice(5,7) !== factFiltroMes)  return false;
+    return true;
+  });
+
+  if(lista.length===0){ cont.innerHTML='<div class="empty"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="1.8" stroke-linecap="round"><path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><path d="M14 2v6h6"/></svg><div>'+(factFiltroMes||factFiltroAnio?'Sin facturas para el período seleccionado.':'Sin facturas en cola. Se generan automáticamente al registrar un cobro con factura.')+'</div></div>'; return; }
   var orden = {'Por crear':0,'Creada':1,'Enviada':2,'Completada':3};
   var html='';
-  facturasData.slice().sort(function(a,b){return orden[a.estado]-orden[b.estado];}).forEach(function(f){
+  lista.slice().sort(function(a,b){return orden[a.estado]-orden[b.estado];}).forEach(function(f){
     html += '<div class="acc" style="cursor:pointer;margin-bottom:11px" onclick="abrirFacturaDetalle(\''+f.id+'\')"><div class="acc-head">'
       + '<div class="acc-stripe" style="background:var(--'+(FACT_BADGE[f.estado]||'b-gray').replace('b-','')+')"></div>'
       + '<div class="acc-av" style="background:linear-gradient(135deg,#1AA398,#0E6E66)">'+ico('doc')+'</div>'
@@ -64,6 +140,7 @@ function renderFacturas(){
   });
   cont.innerHTML = html;
 }
+
 
 function agregarFacturaPendiente(cliente, sesionNum, monto, fecha){
   facturasData.push({id:uid('f'), cliente:cliente.nombre, sesion:sesionNum, monto:monto, fecha:fecha||HOY, estado:'Por crear', folio:'', rfc:cliente.rfc||'', razonSocial:cliente.razonSocial||cliente.nombre, usoCFDI:cliente.usoCFDI||'D01 · Honorarios médicos'});
