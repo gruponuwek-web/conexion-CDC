@@ -292,11 +292,17 @@ function cambiarEtapaLead(id, nuevaEtapa, fromDrag){
 }
 
 function setLeadActividad(l, tipo, fecha, hora, nota){
-  // reemplaza la actividad abierta previa de este lead
-  actividadesData = actividadesData.filter(function(a){ return !(a.refTipo==='lead' && a.refId===l.id && !a.done); });
+  var idAct = 'etapa-' + l.id + '-' + l.etapa;
+  var existente = actividadesData.find(function(a){ return a.id === idAct && !a.done; });
+  if(existente){
+    existente.tipo = tipo; existente.fecha = fecha; existente.hora = hora;
+    existente.grupo = clasificarGrupo(fecha);
+    existente._updated = true;
+    return existente;
+  }
   l.sigAct = tipo; l.sigFecha = fecha; l.sigHora = hora;
   var nuevaAct = {
-    id:uid('a'), prospecto:l.nombre, refTipo:'lead', refId:l.id, tipo:tipo, fecha:fecha, hora:hora,
+    id: idAct, prospecto:l.nombre, refTipo:'lead', refId:l.id, tipo:tipo, fecha:fecha, hora:hora,
     grupo:clasificarGrupo(fecha), done:false, urgente:(clasificarGrupo(fecha)==='vencido'),
     contexto: (nota && nota.trim()) ? nota.trim() : (l.padecimiento+' · '+tipo+' tras pasar a '+l.etapa+'.')
   };
@@ -342,22 +348,26 @@ function guardarEtapaActividad(){
     toast('Actividad "'+tipo+'" agendada · '+fechaHoraTxt(fecha,hora));
     if(nuevaAct){
       var ahora = new Date().toISOString();
-      gs('createCita', {
-        id:nuevaAct.id, prospecto:nuevaAct.prospecto,
-        refTipo:nuevaAct.refTipo, refId:String(nuevaAct.refId),
-        tipo:nuevaAct.tipo, fecha:nuevaAct.fecha, hora:nuevaAct.hora||'',
-        grupo:nuevaAct.grupo, done:'No',
-        urgente:(nuevaAct.urgente?'Sí':'No'),
-        contexto:nuevaAct.contexto||'',
-        creadoEn:ahora, actualizadoEn:ahora
-      }).then(function(r){
-        if(!r.ok) console.error('[CDC GS] createCita:', r.error);
-        else console.info('[CDC GS] Actividad guardada:', nuevaAct.tipo, nuevaAct.prospecto);
-      }).catch(function(e){ console.error('[CDC GS] createCita:',e); });
+      if(nuevaAct._updated){
+        gs('updateCita', {
+          id:nuevaAct.id, tipo:nuevaAct.tipo, fecha:nuevaAct.fecha,
+          hora:nuevaAct.hora||'', grupo:nuevaAct.grupo, actualizadoEn:ahora
+        }).catch(function(e){ console.error('[CDC GS] updateCita etapa:',e); });
+        delete nuevaAct._updated;
+      } else {
+        gs('createCita', {
+          id:nuevaAct.id, prospecto:nuevaAct.prospecto,
+          refTipo:nuevaAct.refTipo, refId:String(nuevaAct.refId),
+          tipo:nuevaAct.tipo, fecha:nuevaAct.fecha, hora:nuevaAct.hora||'',
+          grupo:nuevaAct.grupo, done:'No',
+          urgente:(nuevaAct.urgente?'Sí':'No'),
+          contexto:nuevaAct.contexto||'',
+          creadoEn:ahora, actualizadoEn:ahora
+        }).catch(function(e){ console.error('[CDC GS] createCita:',e); });
+      }
     }
   } else {
     l.sigAct=''; l.sigFecha=''; l.sigHora='';
-    actividadesData = actividadesData.filter(function(a){ return !(a.refTipo==='lead' && a.refId===l.id && !a.done); });
     toast(l.nombre+' → '+etapaActCtx.etapa);
   }
   closeModal('m-etapa-actividad');
