@@ -560,10 +560,12 @@ function initials(nombre){
 }
 function fechaLarga(iso){
   if(!iso) return '—';
-  var d = new Date(iso+'T00:00:00');
+  var dateStr = String(iso).substring(0, 10); // soporta ISO completo y YYYY-MM-DD
+  var d = new Date(dateStr+'T00:00:00');
   if(isNaN(d)) return iso;
   var meses=['ene','feb','mar','abr','may','jun','jul','ago','sep','oct','nov','dic'];
-  return d.getDate()+' '+meses[d.getMonth()]+' '+d.getFullYear();
+  var anio = String(d.getFullYear()).slice(-2);
+  return d.getDate()+' '+meses[d.getMonth()]+' \''+anio;
 }
 function horaTxt(h){
   if(!h) return '';
