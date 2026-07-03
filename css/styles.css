@@ -311,6 +311,12 @@ table.tbl{width:100%;border-collapse:collapse}
 .dash-mes-chip{padding:5px 10px;border-radius:20px;font-size:12px;font-weight:600;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink-3);cursor:pointer;transition:.14s;line-height:1}
 .dash-mes-chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-l)}
 .dash-mes-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.dash-preset-row{display:flex;gap:6px;flex-wrap:wrap}
+.dash-preset-chip{display:inline-flex;align-items:center;gap:5px;padding:5px 12px;border-radius:20px;font-size:12.5px;font-weight:600;border:1.5px solid var(--line);background:var(--surface-2);color:var(--ink-2);cursor:pointer;transition:.14s;line-height:1}
+.dash-preset-chip:hover{border-color:var(--primary);color:var(--primary);background:var(--primary-l)}
+.dash-preset-chip.active{background:var(--primary);border-color:var(--primary);color:#fff}
+.dash-preset-bdg{font-size:11px;font-weight:700;padding:1px 7px;border-radius:10px;background:var(--primary-l);color:var(--primary)}
+.dash-preset-bdg.act{background:rgba(255,255,255,.22);color:#fff}
 
 /* ══════════════════════════════════════════════════════════════
    RESPONSIVE — Móvil & Tablet

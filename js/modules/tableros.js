@@ -6,78 +6,153 @@
    ============================================================ */
 
 function dashFiltroHtml(){
-  var anios = [];
-  var todas = ingresosData.concat(historialEgresos);
-  todas.forEach(function(r){
-    var a = (r.fecha||'').slice(0,4);
-    if(a && anios.indexOf(a)===-1) anios.push(a);
-  });
-  anios.sort().reverse();
-  if(anios.indexOf(new Date().getFullYear().toString())===-1)
-    anios.unshift(new Date().getFullYear().toString());
-
-  var anioOpts = anios.map(function(a){
-    return '<option value="'+a+'"'+(dashFiltroAnio===a?' selected':'')+'>'+a+'</option>';
+  var now = new Date();
+  var y   = now.getFullYear();
+  var m   = now.getMonth(); // 0-indexed
+  var q   = Math.ceil((m + 1) / 3);
+  var badges = {
+    'este-mes':      MESES_CORTO[m],
+    'trim-actual':   'Q' + q,
+    'ultimos-3':     MESES_CORTO[(m + 10) % 12] + '–' + MESES_CORTO[m],
+    'este-anio':     y.toString(),
+    'anio-anterior': (y - 1).toString()
+  };
+  var presets = [
+    ['este-mes',      'Este mes'],
+    ['trim-actual',   'Trim. actual'],
+    ['ultimos-3',     'Últ. 3 meses'],
+    ['este-anio',     'Este año'],
+    ['anio-anterior', 'Año anterior'],
+    ['personalizado', 'Personalizado']
+  ];
+  var chips = presets.map(function(p){
+    var key = p[0], lbl = p[1], act = dashPreset === key;
+    var bdg = badges[key] ? '<span class="dash-preset-bdg'+(act?' act':'')+'">'+badges[key]+'</span>' : '';
+    return '<button class="dash-preset-chip'+(act?' active':'')+'" onclick="setDashPreset(\''+key+'\')">'+lbl+bdg+'</button>';
   }).join('');
 
-  var chips = MESES_CORTO.map(function(m, i){
-    var num = (i+1).toString().padStart(2,'0');
-    var sel = dashFiltroMeses.length===0 || dashFiltroMeses.indexOf(num)!==-1;
-    return '<button class="dash-mes-chip'+(sel?' active':'')+'" onclick="toggleDashMes(\'' + num + '\')" data-mes="'+num+'">'+m+'</button>';
-  }).join('');
+  var html = '<div class="dash-filtro-bar" style="flex-direction:column;align-items:flex-start;gap:8px">'
+    + '<div class="dash-preset-row">' + chips + '</div>';
 
-  return '<div class="dash-filtro-bar">'
-    + '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:15px;height:15px;color:var(--ink-3);flex-shrink:0"><path d="M3 4h18M7 10h10M10 16h4"/></svg>'
-    + '<span class="fin-filtro-label">Año</span>'
-    + '<select class="fin-filtro-sel" style="min-width:100px" onchange="setDashAnio(this.value)">'+anioOpts+'</select>'
-    + '<span class="fin-filtro-label" style="margin-left:4px">Meses</span>'
-    + '<div class="dash-mes-chips">'+chips+'</div>'
-    + '<button class="btn btn-ghost btn-sm fin-filtro-clear" onclick="limpiarDashFiltro()">Todos</button>'
-    + '</div>';
+  if(dashPreset === 'personalizado'){
+    var anios = [];
+    ingresosData.concat(historialEgresos).forEach(function(r){
+      var a = (r.fecha||'').slice(0,4);
+      if(a && anios.indexOf(a)===-1) anios.push(a);
+    });
+    anios.sort().reverse();
+    if(anios.indexOf(y.toString())===-1) anios.unshift(y.toString());
+    var anioOpts = anios.map(function(a){
+      return '<option value="'+a+'"'+(dashFiltroAnio===a?' selected':'')+'>'+a+'</option>';
+    }).join('');
+    var mesChips = MESES_CORTO.map(function(mes, i){
+      var num = (i+1).toString().padStart(2,'0');
+      var sel = dashFiltroMeses.length===0 || dashFiltroMeses.indexOf(num)!==-1;
+      return '<button class="dash-mes-chip'+(sel?' active':'')+'" onclick="toggleDashMes(\''+num+'\')" data-mes="'+num+'">'+mes+'</button>';
+    }).join('');
+    html += '<div style="display:flex;align-items:center;gap:8px;flex-wrap:wrap;padding-top:4px;border-top:1px solid var(--line)">'
+      + '<span class="fin-filtro-label">Año</span>'
+      + '<select class="fin-filtro-sel" style="min-width:90px;height:32px" onchange="setDashAnio(this.value)">'+anioOpts+'</select>'
+      + '<span class="fin-filtro-label" style="margin-left:4px">Meses</span>'
+      + '<div class="dash-mes-chips">'+mesChips+'</div>'
+      + '<button class="btn btn-ghost btn-sm fin-filtro-clear" onclick="limpiarDashMeses()">Todos</button>'
+      + '</div>';
+  }
+  html += '</div>';
+  return html;
+}
+
+function setDashPreset(preset){
+  dashPreset = preset;
+  var now = new Date();
+  var y = now.getFullYear(), m = now.getMonth() + 1; // m = 1-12
+  dashFiltroDesde = ''; dashFiltroHasta = '';
+  if(preset !== 'personalizado'){ dashFiltroAnio = y.toString(); dashFiltroMeses = []; }
+
+  if(preset === 'este-mes'){
+    dashFiltroMeses = [m.toString().padStart(2,'0')];
+  } else if(preset === 'trim-actual'){
+    var q = Math.ceil(m / 3), m1 = (q - 1) * 3 + 1;
+    dashFiltroMeses = [m1, m1+1, m1+2].map(function(x){ return x.toString().padStart(2,'0'); });
+  } else if(preset === 'ultimos-3'){
+    var desde = new Date(y, m - 3, 1); // JS handles month underflow (cross-year)
+    var hasta  = new Date(y, m, 0);    // último día del mes actual
+    dashFiltroDesde = desde.getFullYear()+'-'+(desde.getMonth()+1).toString().padStart(2,'0')+'-01';
+    dashFiltroHasta = hasta.getFullYear()+'-'+(hasta.getMonth()+1).toString().padStart(2,'0')+'-'+hasta.getDate().toString().padStart(2,'0');
+    dashFiltroAnio = ''; // usar rango, no año fijo
+  } else if(preset === 'anio-anterior'){
+    dashFiltroAnio = (y - 1).toString();
+  }
+  // 'este-anio': dashFiltroAnio=y, meses=[] ya seteados
+  // 'personalizado': mantener estado previo
+
+  var fg = $('dash-filtro');
+  if(fg) fg.innerHTML = dashFiltroHtml();
+  buildCharts(dashTabActual);
 }
 
 function setDashAnio(v){
+  dashFiltroDesde = ''; dashFiltroHasta = '';
   dashFiltroAnio = v;
+  dashPreset = 'personalizado';
   var fg = $('dash-filtro');
   if(fg) fg.innerHTML = dashFiltroHtml();
   buildCharts(dashTabActual);
 }
 
 function toggleDashMes(num){
-  if(dashFiltroMeses.length===0){
-    // Todos activos → seleccionar solo este
+  dashFiltroDesde = ''; dashFiltroHasta = '';
+  dashPreset = 'personalizado';
+  if(dashFiltroMeses.length === 0){
     dashFiltroMeses = [num];
   } else {
     var idx = dashFiltroMeses.indexOf(num);
-    if(idx===-1){
-      dashFiltroMeses.push(num);
-    } else {
-      dashFiltroMeses.splice(idx,1);
-      if(dashFiltroMeses.length===0) dashFiltroMeses = []; // vuelve a "todos"
-    }
+    if(idx === -1){ dashFiltroMeses.push(num); }
+    else { dashFiltroMeses.splice(idx, 1); }
   }
   var fg = $('dash-filtro');
   if(fg) fg.innerHTML = dashFiltroHtml();
   buildCharts(dashTabActual);
 }
 
-function limpiarDashFiltro(){
+function limpiarDashMeses(){
   dashFiltroMeses = [];
-  dashFiltroAnio = new Date().getFullYear().toString();
   var fg = $('dash-filtro');
   if(fg) fg.innerHTML = dashFiltroHtml();
   buildCharts(dashTabActual);
 }
 
+function limpiarDashFiltro(){ setDashPreset('este-anio'); }
+
 function dashFiltrar(rows){
-  return rows.filter(function(r){
-    var fecha = (r.fecha||'').length > 10 ? (r.fecha||'').slice(0,10) : (r.fecha||'');
-    var anio = fecha.slice(0,4);
-    var mes  = fecha.slice(5,7);
-    if(dashFiltroAnio && anio !== dashFiltroAnio) return false;
-    if(dashFiltroMeses.length > 0 && dashFiltroMeses.indexOf(mes)===-1) return false;
+  return rows.filter(function(r){ return _enFiltro((r.fecha||'').slice(0,10)); });
+}
+
+function _enFiltro(f){
+  f = (f||'').slice(0,10);
+  if(dashFiltroDesde || dashFiltroHasta){
+    if(dashFiltroDesde && f < dashFiltroDesde) return false;
+    if(dashFiltroHasta && f > dashFiltroHasta) return false;
     return true;
-  });
+  }
+  var anio = f.slice(0,4), mes = f.slice(5,7);
+  if(dashFiltroAnio && anio !== dashFiltroAnio) return false;
+  if(dashFiltroMeses.length > 0 && dashFiltroMeses.indexOf(mes) === -1) return false;
+  return true;
+}
+
+function _mesesBarra(){
+  if(dashFiltroDesde && dashFiltroHasta){
+    var meses = [], cur = dashFiltroDesde.slice(0,7), end = dashFiltroHasta.slice(0,7);
+    while(cur <= end){
+      meses.push(cur.slice(5,7));
+      var y2 = parseInt(cur.slice(0,4),10), m2 = parseInt(cur.slice(5,7),10);
+      if(++m2 > 12){ m2 = 1; y2++; }
+      cur = y2 + '-' + m2.toString().padStart(2,'0');
+    }
+    return meses;
+  }
+  return dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){ return (i+1).toString().padStart(2,'0'); });
 }
 
 function applyChartDefaults(){
@@ -182,19 +257,9 @@ function buildCharts(tab){
   var gridCfg = { grid:{color:CL.grid}, ticks:{color:CL.ink3}, border:{display:false} };
   if(tab==='general'){
     // ── KPIs numéricos del período ──────────────────────────────
-    var mesesKpi = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
-    var totalIn = ingresosData.filter(function(r){
-      var f=(r.fecha||'').slice(0,10);
-      return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
-    }).reduce(function(s,r){return s+(r.monto||0);},0)
-    + ingresosExtras.filter(function(r){
-      var f=(r.fecha||'').slice(0,10);
-      return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
-    }).reduce(function(s,r){return s+(r.monto||0);},0);
-    var totalEg = historialEgresos.filter(function(r){
-      var f=(r.fecha||'').slice(0,10);
-      return f.slice(0,4)===dashFiltroAnio && mesesKpi.indexOf(f.slice(5,7))!==-1;
-    }).reduce(function(s,r){return s+(r.monto||0);},0);
+    var mesesKpi = _mesesBarra();
+    var totalIn = dashFiltrar(ingresosData.concat(ingresosExtras)).reduce(function(s,r){return s+(r.monto||0);},0);
+    var totalEg = dashFiltrar(historialEgresos).reduce(function(s,r){return s+(r.monto||0);},0);
     var utilidad = totalIn - totalEg;
     var cobPend  = clientesData.reduce(function(s,c){return s+(c.porCobrar||0);},0);
 
@@ -258,18 +323,18 @@ function buildCharts(tab){
       }});
 
     // Siempre mostrar barras por mes para comparación clara
-    var mesesActivos = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
+    var mesesActivos = _mesesBarra();
     var labMeses = mesesActivos.map(function(m){ return MESES_CORTO[parseInt(m,10)-1]; });
     var dataIn = mesesActivos.map(function(m){
       return ingresosData.concat(ingresosExtras).filter(function(r){
         var f=(r.fecha||'').slice(0,10);
-        return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
+        return _enFiltro(f) && f.slice(5,7)===m;
       }).reduce(function(s,r){return s+(r.monto||0);},0);
     });
     var dataEg = mesesActivos.map(function(m){
       return historialEgresos.filter(function(r){
         var f=(r.fecha||'').slice(0,10);
-        return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
+        return _enFiltro(f) && f.slice(5,7)===m;
       }).reduce(function(s,r){return s+(r.monto||0);},0);
     });
     // Resaltar mes seleccionado
@@ -317,18 +382,18 @@ function buildCharts(tab){
   }
   else if(tab==='financiero'){
     // Gráfica 1: Ingresos vs egresos por mes
-    var mesesFin = dashFiltroMeses.length > 0 ? dashFiltroMeses.slice().sort() : MESES_CORTO.map(function(_,i){return (i+1).toString().padStart(2,'0');});
+    var mesesFin = _mesesBarra();
     var labFin = mesesFin.map(function(m){ return MESES_CORTO[parseInt(m,10)-1]; });
     var dataFinIn = mesesFin.map(function(m){
       return ingresosData.concat(ingresosExtras).filter(function(r){
         var f=(r.fecha||'').slice(0,10);
-        return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
+        return _enFiltro(f) && f.slice(5,7)===m;
       }).reduce(function(s,r){return s+(r.monto||0);},0);
     });
     var dataFinEg = mesesFin.map(function(m){
       return historialEgresos.filter(function(r){
         var f=(r.fecha||'').slice(0,10);
-        return f.slice(0,4)===dashFiltroAnio && f.slice(5,7)===m;
+        return _enFiltro(f) && f.slice(5,7)===m;
       }).reduce(function(s,r){return s+(r.monto||0);},0);
     });
     safeChart('ch-fin-mensual', {type:'bar',

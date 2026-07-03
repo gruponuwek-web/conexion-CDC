@@ -132,10 +132,16 @@ function mostrarError(msg) {
   if (el) { el.textContent = msg; el.style.display = 'block'; }
 }
 
+// Normaliza fechas GAS que llegan como ISO completo "2026-07-03T06:00:00.000Z" → "2026-07-03"
+function _normFecha(raw){ var s=String(raw||''); var t=s.indexOf('T'); return t>0?s.slice(0,t):s.slice(0,10); }
+
 // ── Filtro Tableros ─────────────────────────────────────────────
 var MESES_CORTO = ['Ene','Feb','Mar','Abr','May','Jun','Jul','Ago','Sep','Oct','Nov','Dic'];
 var dashFiltroAnio  = new Date().getFullYear().toString();
 var dashFiltroMeses = []; // [] = todos los meses
+var dashPreset      = 'este-anio'; // preset activo
+var dashFiltroDesde = ''; // rango de fecha (para presets que cruzan año)
+var dashFiltroHasta = '';
 
 // ── 4. Carga inicial de todos los módulos ────────────────────────
 async function cargarTodo(silent) {
@@ -228,12 +234,13 @@ async function cargarTodo(silent) {
       CDC.actividades = rActs.data;
       actividadesData = rActs.data.map(function(a){
         var done = (a.done === 'Sí' || a.done === true || a.done === 'true');
+        var fechaNorm = _normFecha(a.fecha);
         // Recalcular grupo basado en fecha real (no confiar en lo guardado)
         var grupo;
         if (done) {
           grupo = 'completadas';
-        } else if (a.fecha) {
-          grupo = clasificarGrupo(a.fecha);
+        } else if (fechaNorm) {
+          grupo = clasificarGrupo(fechaNorm);
         } else {
           grupo = a.grupo || 'hoy';
         }
@@ -243,7 +250,7 @@ async function cargarTodo(silent) {
           refTipo:  a.refTipo   || 'lead',
           refId:    a.refId     || '',
           tipo:     a.tipo      || '',
-          fecha:    a.fecha     || '',
+          fecha:    fechaNorm,
           hora:     a.hora      || '',
           grupo:    grupo,
           done:     done,
@@ -256,10 +263,10 @@ async function cargarTodo(silent) {
       // Separar egresos por tipo para los arrays del portal
       CDC.egresos = rEg.data;
       historialEgresos = rEg.data.filter(function(e){ return e.tipo==='historial' || !e.tipo; }).map(function(e){
-        return {id:e.id, nombre:e.nombre, monto:Number(e.monto)||0, fecha:e.fecha, metodo:e.metodo, cat:e.cat, cuenta:e.cuenta, deducible:e.deducible, conciliado:(e.conciliado==='Sí'||e.conciliado===true)};
+        return {id:e.id, nombre:e.nombre, monto:Number(e.monto)||0, fecha:_normFecha(e.fecha), metodo:e.metodo, cat:e.cat, cuenta:e.cuenta, deducible:e.deducible, conciliado:(e.conciliado==='Sí'||e.conciliado===true)};
       });
       porPagarData = rEg.data.filter(function(e){ return e.tipo==='porpagar'; }).map(function(e){
-        return {id:e.id, nombre:e.nombre, monto:Number(e.monto)||0, cat:e.cat, limite:e.limite||'', metodo:e.metodo||'Transferencia'};
+        return {id:e.id, nombre:e.nombre, monto:Number(e.monto)||0, cat:e.cat, limite:_normFecha(e.limite), metodo:e.metodo||'Transferencia'};
       });
       pagosFijos = rEg.data.filter(function(e){ return e.tipo==='fijo'; }).map(function(e){
         return {id:e.id, nombre:e.nombre, monto:Number(e.monto)||0, dia:Number(e.dia)||1, cat:e.cat, cuenta:e.cuenta||''};
@@ -271,7 +278,7 @@ async function cargarTodo(silent) {
       facturasData = rFact.data.map(function(f){
         return {
           id:f.id, clienteId:f.clienteId||'', cliente:f.clienteNombre||f.cliente||'',
-          sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha,
+          sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:_normFecha(f.fecha),
           estado:f.estatus||f.estado||'Por crear', folio:f.folio||'',
           rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''
         };
@@ -284,7 +291,7 @@ async function cargarTodo(silent) {
     if (typeof actividades    !== 'undefined') actividades    = CDC.actividades;
     if (typeof egresosData    !== 'undefined') egresosData    = CDC.egresos;
     if (typeof pagosFijos     !== 'undefined') pagosFijos     = CDC.pagosFijos;
-    if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas.map(function(f){ return {id:f.id, clienteId:f.clienteId||'', cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
+    if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas.map(function(f){ return {id:f.id, clienteId:f.clienteId||'', cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:_normFecha(f.fecha), estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
 
     // Normalizar cobros → ingresosData
     // Construir índice clienteId → nombre para lookup rápido
@@ -325,7 +332,7 @@ async function cargarTodo(silent) {
           cliente:    nombreCliente,
           concepto:   'Sesión ' + (co.sesionN || '') + ' · EMT',
           monto:      Number(co.monto) || 0,
-          fecha:      co.fecha || '',
+          fecha:      _normFecha(co.fecha),
           metodo:     co.metodo || '',
           cuenta:     co.cuenta || '',
           factura:    co.facturaRequerida || 'No',
@@ -346,7 +353,7 @@ async function cargarTodo(silent) {
           concepto:   ie.concepto   || '',
           cliente:    ie.cliente    || '—',
           monto:      Number(ie.monto) || 0,
-          fecha:      (ie.fecha||'').toString().slice(0,10),
+          fecha:      _normFecha(ie.fecha),
           metodo:     ie.metodo     || '',
           cuenta:     ie.cuenta     || '',
           cat:        ie.cat        || '',

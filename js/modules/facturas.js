@@ -35,7 +35,7 @@ async function _recargarFacturas() {
   var r = await gs('getFacturas');
   if (r.ok) {
     CDC.facturas = r.data;
-    if (typeof facturasData !== 'undefined') facturasData = CDC.facturas.map(function(f){ return {id:f.id, clienteId:f.clienteId||'', cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
+    if (typeof facturasData !== 'undefined') facturasData = CDC.facturas.map(function(f){ return {id:f.id, clienteId:f.clienteId||'', cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:_normFecha(f.fecha), estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
     if (typeof renderFacturas !== 'undefined') renderFacturas();
   }
 }
