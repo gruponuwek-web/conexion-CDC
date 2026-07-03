@@ -365,6 +365,9 @@ function guardarSesion(){
   x.s.fecha=$('ses-ed-fecha').value; x.s.hora=$('ses-ed-hora').value; x.s.notas=$('ses-ed-notas').value;
   closeModal('m-ses-editar'); renderClientes();
   toast('Sesión actualizada');
+  gs('updateSesion', {id:'s-'+sesionCtx.clienteId+'-'+sesionCtx.n,
+    fecha:x.s.fecha, hora:x.s.hora, notas:x.s.notas, actualizadoEn:new Date().toISOString()
+  }).catch(function(e){ console.error('[CDC GS] guardarSesion:',e); });
 }
 
 // ── Modal de asistencia (paso previo a confirmar sesión next) ──

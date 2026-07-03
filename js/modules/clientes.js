@@ -246,9 +246,24 @@ function cambiarEstadoCliente(id, estado){
     .catch(function(e){ console.error('[CDC GS] updateCliente estado:',e); });
 }
 
-function setRazonCancel(id, r){ var c=getCliente(id); if(!c) return; c.razonCancel=r; if(r==='Otro') renderClientes(); }
+function setRazonCancel(id, r){
+  var c=getCliente(id); if(!c) return;
+  c.razonCancel=r;
+  if(r==='Otro') renderClientes();
+  gs('updateCliente', {id:id, razonCancel:r, actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] setRazonCancel:',e); });
+}
 
-function setRazonOtro(id, v){ var c=getCliente(id); if(c) c.razonOtro=v; }
+var _razonOtroTimer = null;
+function setRazonOtro(id, v){
+  var c=getCliente(id); if(!c) return;
+  c.razonOtro=v;
+  clearTimeout(_razonOtroTimer);
+  _razonOtroTimer = setTimeout(function(){
+    gs('updateCliente', {id:id, razonOtro:v, actualizadoEn:new Date().toISOString()})
+      .catch(function(e){ console.error('[CDC GS] setRazonOtro:',e); });
+  }, 800);
+}
 
 function abrirOnboarding(clienteId, fresh, prevEtapa, leadId){
   var c = getCliente(clienteId); if(!c) return;
