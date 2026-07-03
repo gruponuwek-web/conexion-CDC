@@ -270,10 +270,10 @@ async function cargarTodo(silent) {
       CDC.facturas = rFact.data;
       facturasData = rFact.data.map(function(f){
         return {
-          id:f.id, cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'',
-          monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear',
-          folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'',
-          razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''
+          id:f.id, clienteId:f.clienteId||'', cliente:f.clienteNombre||f.cliente||'',
+          sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha,
+          estado:f.estatus||f.estado||'Por crear', folio:f.folio||'',
+          rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''
         };
       });
     }
@@ -284,7 +284,7 @@ async function cargarTodo(silent) {
     if (typeof actividades    !== 'undefined') actividades    = CDC.actividades;
     if (typeof egresosData    !== 'undefined') egresosData    = CDC.egresos;
     if (typeof pagosFijos     !== 'undefined') pagosFijos     = CDC.pagosFijos;
-    if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas.map(function(f){ return {id:f.id, cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
+    if (typeof facturasData   !== 'undefined') facturasData   = CDC.facturas.map(function(f){ return {id:f.id, clienteId:f.clienteId||'', cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
 
     // Normalizar cobros → ingresosData
     // Construir índice clienteId → nombre para lookup rápido
@@ -1203,6 +1203,8 @@ async function _syncBackground() {
   if (ahora - _ultimoSync < SYNC_INTERVALO) return; // throttle
   _syncEnCurso = true;
   _ultimoSync = ahora;
+  var syncDot = document.getElementById('sync-dot');
+  if (syncDot) syncDot.style.display = 'flex';
   try {
     // Preservar estado del onboarding si el modal está abierto
     var onbBackup = null;
@@ -1226,6 +1228,7 @@ async function _syncBackground() {
     console.warn('[CDC Sync] Error en sync background:', e);
   } finally {
     _syncEnCurso = false;
+    if (syncDot) syncDot.style.display = 'none';
   }
 }
 

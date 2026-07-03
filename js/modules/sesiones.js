@@ -16,7 +16,6 @@ function clickDot(clienteId, n){
   var s = c.sesiones[n-1]; if(!s) return;
   sesionCtx = {clienteId:clienteId, n:n};
 
-  // Para sesiones "por confirmar", preguntar primero si el paciente asistió
   if(s.estado==='next'){
     setText('sasist-titulo', 'Sesión '+n+' · '+c.nombre);
     setText('sasist-fecha', s.fecha ? ('Para el '+fechaLarga(s.fecha)+(s.hora?' · '+horaTxt(s.hora):'')) : '');
@@ -24,49 +23,16 @@ function clickDot(clienteId, n){
     return;
   }
 
-  setText('ses-ed-title', 'Sesión '+n+' · '+c.nombre);
-  setText('ses-ed-sub', dotLabel(s.estado));
-  $('ses-ed-fecha').value = s.fecha||'';
-  $('ses-ed-hora').value = s.hora||'';
-  $('ses-ed-notas').value = s.notas||'';
-
-  // badge de estado
-  var cobradaYaBadge = (s.cobrada==='Sí'||s.cobrada===true||s.cobrada==='Si');
-  var bcls = s.estado==='done'?(cobradaYaBadge?'b-green':'b-blue'):(s.estado==='next'?'b-orange':(s.estado==='scheduled'?'b-orange':'b-gray'));
-  // R6: panel 'next' siempre arranca en "Por confirmar"
-  var badgeTxt = dotLabel(s.estado, s.cobrada);
-  setHtml('ses-ed-statusrow', '<span class="badge '+bcls+'">'+badgeTxt+'</span>');
-
-  // panel de cobro y footer según estado
-  var foot = '<button class="btn btn-ghost" onclick="closeModal(\'m-ses-editar\')">Cerrar</button>';
-  var cobroPanel = '';
-  if(s.estado==='pending'){
-    foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
-
-  } else if(s.estado==='scheduled'){
-    foot += '<button class="btn btn-soft" onclick="reagendarSesion()">Reagendar</button>';
-    foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Confirmar sesión</button>';
-
-  } else if(s.estado==='next'){
-    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Sesión impartida · Paso 3</div>'
-      + '<div style="font-size:13px;color:var(--ink-2)">Confirma que la sesión fue realizada. El cobro se registrará en el paso siguiente.</div></div>';
-    foot += '<button class="btn btn-primary" onclick="sesionRealizada(\''+clienteId+'\','+n+')">Sesión realizada</button>';
-
-  } else if(s.estado==='done'){
-    var cobradaYa = (s.cobrada === 'Sí' || s.cobrada === true || s.cobrada === 'Si');
-    if(cobradaYa){
-      cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada y cobrada</div>'
-        + '<div style="font-size:13px;color:var(--ink-2)">Cobro registrado por <b>'+money(s.precio)+'</b>.</div></div>';
-      foot += '<button class="btn btn-primary" onclick="guardarSesion()">Guardar notas</button>';
-    } else {
-      cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Paso 4 · Registrar cobro</div>'
-        + '<div style="font-size:13px;color:var(--ink-2)">Sesión realizada ✓ Registra el pago de <b>'+money(s.precio)+'</b> para completar el ciclo.</div></div>';
-      foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar notas</button>';
-      foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+clienteId+'\','+n+')">Registrar cobro</button>';
+  // Sesión realizada pero sin cobro → directo al modal de cobro
+  if(s.estado==='done'){
+    var cobradaYa = (s.cobrada==='Sí' || s.cobrada===true || s.cobrada==='Si');
+    if(!cobradaYa){
+      openCobro(clienteId, n);
+      return;
     }
   }
-  setHtml('ses-ed-foot', foot);
-  openModal('m-ses-editar');
+
+  clickDotFull(c, n);
 }
 
 function nextCuentaUpdate(){
@@ -161,81 +127,6 @@ function editarCobroDone(){
     .catch(function(e){ console.error('[CDC GS] updateSesion editarCobro:', e); });
   gs('updateCliente', { id: x.c.id, cobrado: x.c.cobrado, porCobrar: x.c.porCobrar, actualizadoEn: ahora })
     .catch(function(e){ console.error('[CDC GS] updateCliente editarCobro:', e); });
-}
-
-function reprogramarSesion(){
-  var x = _curSes(); if(!x){ return; }
-  reprogSesCtx = { clienteId: sesionCtx.clienteId, n: sesionCtx.n };
-  // Poblar modal con verificación
-  setText('rses-titulo', 'Sesión '+sesionCtx.n+' · '+x.c.nombre);
-  var rfecha = $('rses-fecha'); if(rfecha) rfecha.value = x.s.fecha || '';
-  var rhora  = $('rses-hora');  if(rhora)  rhora.value  = x.s.hora  || '10:00';
-  var rmot   = $('rses-motivo'); if(rmot)  rmot.value   = '';
-  var rsel   = $('rses-motivo-sel'); if(rsel) rsel.value = '';
-  closeModal('m-ses-editar');
-  openModal('m-rses');
-}
-
-function confirmarReprogSesion(){
-  if(!reprogSesCtx) return;
-  var nueva  = document.getElementById('rses-fecha').value;
-  var hora   = document.getElementById('rses-hora').value || '10:00';
-  var motivo = document.getElementById('rses-motivo').value.trim();
-  if(!nueva){ toast('Selecciona una nueva fecha'); return; }
-
-  var c = getCliente(reprogSesCtx.clienteId);
-  if(!c) return;
-  var s = c.sesiones[reprogSesCtx.n - 1];
-  if(!s) return;
-
-  var prev = s.fecha;
-  s.fecha = nueva;
-  s.hora  = hora;
-  s.estado = 'scheduled';
-
-  // Agregar nota al historial del cliente si hay motivo
-  if(motivo){
-    if(!c.notas) c.notas = '';
-    c.notas += '\n['+nueva+'] Sesi\u00f3n '+reprogSesCtx.n+' reprogramada: '+motivo;
-  }
-
-  closeModal('m-rses');
-  renderClientes();
-  toast('Sesi\u00f3n '+reprogSesCtx.n+' reprogramada para '+fechaLarga(nueva)+(motivo?' · '+motivo:''));
-
-  // Crear actividad de seguimiento por cancelación
-  if(motivo){
-    var ahora = new Date().toISOString();
-    var hoy   = ahora.slice(0,10);
-    var actId = 'reprg-'+reprogSesCtx.clienteId+'-'+reprogSesCtx.n+'-'+Date.now();
-    var activa = {
-      id:actId, prospecto:c.nombre,
-      refTipo:'cliente', refId:reprogSesCtx.clienteId,
-      tipo:'Seguimiento reprogramaci\u00f3n sesi\u00f3n '+reprogSesCtx.n,
-      fecha:nueva, hora:'10:00',
-      grupo:clasificarGrupo(nueva),
-      done:false, urgente:false,
-      contexto:'Sesi\u00f3n '+reprogSesCtx.n+' reprogramada de '+fechaLarga(prev)+' a '+fechaLarga(nueva)+'. Motivo: '+motivo+'.'
-    };
-    actividadesData.push(activa);
-    gs('createCita', {
-      id:actId, prospecto:c.nombre,
-      refTipo:'cliente', refId:reprogSesCtx.clienteId,
-      tipo:activa.tipo, fecha:nueva, hora:'10:00',
-      grupo:activa.grupo, done:'No', urgente:'No',
-      contexto:activa.contexto,
-      creadoEn:ahora, actualizadoEn:ahora
-    }).catch(function(e){ console.error('[CDC GS] createCita reprg:',e); });
-    renderActChips(); renderNav();
-  }
-
-  // Actualizar en Sheets
-  var ahora2 = new Date().toISOString();
-  gs('updateSesion', {
-    id:'s-'+reprogSesCtx.clienteId+'-'+reprogSesCtx.n,
-    estado:'scheduled', fecha:nueva, hora:hora,
-    actualizadoEn:ahora2
-  }).catch(function(e){ console.error('[CDC GS] updateSesion reprg:',e); });
 }
 
 function sesionRealizada(clienteId, n){

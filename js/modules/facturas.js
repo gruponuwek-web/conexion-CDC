@@ -35,7 +35,7 @@ async function _recargarFacturas() {
   var r = await gs('getFacturas');
   if (r.ok) {
     CDC.facturas = r.data;
-    if (typeof facturasData !== 'undefined') facturasData = CDC.facturas.map(function(f){ return {id:f.id, cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
+    if (typeof facturasData !== 'undefined') facturasData = CDC.facturas.map(function(f){ return {id:f.id, clienteId:f.clienteId||'', cliente:f.clienteNombre||f.cliente||'', sesion:f.sesionN||f.sesion||'', monto:Number(f.monto)||0, fecha:f.fecha, estado:f.estatus||f.estado||'Por crear', folio:f.folio||'', rfc:f.rfcFiscal||f.rfc||'', razonSocial:f.razonSocial||'', usoCFDI:f.usoCFDI||''}; });
     if (typeof renderFacturas !== 'undefined') renderFacturas();
   }
 }
@@ -204,7 +204,81 @@ function avanzarFactura(id){
     abrirFacturaDetalle(id);
     toast('Factura de '+f.cliente+' → '+sig);
   }
-  gs('updateFactura', {id:id, estatus:sig, folio:f.folio||'', actualizadoEn:new Date().toISOString()})
+  var ahora = new Date().toISOString();
+  var hoy = ahora.slice(0,10);
+  gs('updateFactura', {id:id, estatus:sig, folio:f.folio||'', actualizadoEn:ahora})
     .catch(function(e){ console.error('[CDC GS] updateFactura:',e); });
+
+  // Marcar actividad anterior como done y crear la siguiente
+  if(sig==='Creada'){
+    // Marcar "Generar factura" como done
+    var idGen = 'fact-'+f.clienteId+'-'+f.sesion;
+    var actGen = getActividad(idGen);
+    if(actGen && !actGen.done){
+      actGen.done = true;
+      gs('updateCita', {id:idGen, done:'Sí', actualizadoEn:ahora})
+        .catch(function(e){ console.error('[CDC GS] updateCita fact-gen:',e); });
+    }
+    // Crear actividad "Enviar factura"
+    var idEnv = 'fact-env-'+f.id;
+    if(!getActividad(idEnv)){
+      var actEnv = {
+        id:idEnv, prospecto:f.cliente, refTipo:'cliente', refId:f.clienteId||'',
+        tipo:'Enviar factura · Sesión '+f.sesion,
+        fecha:hoy, hora:'10:00', grupo:'hoy',
+        done:false, urgente:false,
+        contexto:'Factura de '+f.cliente+' timbrada (folio '+esc(f.folio)+'). Enviar al cliente.'
+      };
+      actividadesData.push(actEnv);
+      gs('createCita', {
+        id:idEnv, prospecto:f.cliente, refTipo:'cliente', refId:f.clienteId||'',
+        tipo:actEnv.tipo, fecha:hoy, hora:'10:00', grupo:'hoy',
+        done:'No', urgente:'No', contexto:actEnv.contexto,
+        creadoEn:ahora, actualizadoEn:ahora
+      }).catch(function(e){ console.error('[CDC GS] createCita fact-env:',e); });
+    }
+  } else if(sig==='Enviada'){
+    // Marcar "Enviar factura" como done
+    var idEnvD = 'fact-env-'+f.id;
+    var actEnvD = getActividad(idEnvD);
+    if(actEnvD && !actEnvD.done){
+      actEnvD.done = true;
+      gs('updateCita', {id:idEnvD, done:'Sí', actualizadoEn:ahora})
+        .catch(function(e){ console.error('[CDC GS] updateCita fact-env:',e); });
+    }
+    // Crear actividad "Confirmar recepción" para 3 días después
+    var idRec = 'fact-rec-'+f.id;
+    if(!getActividad(idRec)){
+      var fechaRec = new Date(hoy+'T00:00:00');
+      fechaRec.setDate(fechaRec.getDate()+3);
+      var fechaRecStr = fechaRec.toISOString().slice(0,10);
+      var actRec = {
+        id:idRec, prospecto:f.cliente, refTipo:'cliente', refId:f.clienteId||'',
+        tipo:'Confirmar recepción factura · Sesión '+f.sesion,
+        fecha:fechaRecStr, hora:'10:00', grupo:clasificarGrupo(fechaRecStr),
+        done:false, urgente:false,
+        contexto:'Factura de '+f.cliente+' enviada. Confirmar que el cliente recibió y acepta el CFDI.'
+      };
+      actividadesData.push(actRec);
+      gs('createCita', {
+        id:idRec, prospecto:f.cliente, refTipo:'cliente', refId:f.clienteId||'',
+        tipo:actRec.tipo, fecha:fechaRecStr, hora:'10:00', grupo:actRec.grupo,
+        done:'No', urgente:'No', contexto:actRec.contexto,
+        creadoEn:ahora, actualizadoEn:ahora
+      }).catch(function(e){ console.error('[CDC GS] createCita fact-rec:',e); });
+    }
+  } else if(sig==='Completada'){
+    // Marcar todas las actividades de esta factura como done
+    ['fact-'+f.clienteId+'-'+f.sesion, 'fact-env-'+f.id, 'fact-rec-'+f.id].forEach(function(aid){
+      var act = getActividad(aid);
+      if(act && !act.done){
+        act.done = true;
+        gs('updateCita', {id:aid, done:'Sí', actualizadoEn:ahora})
+          .catch(function(e){ console.error('[CDC GS] updateCita fact-complete:',e); });
+      }
+    });
+  }
+  renderActChips(); renderNav();
+  if(pantallaActual==='hoy') renderActividades(actFiltro);
 }
 

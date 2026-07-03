@@ -388,7 +388,7 @@ function activarCliente(){
   var ahora = new Date().toISOString();
   gs('updateCliente', {
     id:c.id, servicio:sv, estado:'Activo',
-    numSes:ns, precioSes:c.precioSes, monto:mt,
+    numSes:ns, precioSes:c.precioSes, monto:mt, fechaPrimera:fp,
     cobrado:0, porCobrar:mt, actualizadoEn:ahora
   }).then(function(r){ if(!r.ok) console.error('[CDC GS] updateCliente activar:',r.error); })
     .catch(function(e){ console.error('[CDC GS] updateCliente error:',e); });
@@ -402,25 +402,34 @@ function activarCliente(){
     })
   }).catch(function(e){ console.error('[CDC GS] createSesiones error:',e); });
 
-  // Crear actividades de agenda para sesiones pre-agendadas (sesión 2 en adelante con estado scheduled)
+  // Crear actividades de agenda para sesiones pre-agendadas
   c.sesiones.forEach(function(s){
-    if(s.estado === 'scheduled' && s.fecha){
-      var idConf = 'conf-ses-'+c.id+'-'+s.n;
-      var actConf = {
+    var idConf, actConf, tipo, contexto;
+    if(s.estado === 'next' && s.fecha){
+      // Sesión 1: ya marcada como impartida, recordar procesar
+      idConf = 'conf-ses-'+c.id+'-'+s.n;
+      tipo = 'Confirmar sesión '+s.n;
+      contexto = 'Sesión '+s.n+' impartida el '+fechaLarga(s.fecha)+'. Confirmar asistencia y registrar cobro.';
+    } else if(s.estado === 'scheduled' && s.fecha){
+      // Sesión 2+: agendada, recordar confirmar asistencia
+      idConf = 'conf-ses-'+c.id+'-'+s.n;
+      tipo = 'Confirmar sesión '+s.n;
+      contexto = 'Sesión '+s.n+' agendada para el '+fechaLarga(s.fecha)+'. Confirmar asistencia del paciente.';
+    }
+    if(idConf){
+      actConf = {
         id: idConf, prospecto: c.nombre,
         refTipo: 'cliente', refId: c.id,
-        tipo: 'Confirmar sesión '+s.n,
-        fecha: s.fecha, hora: s.hora||'10:00',
+        tipo: tipo, fecha: s.fecha, hora: s.hora||'10:00',
         grupo: clasificarGrupo(s.fecha),
-        done: false, urgente: false,
-        contexto: 'Sesión '+s.n+' agendada para el '+fechaLarga(s.fecha)+'. Confirmar asistencia del paciente.'
+        done: false, urgente: false, contexto: contexto
       };
       actividadesData.push(actConf);
       gs('createCita', {
         id:idConf, prospecto:c.nombre, refTipo:'cliente', refId:c.id,
-        tipo:actConf.tipo, fecha:s.fecha, hora:actConf.hora,
+        tipo:tipo, fecha:s.fecha, hora:actConf.hora,
         grupo:actConf.grupo, done:'No', urgente:'No',
-        contexto:actConf.contexto, creadoEn:ahora, actualizadoEn:ahora
+        contexto:contexto, creadoEn:ahora, actualizadoEn:ahora
       }).catch(function(e){ console.error('[CDC GS] createCita activar conf:',e); });
     }
   });

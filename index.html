@@ -17,6 +17,7 @@
 .admin-chip{display:inline-flex;align-items:center;gap:5px;background:var(--surface-2,#F3F4F6);border:1px solid var(--line,#E5E7EB);border-radius:20px;padding:4px 10px 4px 12px;font-size:0.82rem;color:var(--ink,#1a1a1a);}
 .admin-chip button{background:none;border:none;cursor:pointer;color:var(--ink-3,#6B7280);font-size:1rem;line-height:1;padding:0 0 0 2px;}
 .admin-chip button:hover{color:var(--red,#C43D3D);}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.35}}
 </style>
 </head>
 <body>
@@ -72,6 +73,9 @@
     <header class="topbar">
       <div><div class="page-title" id="page-title">Hoy</div><div class="page-sub" id="page-sub">Centro de actividades</div></div>
       <div class="spacer"></div>
+      <div id="sync-dot" style="display:none;align-items:center;gap:6px;font-size:12px;color:var(--ink-3);margin-right:12px">
+        <span style="width:7px;height:7px;border-radius:50%;background:var(--blue);animation:pulse 1.2s infinite"></span>Sincronizando
+      </div>
       <div class="usercard">
         <div class="who"><b id="user-name">Dr. Willy</b><br><span id="user-role">Acceso total</span></div>
         <div class="av" id="user-av" style="background:linear-gradient(135deg,#1AA398,#0E6E66)">DW</div>
@@ -396,7 +400,8 @@
       <div style="font-size:17px;font-weight:600;color:var(--ink-1);margin-bottom:8px">¿El paciente asistió a la sesión?</div>
       <div style="font-size:13.5px;color:var(--ink-3);margin-bottom:24px">Confirma antes de registrar el cobro, o reagenda si no se presentó.</div>
     </div>
-    <div class="modal-foot" style="justify-content:center;gap:12px">
+    <div class="modal-foot" style="justify-content:center;gap:12px;flex-wrap:wrap">
+      <button class="btn btn-ghost" onclick="closeModal('m-ses-asistencia')">Ver después</button>
       <button class="btn btn-soft" style="min-width:140px" onclick="asistioNo()">No asistió · Reagendar</button>
       <button class="btn btn-primary" style="min-width:140px" onclick="asistioSi()">Sí asistió · Confirmar</button>
     </div>
@@ -441,9 +446,9 @@
         <div class="field"><label>Método de pago</label><select id="cb-metodo" onchange="cbActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
         <div class="field"><label>Cuenta</label><select id="cb-cuenta"></select></div>
       </div>
-      <div class="field"><label>¿Requiere factura?</label><select id="cb-factura"><option>No</option><option>Sí</option></select></div>
-      <div class="panel panel-blue" style="margin-bottom:0">
-        <div style="font-size:12.5px;color:var(--ink-2)">Si marcas <b>Sí</b>, se generará automáticamente una entrada en la cola de Facturas con estatus <b>Por crear</b>.</div>
+      <div class="field"><label>¿Requiere factura?</label><select id="cb-factura" onchange="$('cb-factura-hint').style.display=this.value==='Sí'?'block':'none'"><option>No</option><option>Sí</option></select></div>
+      <div id="cb-factura-hint" class="panel panel-blue" style="margin-bottom:0;display:none">
+        <div style="font-size:12.5px;color:var(--ink-2)">Al confirmar el cobro con factura, se generará automáticamente una entrada en el módulo <b>Historial CFDI</b> con estatus <b>Por crear</b>.</div>
       </div>
     </div>
     <div class="modal-foot">
@@ -626,7 +631,6 @@
     </div>
     <div class="modal-body">
       <div id="fd-estado-badge" style="margin-bottom:16px"></div>
-      <div id="fd-acciones-panel"></div>
       <div class="panel" style="background:var(--surface-2);border-color:var(--line)">
         <div class="panel-title">Datos del cobro</div>
         <div id="fd-datos-cobro"></div>
@@ -635,6 +639,7 @@
         <div class="panel-title">Datos fiscales</div>
         <div id="fd-datos-fiscales"></div>
       </div>
+      <div id="fd-acciones-panel"></div>
     </div>
     <div class="modal-foot" id="fd-footer"></div>
   </div>
@@ -669,56 +674,6 @@ function loginSubmit(){
 }
 function loginKeydown(e){ if(e.key==='Enter') loginSubmit(); }
 </script>
-<!-- m-rses: reprogramar sesión -->
-<div class="modal" id="m-rses">
-  <div class="modal-bg" onclick="closeModal('m-rses')"></div>
-  <div class="modal-box">
-    <div class="modal-head">
-      <div class="mh-ic" style="background:var(--amber-bg);color:var(--amber)">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><rect x="3" y="4" width="18" height="18" rx="2"/><path d="M16 2v4M8 2v4M3 10h18M16 18l2 2 4-4"/></svg>
-      </div>
-      <div>
-        <h3>Reprogramar sesión</h3>
-        <div class="mh-sub" id="rses-titulo"></div>
-      </div>
-      <button class="modal-x" onclick="closeModal('m-rses')">
-        <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg>
-      </button>
-    </div>
-    <div class="modal-body">
-      <div class="panel panel-amber" style="margin-bottom:16px">
-        <div style="font-size:13px;color:var(--ink-2)">La sesión regresará a estado <b>Agendada</b> con la nueva fecha. Si hay un motivo, se generará una actividad de seguimiento.</div>
-      </div>
-      <div class="field-row">
-        <div class="field">
-          <label>Nueva fecha <span class="req">*</span></label>
-          <input id="rses-fecha" type="date">
-        </div>
-        <div class="field">
-          <label>Hora</label>
-          <input id="rses-hora" type="time">
-        </div>
-      </div>
-      <div class="field">
-        <label>Motivo de reprogramación <span style="color:var(--ink-3);font-weight:400">(opcional)</span></label>
-        <select id="rses-motivo-sel" onchange="document.getElementById('rses-motivo').value=this.value==='otro'?'':this.value">
-          <option value="">— Selecciona o escribe —</option>
-          <option value="Paciente canceló">Paciente canceló</option>
-          <option value="Paciente no se presentó">Paciente no se presentó</option>
-          <option value="Cambio de agenda del médico">Cambio de agenda del médico</option>
-          <option value="Problema técnico con equipo">Problema técnico con equipo</option>
-          <option value="otro">Otro (escribir)</option>
-        </select>
-        <input id="rses-motivo" type="text" placeholder="Detalla el motivo..." style="margin-top:8px">
-      </div>
-    </div>
-    <div class="modal-foot">
-      <button class="btn btn-ghost" onclick="closeModal('m-rses')">Cancelar</button>
-      <button class="btn btn-primary" onclick="confirmarReprogSesion()">Confirmar reprogramación</button>
-    </div>
-  </div>
-</div>
-
 <script src="./js/auth.js"></script>
 <script src="./js/vendor/chart.umd.min.js"></script>
 <script src="./js/app.js?v=202606292200"></script>
