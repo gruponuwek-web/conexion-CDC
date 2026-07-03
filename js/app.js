@@ -175,11 +175,19 @@ async function cargarTodo(silent) {
       rSes.data.forEach(function(s){
         var cid = s.clienteId;
         if (!sesionesPorCliente[cid]) sesionesPorCliente[cid] = [];
+        // GAS serializa Date objects como ISO ("2026-07-03T06:00:00.000Z") — normalizar a YYYY-MM-DD
+        var rawFecha = s.fecha ? String(s.fecha) : '';
+        var tIdxF = rawFecha.indexOf('T');
+        var fechaStr = tIdxF > 0 ? rawFecha.slice(0, tIdxF) : rawFecha.slice(0, 10);
+        // Hora: GAS serializa tiempos como "1899-12-30T10:00:00.000Z" — extraer la parte HH:MM
+        var rawHora = s.hora ? String(s.hora) : '';
+        var tIdxH = rawHora.indexOf('T');
+        var horaStr = tIdxH > 0 ? rawHora.slice(tIdxH + 1, tIdxH + 6) : rawHora.slice(0, 5);
         sesionesPorCliente[cid].push({
           n:       Number(s.n)       || 0,
           estado:  s.estado          || 'pending',
-          fecha:   s.fecha           || '',
-          hora:    s.hora            || '',
+          fecha:   fechaStr,
+          hora:    horaStr,
           notas:   s.notas           || '',
           precio:  Number(s.precio)  || 0,
           cobrada: s.cobrada         || 'No',

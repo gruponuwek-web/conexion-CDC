@@ -277,37 +277,67 @@ function sesionRealizada(clienteId, n){
     if(pantallaActual==='hoy') renderActividades(actFiltro);
   }
 
-  // Actividad: agendar la siguiente sesión
+  // Marcar conf-ses de esta sesión como done
+  var idConfN = 'conf-ses-'+clienteId+'-'+n;
+  var actConfN = getActividad(idConfN);
+  if(actConfN && !actConfN.done){
+    actConfN.done = true;
+    gs('updateCita', {id:idConfN, done:'Sí', actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] updateCita conf sesionRealizada:',e); });
+  }
+
+  // Actividad para la siguiente sesión
   var sigN2 = n + 1;
   var sigSes2 = x.c.sesiones ? x.c.sesiones[sigN2-1] : null;
   if(sigSes2 && sigSes2.estado !== 'done'){
-    var idSig2 = 'sig-ses-'+clienteId+'-'+sigN2;
-    if(!getActividad(idSig2)){
-      var fechaSig2 = new Date(hoy+'T00:00:00');
-      fechaSig2.setDate(fechaSig2.getDate()+3);
-      var fechaSigStr2 = fechaSig2.toISOString().slice(0,10);
-      var actSig2 = {
-        id: idSig2, prospecto: x.c.nombre,
-        refTipo: 'cliente', refId: clienteId,
-        tipo: 'Agendar sesión '+sigN2,
-        fecha: fechaSigStr2, hora: '10:00',
-        grupo: clasificarGrupo(fechaSigStr2),
-        done: false, urgente: false,
-        contexto: 'Sesión '+n+' realizada. Agendar sesión '+sigN2+' de '+x.c.sesiones.length+' para '+esc(x.c.nombre)+'.'
-      };
-      actividadesData.push(actSig2);
-      gs('createCita', {
-        id:idSig2, prospecto:x.c.nombre,
-        refTipo:'cliente', refId:clienteId,
-        tipo:'Agendar sesión '+sigN2,
-        fecha:fechaSigStr2, hora:'10:00',
-        grupo:actSig2.grupo, done:'No', urgente:'No',
-        contexto:actSig2.contexto,
-        creadoEn:ahora, actualizadoEn:ahora
-      }).catch(function(e){ console.error('[CDC GS] createCita sig:',e); });
-      renderActChips(); renderNav();
-      if(pantallaActual==='hoy') renderActividades(actFiltro);
+    if(sigSes2.estado === 'scheduled' && sigSes2.fecha){
+      // Ya tiene fecha agendada — crear recordatorio de confirmar asistencia
+      var idConf2 = 'conf-ses-'+clienteId+'-'+sigN2;
+      if(!getActividad(idConf2)){
+        var actConf2 = {
+          id: idConf2, prospecto: x.c.nombre,
+          refTipo: 'cliente', refId: clienteId,
+          tipo: 'Confirmar sesión '+sigN2,
+          fecha: sigSes2.fecha, hora: sigSes2.hora||'10:00',
+          grupo: clasificarGrupo(sigSes2.fecha),
+          done: false, urgente: false,
+          contexto: 'Sesión '+sigN2+' agendada para el '+fechaLarga(sigSes2.fecha)+'. Confirmar asistencia del paciente.'
+        };
+        actividadesData.push(actConf2);
+        gs('createCita', {
+          id:idConf2, prospecto:x.c.nombre, refTipo:'cliente', refId:clienteId,
+          tipo:actConf2.tipo, fecha:sigSes2.fecha, hora:actConf2.hora,
+          grupo:actConf2.grupo, done:'No', urgente:'No',
+          contexto:actConf2.contexto, creadoEn:ahora, actualizadoEn:ahora
+        }).catch(function(e){ console.error('[CDC GS] createCita conf2:',e); });
+      }
+    } else {
+      // Pendiente de agendar — crear recordatorio de agendado
+      var idSig2 = 'sig-ses-'+clienteId+'-'+sigN2;
+      if(!getActividad(idSig2)){
+        var fechaSig2 = new Date(hoy+'T00:00:00');
+        fechaSig2.setDate(fechaSig2.getDate()+3);
+        var fechaSigStr2 = fechaSig2.toISOString().slice(0,10);
+        var actSig2 = {
+          id: idSig2, prospecto: x.c.nombre,
+          refTipo: 'cliente', refId: clienteId,
+          tipo: 'Agendar sesión '+sigN2,
+          fecha: fechaSigStr2, hora: '10:00',
+          grupo: clasificarGrupo(fechaSigStr2),
+          done: false, urgente: false,
+          contexto: 'Sesión '+n+' realizada. Agendar sesión '+sigN2+' de '+x.c.sesiones.length+' para '+esc(x.c.nombre)+'.'
+        };
+        actividadesData.push(actSig2);
+        gs('createCita', {
+          id:idSig2, prospecto:x.c.nombre, refTipo:'cliente', refId:clienteId,
+          tipo:'Agendar sesión '+sigN2, fecha:fechaSigStr2, hora:'10:00',
+          grupo:actSig2.grupo, done:'No', urgente:'No',
+          contexto:actSig2.contexto, creadoEn:ahora, actualizadoEn:ahora
+        }).catch(function(e){ console.error('[CDC GS] createCita sig:',e); });
+      }
     }
+    renderActChips(); renderNav();
+    if(pantallaActual==='hoy') renderActividades(actFiltro);
   }
 
   gs('updateSesion', {
@@ -443,18 +473,37 @@ function reagendarSesion(){
   closeModal('m-ses-editar'); renderClientes();
   toast('Sesión '+sesionCtx.n+' reagendada para el '+fechaLarga(f));
 
-  // Actualizar actividad de confirmación en Agenda si existe
+  // Actualizar o crear actividad de confirmación en Agenda
   var ahora = new Date().toISOString();
   var idConf = 'conf-ses-'+sesionCtx.clienteId+'-'+sesionCtx.n;
   var actConf = getActividad(idConf);
   if(actConf){
     actConf.fecha = f; actConf.hora = x.s.hora;
     actConf.grupo = clasificarGrupo(f);
-    renderActChips(); renderNav();
-    if(pantallaActual==='hoy') renderActividades(actFiltro);
     gs('updateCita', {id:idConf, fecha:f, hora:x.s.hora, grupo:actConf.grupo, actualizadoEn:ahora})
       .catch(function(e){ console.error('[CDC GS] updateCita reagendar:',e); });
+  } else {
+    var nuevaAct = {
+      id: idConf, prospecto: x.c.nombre,
+      refTipo: 'cliente', refId: sesionCtx.clienteId,
+      tipo: 'Confirmar sesión '+sesionCtx.n,
+      fecha: f, hora: x.s.hora||'10:00',
+      grupo: clasificarGrupo(f),
+      done: false, urgente: false,
+      contexto: 'Sesión '+sesionCtx.n+' reagendada para el '+fechaLarga(f)+'. Confirmar asistencia del paciente.'
+    };
+    actividadesData.push(nuevaAct);
+    gs('createCita', {
+      id:idConf, prospecto:x.c.nombre,
+      refTipo:'cliente', refId:sesionCtx.clienteId,
+      tipo:nuevaAct.tipo, fecha:f, hora:nuevaAct.hora,
+      grupo:nuevaAct.grupo, done:'No', urgente:'No',
+      contexto:nuevaAct.contexto,
+      creadoEn:ahora, actualizadoEn:ahora
+    }).catch(function(e){ console.error('[CDC GS] createCita reagendar:',e); });
   }
+  renderActChips(); renderNav();
+  if(pantallaActual==='hoy') renderActividades(actFiltro);
 
   gs('updateSesion', {id:'s-'+sesionCtx.clienteId+'-'+sesionCtx.n,
     estado:'scheduled', fecha:f, hora:x.s.hora, notas:x.s.notas, actualizadoEn:ahora
@@ -469,6 +518,15 @@ function marcarImpartida(){
   toast('Sesión '+sesionCtx.n+' confirmada ✓');
 
   var ahora = new Date().toISOString();
+
+  // Marcar actividad de confirmación como realizada
+  var idConf = 'conf-ses-'+sesionCtx.clienteId+'-'+sesionCtx.n;
+  var actConf = getActividad(idConf);
+  if(actConf && !actConf.done){
+    actConf.done = true;
+    gs('updateCita', {id:idConf, done:'Sí', actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] updateCita marcarImpartida:',e); });
+  }
 
   renderNav(); renderActChips();
   if(pantallaActual==='hoy') renderActividades(actFiltro);

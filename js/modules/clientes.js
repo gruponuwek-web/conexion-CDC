@@ -401,5 +401,29 @@ function activarCliente(){
         creadoEn:ahora, actualizadoEn:ahora};
     })
   }).catch(function(e){ console.error('[CDC GS] createSesiones error:',e); });
+
+  // Crear actividades de agenda para sesiones pre-agendadas (sesión 2 en adelante con estado scheduled)
+  c.sesiones.forEach(function(s){
+    if(s.estado === 'scheduled' && s.fecha){
+      var idConf = 'conf-ses-'+c.id+'-'+s.n;
+      var actConf = {
+        id: idConf, prospecto: c.nombre,
+        refTipo: 'cliente', refId: c.id,
+        tipo: 'Confirmar sesión '+s.n,
+        fecha: s.fecha, hora: s.hora||'10:00',
+        grupo: clasificarGrupo(s.fecha),
+        done: false, urgente: false,
+        contexto: 'Sesión '+s.n+' agendada para el '+fechaLarga(s.fecha)+'. Confirmar asistencia del paciente.'
+      };
+      actividadesData.push(actConf);
+      gs('createCita', {
+        id:idConf, prospecto:c.nombre, refTipo:'cliente', refId:c.id,
+        tipo:actConf.tipo, fecha:s.fecha, hora:actConf.hora,
+        grupo:actConf.grupo, done:'No', urgente:'No',
+        contexto:actConf.contexto, creadoEn:ahora, actualizadoEn:ahora
+      }).catch(function(e){ console.error('[CDC GS] createCita activar conf:',e); });
+    }
+  });
+  renderActChips(); renderNav();
 }
 
