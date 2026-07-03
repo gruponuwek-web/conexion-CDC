@@ -16,6 +16,14 @@ function clickDot(clienteId, n){
   var s = c.sesiones[n-1]; if(!s) return;
   sesionCtx = {clienteId:clienteId, n:n};
 
+  // Para sesiones "por confirmar", preguntar primero si el paciente asistió
+  if(s.estado==='next'){
+    setText('sasist-titulo', 'Sesión '+n+' · '+c.nombre);
+    setText('sasist-fecha', s.fecha ? ('Para el '+fechaLarga(s.fecha)+(s.hora?' · '+horaTxt(s.hora):'')) : '');
+    openModal('m-ses-asistencia');
+    return;
+  }
+
   setText('ses-ed-title', 'Sesión '+n+' · '+c.nombre);
   setText('ses-ed-sub', dotLabel(s.estado));
   $('ses-ed-fecha').value = s.fecha||'';
@@ -36,7 +44,7 @@ function clickDot(clienteId, n){
     foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
 
   } else if(s.estado==='scheduled'){
-    foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar</button>';
+    foot += '<button class="btn btn-soft" onclick="reagendarSesion()">Reagendar</button>';
     foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Confirmar sesión</button>';
 
   } else if(s.estado==='next'){
@@ -357,6 +365,97 @@ function guardarSesion(){
   x.s.fecha=$('ses-ed-fecha').value; x.s.hora=$('ses-ed-hora').value; x.s.notas=$('ses-ed-notas').value;
   closeModal('m-ses-editar'); renderClientes();
   toast('Sesión actualizada');
+}
+
+// ── Modal de asistencia (paso previo a confirmar sesión next) ──
+function asistioSi(){
+  closeModal('m-ses-asistencia');
+  // Abrir el modal normal de sesión para proceder al cobro
+  var c = getCliente(sesionCtx.clienteId); if(!c) return;
+  var n = sesionCtx.n;
+  clickDotFull(c, n);
+}
+
+function asistioNo(){
+  closeModal('m-ses-asistencia');
+  // Revertir a scheduled y abrir el modal para seleccionar nueva fecha
+  var c = getCliente(sesionCtx.clienteId); if(!c) return;
+  var n = sesionCtx.n;
+  var s = c.sesiones[n-1]; if(!s) return;
+  s.estado = 'scheduled';
+  clickDotFull(c, n);
+}
+
+// Lógica interna de clickDot sin el interceptor de 'next'
+function clickDotFull(c, n){
+  var s = c.sesiones[n-1]; if(!s) return;
+  sesionCtx = {clienteId:c.id, n:n};
+
+  setText('ses-ed-title', 'Sesión '+n+' · '+c.nombre);
+  setText('ses-ed-sub', dotLabel(s.estado));
+  $('ses-ed-fecha').value = s.fecha||'';
+  $('ses-ed-hora').value = s.hora||'';
+  $('ses-ed-notas').value = s.notas||'';
+
+  var cobradaYaBadge = (s.cobrada==='Sí'||s.cobrada===true||s.cobrada==='Si');
+  var bcls = s.estado==='done'?(cobradaYaBadge?'b-green':'b-blue'):(s.estado==='next'?'b-orange':(s.estado==='scheduled'?'b-orange':'b-gray'));
+  var badgeTxt = dotLabel(s.estado, s.cobrada);
+  setHtml('ses-ed-statusrow', '<span class="badge '+bcls+'">'+badgeTxt+'</span>');
+
+  var foot = '<button class="btn btn-ghost" onclick="closeModal(\'m-ses-editar\')">Cerrar</button>';
+  var cobroPanel = '';
+  if(s.estado==='pending'){
+    foot += '<button class="btn btn-primary" onclick="agendarSesion()">Agendar sesión</button>';
+  } else if(s.estado==='scheduled'){
+    foot += '<button class="btn btn-soft" onclick="reagendarSesion()">Reagendar</button>';
+    foot += '<button class="btn btn-primary" onclick="marcarImpartida()">Confirmar sesión</button>';
+  } else if(s.estado==='next'){
+    cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Sesión impartida · Paso 3</div>'
+      + '<div style="font-size:13px;color:var(--ink-2)">Confirma que la sesión fue realizada. El cobro se registrará en el paso siguiente.</div></div>';
+    foot += '<button class="btn btn-primary" onclick="sesionRealizada(\''+c.id+'\','+n+')">Sesión realizada</button>';
+  } else if(s.estado==='done'){
+    var cobradaYa = (s.cobrada === 'Sí' || s.cobrada === true || s.cobrada === 'Si');
+    if(cobradaYa){
+      cobroPanel = '<div class="panel" style="background:var(--green-bg);border-color:var(--green-bd)"><div class="panel-title" style="color:var(--green)">'+ico('cobro')+'Sesión completada y cobrada</div>'
+        + '<div style="font-size:13px;color:var(--ink-2)">Cobro registrado por <b>'+money(s.precio)+'</b>.</div></div>';
+      foot += '<button class="btn btn-primary" onclick="guardarSesion()">Guardar notas</button>';
+    } else {
+      cobroPanel = '<div class="panel panel-blue"><div class="panel-title">'+ico('cobro')+'Paso 4 · Registrar cobro</div>'
+        + '<div style="font-size:13px;color:var(--ink-2)">Sesión realizada ✓ Registra el pago de <b>'+money(s.precio)+'</b> para completar el ciclo.</div></div>';
+      foot += '<button class="btn btn-soft" onclick="guardarSesion()">Guardar notas</button>';
+      foot += '<button class="btn btn-primary" onclick="closeModal(\'m-ses-editar\');openCobro(\''+c.id+'\','+n+')">Registrar cobro</button>';
+    }
+  }
+  setHtml('ses-ed-cobro-panel', cobroPanel);
+  setHtml('ses-ed-foot', foot);
+  openModal('m-ses-editar');
+}
+
+function reagendarSesion(){
+  var x=_curSes(); if(!x){closeModal('m-ses-editar');return;}
+  var f=$('ses-ed-fecha').value;
+  if(!f){ toast('Selecciona la nueva fecha para reagendar'); return; }
+  x.s.fecha=f; x.s.hora=$('ses-ed-hora').value||'10:00'; x.s.notas=$('ses-ed-notas').value;
+  x.s.estado='scheduled';
+  closeModal('m-ses-editar'); renderClientes();
+  toast('Sesión '+sesionCtx.n+' reagendada para el '+fechaLarga(f));
+
+  // Actualizar actividad de confirmación en Agenda si existe
+  var ahora = new Date().toISOString();
+  var idConf = 'conf-ses-'+sesionCtx.clienteId+'-'+sesionCtx.n;
+  var actConf = getActividad(idConf);
+  if(actConf){
+    actConf.fecha = f; actConf.hora = x.s.hora;
+    actConf.grupo = clasificarGrupo(f);
+    renderActChips(); renderNav();
+    if(pantallaActual==='hoy') renderActividades(actFiltro);
+    gs('updateCita', {id:idConf, fecha:f, hora:x.s.hora, grupo:actConf.grupo, actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] updateCita reagendar:',e); });
+  }
+
+  gs('updateSesion', {id:'s-'+sesionCtx.clienteId+'-'+sesionCtx.n,
+    estado:'scheduled', fecha:f, hora:x.s.hora, notas:x.s.notas, actualizadoEn:ahora
+  }).catch(function(e){ console.error('[CDC GS] updateSesion reagendar:',e); });
 }
 
 function marcarImpartida(){

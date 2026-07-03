@@ -383,6 +383,26 @@
   </div>
 </div>
 
+<!-- m-ses-asistencia (confirmación previa de asistencia) -->
+<div class="modal" id="m-ses-asistencia">
+  <div class="modal-bg" onclick="closeModal('m-ses-asistencia')"></div>
+  <div class="modal-box" style="max-width:420px">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--blue-bg);color:var(--blue)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><path d="M17 21v-2a4 4 0 0 0-4-4H5a4 4 0 0 0-4 4v2"/><circle cx="9" cy="7" r="4"/><path d="M23 21v-2a4 4 0 0 0-3-3.87"/><path d="M16 3.13a4 4 0 0 1 0 7.75"/></svg></div>
+      <div><h3 id="sasist-titulo">Sesión · Cliente</h3><div class="mh-sub" id="sasist-fecha"></div></div>
+      <button class="modal-x" onclick="closeModal('m-ses-asistencia')"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M18 6 6 18M6 6l12 12"/></svg></button>
+    </div>
+    <div class="modal-body" style="text-align:center;padding:28px 24px 8px">
+      <div style="font-size:17px;font-weight:600;color:var(--ink-1);margin-bottom:8px">¿El paciente asistió a la sesión?</div>
+      <div style="font-size:13.5px;color:var(--ink-3);margin-bottom:24px">Confirma antes de registrar el cobro, o reagenda si no se presentó.</div>
+    </div>
+    <div class="modal-foot" style="justify-content:center;gap:12px">
+      <button class="btn btn-soft" style="min-width:140px" onclick="asistioNo()">No asistió · Reagendar</button>
+      <button class="btn btn-primary" style="min-width:140px" onclick="asistioSi()">Sí asistió · Confirmar</button>
+    </div>
+  </div>
+</div>
+
 <!-- m-ses-editar (panel de sesión) -->
 <div class="modal" id="m-ses-editar">
   <div class="modal-bg" onclick="closeModal('m-ses-editar')"></div>
