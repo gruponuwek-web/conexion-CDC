@@ -87,18 +87,26 @@ function renderPipeline(){
 
 function renderLeadsTabla(){
   var tb = $('leads-tbody'); if(!tb) return;
+  var q = ($('leads-buscar') ? $('leads-buscar').value.toLowerCase().trim() : '');
+  var lista = q ? leadsData.filter(function(l){
+    return (l.nombre||'').toLowerCase().includes(q) || (l.paciente||'').toLowerCase().includes(q);
+  }) : leadsData;
   var html = '';
-  leadsData.forEach(function(l){
-    var etCls = 'b-'+(ETAPA_COLOR[l.etapa]||'gray');
-    html += '<tr onclick="openPipeDetalle(\''+l.id+'\',false)">'
-      + '<td><b>'+esc(l.nombre)+'</b></td>'
-      + '<td>'+esc(l.paciente)+'</td>'
-      + '<td>'+esc(l.padecimiento)+'</td>'
-      + '<td><span class="badge '+etCls+'">'+esc(l.etapa)+'</span></td>'
-      + '<td>'+esc(l.canal)+'</td>'
-      + '<td>'+tempBadge(l.temp)+'</td>'
-      + '</tr>';
-  });
+  if(lista.length === 0){
+    html = '<tr><td colspan="6" style="text-align:center;color:var(--ink-3);padding:18px">Sin resultados para "'+esc(q)+'"</td></tr>';
+  } else {
+    lista.forEach(function(l){
+      var etCls = 'b-'+(ETAPA_COLOR[l.etapa]||'gray');
+      html += '<tr onclick="openPipeDetalle(\''+l.id+'\',false)">'
+        + '<td><b>'+esc(l.nombre)+'</b></td>'
+        + '<td>'+esc(l.paciente)+'</td>'
+        + '<td>'+esc(l.padecimiento)+'</td>'
+        + '<td><span class="badge '+etCls+'">'+esc(l.etapa)+'</span></td>'
+        + '<td>'+esc(l.canal)+'</td>'
+        + '<td>'+tempBadge(l.temp)+'</td>'
+        + '</tr>';
+    });
+  }
   tb.innerHTML = html;
 }
 

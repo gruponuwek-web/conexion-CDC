@@ -111,7 +111,7 @@
           <div class="kcol" id="col-Perdido" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'Perdido')"><div class="kcol-head"><span class="dot" style="background:#C2553F"></span><span class="t">Perdido</span><span class="c" id="cnt-Perdido">0</span></div><div class="kcol-desc">Cotizó pero no se cerró el trato</div><div class="kcol-body"></div></div>
           <div class="kcol" id="col-No clasifica" ondragover="onDragOver(event)" ondragleave="onDragLeave(event)" ondrop="onDrop(event,'No clasifica')"><div class="kcol-head"><span class="dot" style="background:#8A9199"></span><span class="t">No clasifica</span><span class="c" id="cnt-No clasifica">0</span></div><div class="kcol-desc">No contestan o sin perfil</div><div class="kcol-body"></div></div>
         </div>
-        <div class="section-head" style="margin-top:26px"><h2>Lista de leads</h2><div class="spacer"></div></div>
+        <div class="section-head" style="margin-top:26px"><h2>Lista de leads</h2><div class="spacer"></div><input id="leads-buscar" type="search" placeholder="Buscar por nombre o paciente…" oninput="renderLeadsTabla()" style="font-size:13px;padding:6px 11px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-1);outline:none;width:230px"></div>
         <div class="tbl-wrap"><table class="tbl"><thead><tr><th>Lead</th><th>Paciente</th><th>Padecimiento</th><th>Etapa</th><th>Canal</th><th>Temp.</th></tr></thead><tbody id="leads-tbody"></tbody></table></div>
       </section>
       <section class="screen" id="screen-clientes">

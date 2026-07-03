@@ -150,7 +150,7 @@ svg{display:inline-block;vertical-align:-0.14em;width:16px;height:16px;flex-shri
 .kcol-head .dot{width:9px;height:9px;border-radius:50%}
 .kcol-head .t{font-weight:700;font-size:13px}
 .kcol-head .c{margin-left:auto;font-size:12px;color:var(--ink-3);font-weight:600;background:var(--surface);border:1px solid var(--line);border-radius:7px;padding:1px 8px}
-.kcol-body{padding:11px;display:flex;flex-direction:column;gap:10px;min-height:90px;flex:1}
+.kcol-body{padding:11px;display:flex;flex-direction:column;gap:10px;min-height:90px;max-height:520px;overflow-y:auto;flex:1}
 .lead-card{background:var(--surface);border:1px solid var(--line);border-radius:11px;padding:13px;box-shadow:var(--shadow-sm);cursor:grab;transition:.14s}
 .lead-card:hover{box-shadow:var(--shadow-md);transform:translateY(-1px)}
 .lead-card.dragging{opacity:.4}
