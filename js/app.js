@@ -380,6 +380,7 @@ async function cargarTodo(silent) {
     if(!silent) mostrarError('Error de conexión con Google Sheets: ' + err.toString());
     console.error('[CDC GS] cargarTodo falló:', err);
   }
+  _rebuildMaps();
   if(!silent) mostrarLoader(false);
 }
 
@@ -689,6 +690,8 @@ function mkSesiones(num, doneCount, precio, fechaPrimera, pausadoDesde){
 
 var clientesData    = [];
 var actividadesData = [];
+var _clientesMap    = new Map();
+var _leadsMap       = new Map();
 var pagosFijos      = [];
 var porPagarData    = [];
 var historialEgresos= [];
@@ -702,22 +705,14 @@ var facturasData    = [];
 var FACT_SEQ = ['Por crear','Creada','Enviada','Completada'];
 var FACT_BADGE = {'Por crear':'b-amber','Creada':'b-blue','Enviada':'b-violet','Completada':'b-green'};
 
-function getCliente(id){ 
-  if(!id) return null;
-  var sid = String(id);
-  for(var i=0;i<clientesData.length;i++){ 
-    if(String(clientesData[i].id)===sid) return clientesData[i]; 
-  } 
-  return null; 
+function _rebuildMaps(){
+  _clientesMap = new Map();
+  clientesData.forEach(function(c){ _clientesMap.set(String(c.id), c); });
+  _leadsMap = new Map();
+  leadsData.forEach(function(l){ _leadsMap.set(String(l.id), l); });
 }
-function getLead(id){ 
-  if(!id) return null;
-  var sid = String(id);
-  for(var i=0;i<leadsData.length;i++){ 
-    if(String(leadsData[i].id)===sid) return leadsData[i]; 
-  } 
-  return null; 
-}
+function getCliente(id){ if(!id) return null; return _clientesMap.get(String(id)) || null; }
+function getLead(id){    if(!id) return null; return _leadsMap.get(String(id))    || null; }
 function getActividad(id){ for(var i=0;i<actividadesData.length;i++){ if(actividadesData[i].id===id) return actividadesData[i]; } return null; }
 function getFactura(id){ for(var i=0;i<facturasData.length;i++){ if(facturasData[i].id===id) return facturasData[i]; } return null; }
 /* ============================================================
