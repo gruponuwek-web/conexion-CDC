@@ -215,11 +215,13 @@ function _calRenderDetail() {
   if (calFilter === 'vencidas')    acts = acts.filter(function(a){ return !a.done && _normFecha(a.fecha) < HOY; });
   if (calFilter === 'completadas') acts = acts.filter(function(a){ return a.done; });
 
-  // Ordenar: urgentes primero, luego por hora
+  // Ordenar: pendientes primero, urgentes al tope, completadas al fondo
   acts.sort(function(a, b) {
+    if (a.done && !b.done) return 1;
+    if (!a.done && b.done) return -1;
     if (a.urgente && !b.urgente) return -1;
     if (!a.urgente && b.urgente) return 1;
-    return (a.hora||'').localeCompare(b.hora||'');
+    return (_calNormHora(a.hora)||'').localeCompare(_calNormHora(b.hora)||'');
   });
 
   if (acts.length === 0) {
@@ -235,7 +237,8 @@ function _calRenderDetail() {
     var grupo  = a.done ? 'done' : clasificarGrupo(_normFecha(a.fecha));
     var icCls  = grupo==='done'?'b-green': grupo==='vencido'?'b-red': grupo==='hoy'?'b-amber':'b-blue';
     var igHtml = ico(tipoIcon(a.tipo));
-    var horaTxt = a.hora ? '<span style="font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums">'+esc(a.hora)+'</span>' : '';
+    var horaStr = _calNormHora(a.hora);
+    var horaTxt = horaStr ? '<span style="font-size:11px;color:var(--ink-3);font-variant-numeric:tabular-nums">'+esc(horaStr)+'</span>' : '';
     var urgTag  = (a.urgente && !a.done) ? '<span class="badge b-red" style="font-size:10px">Urgente</span>' : '';
     var doneTag = a.done ? '<span class="badge b-green" style="font-size:10px">Completada</span>' : '';
 
@@ -275,4 +278,12 @@ function _calRenderSummaryChips() {
 /* ── Helper ISO ──────────────────────────────────────────── */
 function _calIso(y, m, d) {
   return y + '-' + String(m+1).padStart(2,'0') + '-' + String(d).padStart(2,'0');
+}
+
+/* ── Normaliza hora: Sheets devuelve "1899-12-30T16:36:36.000Z" para tiempos ── */
+function _calNormHora(h) {
+  if (!h) return '';
+  var s = String(h);
+  if (s.indexOf('T') > 0) return s.split('T')[1].slice(0, 5);
+  return s.slice(0, 5);
 }
