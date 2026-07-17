@@ -10,7 +10,7 @@ async function gs_registrarCobro(cobroData) {
   //              metodo, cuenta, facturaRequerida, rfcFiscal,
   //              razonSocial, usoCFDI, nextSesionId, nextSesionFecha,
   //              sesionNum }
-  var res = await gs('saveCobro', cobroData);
+  var res = await gs('createCobro', cobroData);
   if (res.ok) {
     await Promise.all([
       _recargarClientes(),

@@ -65,9 +65,11 @@ function handle(e) {
       case 'updateCobro':   out = updateById(SHEET_NAMES.cobros, data);                    break;
 
       // ── EGRESOS ───────────────────────────────────────────────
-      case 'getEgresos':    out = getRows(SHEET_NAMES.egresos);                            break;
-      case 'createEgreso':  out = appendRow(SHEET_NAMES.egresos, data);                    break;
-      case 'updateEgreso':  out = updateById(SHEET_NAMES.egresos, data);                   break;
+      case 'getEgresos':      out = getRows(SHEET_NAMES.egresos);                          break;
+      case 'getPagosFijos':   out = getRows(SHEET_NAMES.egresos).filter(r => r.tipo === 'fijo'); break;
+      case 'createEgreso':    out = appendRow(SHEET_NAMES.egresos, data);                  break;
+      case 'updateEgreso':    out = updateById(SHEET_NAMES.egresos, data);                 break;
+      case 'deletePagoFijo':  out = deleteById(SHEET_NAMES.egresos, data.id);             break;
 
       // ── FACTURAS ──────────────────────────────────────────────
       case 'getFacturas':   out = getRows(SHEET_NAMES.facturas);                           break;
@@ -175,6 +177,22 @@ function getSheet(sheetName) {
   const sheet = SpreadsheetApp.getActive().getSheetByName(sheetName);
   if (!sheet) throw new Error('No existe la hoja: ' + sheetName);
   return sheet;
+}
+
+function deleteById(sheetName, id) {
+  if (!id) throw new Error('Falta id para eliminar en ' + sheetName);
+  const sheet = getSheet(sheetName);
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0];
+  const idCol = headers.indexOf('id');
+  if (idCol < 0) throw new Error('No existe columna "id" en hoja: ' + sheetName);
+  for (let i = values.length - 1; i >= 1; i--) {
+    if (String(values[i][idCol]) === String(id)) {
+      sheet.deleteRow(i + 1);
+      return { id: id };
+    }
+  }
+  throw new Error('Registro no encontrado: ' + id + ' en ' + sheetName);
 }
 
 // upsertConfig — actualiza una fila si key existe, si no la crea

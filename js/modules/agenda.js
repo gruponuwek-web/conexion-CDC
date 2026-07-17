@@ -6,13 +6,13 @@
    ============================================================ */
 
 async function gs_guardarActividad(actData) {
-  var res = await gs('saveActividad', actData);
+  var res = await gs('createCita', actData);
   if (res.ok) await _recargarActividades();
   return res;
 }
 
 async function gs_actualizarActividad(actData) {
-  var res = await gs('updateActividad', actData);
+  var res = await gs('updateCita', actData);
   if (res.ok) await _recargarActividades();
   return res;
 }

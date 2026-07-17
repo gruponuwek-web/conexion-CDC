@@ -6,7 +6,7 @@
    ============================================================ */
 
 async function gs_guardarEgreso(egresoData) {
-  var res = await gs('saveEgreso', egresoData);
+  var res = await gs('createEgreso', egresoData);
   if (res.ok) await _recargarEgresos();
   return res;
 }
@@ -18,7 +18,7 @@ async function gs_actualizarEgreso(egresoData) {
 }
 
 async function gs_guardarPagoFijo(pfData) {
-  var res = await gs('savePagoFijo', pfData);
+  var res = await gs('createEgreso', pfData);
   if (res.ok) await _recargarEgresos();
   return res;
 }

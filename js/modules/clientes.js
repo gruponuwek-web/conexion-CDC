@@ -6,7 +6,7 @@
    ============================================================ */
 
 async function gs_guardarCliente(clienteData) {
-  var res = await gs('saveCliente', clienteData);
+  var res = await gs('createCliente', clienteData);
   if (res.ok) await _recargarClientes();
   return res;
 }

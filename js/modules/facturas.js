@@ -7,7 +7,7 @@
 
 async function gs_agregarFacturaPendiente(clienteNombre, sesionNum, monto, fecha) {
   var cliente = CDC.clientes.find(function(c) { return c.nombre === clienteNombre; });
-  return gs('saveFactura', {
+  return gs('createFactura', {
     clienteId:      cliente ? cliente.id : '',
     clienteNombre:  clienteNombre,
     sesionNum:      sesionNum,

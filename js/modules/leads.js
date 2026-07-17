@@ -6,7 +6,7 @@
    ============================================================ */
 
 async function gs_guardarLead(leadData) {
-  var res = await gs('saveLead', leadData);
+  var res = await gs('createLead', leadData);
   if (res.ok) {
     await _recargarLeads();
   } else {
