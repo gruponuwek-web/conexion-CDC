@@ -130,6 +130,22 @@ function onDrop(e, etapa){
   cambiarEtapaLead(id, etapa, true);
 }
 
+function _poblarSigActPorEtapa(etapa, valorActual){
+  var el = $('pd-sigact'); if(!el) return;
+  var tipos = (ETAPA_ACT_TIPOS && ETAPA_ACT_TIPOS[etapa]) ? ETAPA_ACT_TIPOS[etapa] : ACT_TIPOS;
+  var opts = '<option value="">— Ninguna —</option>';
+  opts += tipos.map(function(t){
+    return '<option'+(t===(valorActual||'')?' selected':'')+'>'+esc(t)+'</option>';
+  }).join('');
+  el.innerHTML = opts;
+  if(valorActual && tipos.indexOf(valorActual)===-1) el.value = '';
+}
+
+function onPdEtapaChange(){
+  var sel = $('pd-etapa-select'); if(!sel) return;
+  _poblarSigActPorEtapa(sel.value, $('pd-sigact').value);
+}
+
 function openPipeDetalle(id, fromDrag){
   var l = getLead(id); if(!l) return;
   pipeActualId = id;
@@ -141,15 +157,13 @@ function openPipeDetalle(id, fromDrag){
   if(extras.length) sub += ' (' + extras.join(', ') + ')';
   sub += ' · ' + l.padecimiento;
   setText('pd-pac', sub);
-  // R9: fromDrag => etapa fija (badge); manual => dropdown
-  var fixed = $('pd-etapa-fixed'), sel = $('pd-etapa-select');
-  if(fromDrag){
-    fixed.style.display=''; sel.style.display='none';
-    fixed.innerHTML = '<span class="badge b-'+(ETAPA_COLOR[l.etapa]||'gray')+'">'+esc(l.etapa)+'</span>';
-  } else {
-    fixed.style.display='none'; sel.style.display='';
-    sel.value = l.etapa;
-  }
+  // Etapa solo lectura — badge informativo, sin dropdown
+  var fixed = $('pd-etapa-fixed');
+  var sel   = $('pd-etapa-select');
+  fixed.style.display = '';
+  fixed.innerHTML = '<span class="badge b-'+(ETAPA_COLOR[l.etapa]||'gray')+'">'+esc(l.etapa)+'</span>';
+  sel.style.display = 'none';
+  sel.value = l.etapa;
   $('pd-correo').value = l.correo||'';
   $('pd-cel').value = l.cel||'';
   $('pd-paciente').value = (l.paciente && l.paciente!=='—') ? l.paciente : '';
@@ -158,8 +172,9 @@ function openPipeDetalle(id, fromDrag){
   $('pd-padecimiento').value = l.padecimiento||'';
   $('pd-temp').value = l.temp||'Tibio';
   $('pd-canal').value = l.canal||'';
-  $('pd-sigact').value = l.sigAct||'';
-  $('pd-sigfecha').value = l.sigFecha||'';
+  // Poblar sigact filtrado por etapa actual
+  _poblarSigActPorEtapa(l.etapa, l.sigAct||'');
+  $('pd-sigfecha').value = _normFecha(l.sigFecha)||'';
   if($('pd-sighora')) $('pd-sighora').value = l.sigHora||'';
   $('pd-nota').value = l.nota||'';
   var tl = (l.historial||[]).map(function(h){ return '<div class="tl-item"><div class="tl-t">'+esc(h.t)+'</div><div class="tl-x">'+esc(h.x)+'</div></div>'; }).join('');
@@ -257,6 +272,7 @@ function ganarLead(id, prevEtapa){
       onboarding:{contrato:false,anticipo:false,consent:false,neurometria:false,expediente:false,protocolo:false,calendario:false}
     };
     clientesData.push(nc);
+    _rebuildMaps();
     // Guardar en Sheets
     var ahora = new Date().toISOString();
     gs('createCliente', {
@@ -327,8 +343,9 @@ function abrirEtapaActividad(id, prev, etapa){
   setText('ea-desc', ETAPA_DESC[etapa]||'');
   var prop = ETAPA_ACT_DEFAULT[etapa];
   if(prop===undefined) prop='Llamada';
+  var tiposEtapa = (ETAPA_ACT_TIPOS && ETAPA_ACT_TIPOS[etapa]) ? ETAPA_ACT_TIPOS[etapa] : ACT_TIPOS;
   var optsBase = opcional ? '<option value="">— Sin actividad —</option>' : '';
-  setHtml('ea-tipo', optsBase + ACT_TIPOS.map(function(t){ return '<option'+(t===prop?' selected':'')+'>'+esc(t)+'</option>'; }).join(''));
+  setHtml('ea-tipo', optsBase + tiposEtapa.map(function(t){ return '<option'+(t===prop?' selected':'')+'>'+esc(t)+'</option>'; }).join(''));
   if(opcional && !prop) $('ea-tipo').value='';
   $('ea-fecha').value = HOY;
   $('ea-hora').value = '10:00';

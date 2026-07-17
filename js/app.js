@@ -625,6 +625,15 @@ var ETAPA_ACT_DEFAULT = {
   'Nuevo':'Llamada','Contactado':'Llamada','Diagnóstico':'Agendar cita',
   'Cotizado':'Seguimiento cotización','Perdido':'','No clasifica':''
 };
+// Actividades disponibles por etapa (solo las relevantes para cada fase)
+var ETAPA_ACT_TIPOS = {
+  'Nuevo':        ['Llamada','Mensaje WhatsApp'],
+  'Contactado':   ['Llamada','Mensaje WhatsApp','Agendar cita','Enviar cotización'],
+  'Diagnóstico':  ['Agendar cita','Llamada','Enviar documento'],
+  'Cotizado':     ['Seguimiento cotización','Enviar cotización','Llamada','Mensaje WhatsApp'],
+  'Perdido':      ['Llamada','Mensaje WhatsApp','Seguimiento cotización'],
+  'No clasifica': ['Llamada','Mensaje WhatsApp']
+};
 var ETAPAS_OPCIONALES = LISTAS.etapasOpcionales;
 var ACT_TIPOS = LISTAS.tiposActividad;
 var PADECIMIENTOS = LISTAS.padecimientos;
@@ -808,7 +817,7 @@ function nav(key){
   setText('page-title', t[0]); setText('page-sub', t[1]);
   renderNav();
   renderMobNav();
-  if(key==='hoy'){ renderActividades(actFiltro); renderActChips(); }
+  if(key==='hoy'){ renderActividades(actFiltro); renderActChips(); if(typeof hoyVista==='function') hoyVista(hoyVistaActual||'lista'); }
   if(key==='leads') renderLeads();
   if(key==='clientes') renderClientes();
   if(key==='egresos'){ renderFinanzas(); var fg=$('fin-filtro-global'); if(fg) fg.innerHTML=finFiltroHtml(); }
