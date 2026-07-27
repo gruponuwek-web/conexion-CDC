@@ -314,9 +314,7 @@ function renderIngresos(){
       + concBtn('ingreso', i.id, i.conciliado)
       + '<button class="btn btn-ghost btn-sm" style="color:var(--red);margin-left:4px" title="Eliminar" onclick="event.stopPropagation();eliminarIngreso(\''+i.id+'\')">×</button></div>';
   }).join('') : '<div class="empty" style="padding:18px">Sin ingresos'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
-  var html = egSection('Historial de ingresos', 'Cobros recibidos de clientes', ingresosData.length, rows, inSortBar);
-
-  // ── Ingresos adicionales ──────────────────────────────────────
+  // ── Ingresos adicionales (primero) ───────────────────────────
   var extFilt = finFiltrar(ingresosExtras);
   var extRows = extFilt.length ? _egSort(extFilt, inSortField, inSortDir).map(function(i){
     return '<div class="histrow" style="cursor:pointer" onclick="abrirIngresoExtraDetalle(\''+i.id+'\')"><div class="act-ico" style="width:34px;height:34px;background:var(--emerald-bg,#D1FAE5);color:var(--emerald,#0E8F73)">'+ico('cobro')+'</div>'
@@ -325,7 +323,10 @@ function renderIngresos(){
       + concBtn('ingresoExtra', i.id, i.conciliado)+'</div>';
   }).join('') : '<div class="empty" style="padding:18px">Sin ingresos adicionales'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
   var btnExtra = '<button class="btn btn-soft btn-sm" onclick="event.stopPropagation();openNuevoIngresoExtra()">+ Agregar</button>';
-  html += egSection('Ingresos adicionales', 'Consultoría, ventas, donativos, otros', extFilt.length, extRows, btnExtra);
+  var html = egSection('Ingresos adicionales', 'Consultoría, ventas, donativos, otros', extFilt.length, extRows, btnExtra);
+
+  // ── Historial de cobros (abajo) ───────────────────────────────
+  html += egSection('Historial de ingresos', 'Cobros recibidos de clientes', ingresosData.length, rows, inSortBar);
 
   cont.innerHTML = html;
 }
