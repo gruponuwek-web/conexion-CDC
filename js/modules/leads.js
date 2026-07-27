@@ -77,7 +77,7 @@ function renderPipeline(){
     leads.forEach(function(l){
       html += '<div class="lead-card" draggable="true" data-id="'+l.id+'" ondragstart="onDragStart(event,\''+l.id+'\')" ondragend="onDragEnd(event)" onclick="openPipeDetalle(\''+l.id+'\',false)">'
         + '<div class="lc-name">'+esc(l.nombre)+'</div>'
-        + '<div class="lc-pac">'+esc(l.paciente)+' · '+esc(l.padecimiento)+'</div>'
+        + '<div class="lc-pac">'+esc(l.paciente)+' · '+esc(l.medicoReferido||l.padecimiento||'—')+'</div>'
         + '<div class="lc-foot">'+tempBadge(l.temp)+'<span style="margin-left:auto">'+esc(l.canal)+'</span></div>'
         + '</div>';
     });
@@ -100,7 +100,7 @@ function renderLeadsTabla(){
       html += '<tr onclick="openPipeDetalle(\''+l.id+'\',false)">'
         + '<td><b>'+esc(l.nombre)+'</b></td>'
         + '<td>'+esc(l.paciente)+'</td>'
-        + '<td>'+esc(l.padecimiento)+'</td>'
+        + '<td>'+esc(l.medicoReferido||l.padecimiento||'—')+'</td>'
         + '<td><span class="badge '+etCls+'">'+esc(l.etapa)+'</span></td>'
         + '<td>'+esc(l.canal)+'</td>'
         + '<td>'+tempBadge(l.temp)+'</td>'
@@ -155,7 +155,7 @@ function openPipeDetalle(id, fromDrag){
   if(l.edad!=null && l.edad!=='') extras.push(l.edad+'a');
   if(l.genero) extras.push(l.genero);
   if(extras.length) sub += ' (' + extras.join(', ') + ')';
-  sub += ' · ' + l.padecimiento;
+  sub += ' · ' + (l.medicoReferido || l.padecimiento || '—');
   setText('pd-pac', sub);
   // Etapa solo lectura — badge informativo, sin dropdown
   var fixed = $('pd-etapa-fixed');
@@ -169,7 +169,7 @@ function openPipeDetalle(id, fromDrag){
   $('pd-paciente').value = (l.paciente && l.paciente!=='—') ? l.paciente : '';
   $('pd-edad').value = (l.edad!=null && l.edad!=='') ? l.edad : '';
   $('pd-genero').value = l.genero||'';
-  $('pd-padecimiento').value = l.padecimiento||'';
+  $('pd-medico-ref').value = l.medicoReferido || l.padecimiento || '';
   $('pd-temp').value = l.temp||'Tibio';
   $('pd-canal').value = l.canal||'';
   // Poblar sigact filtrado por etapa actual
@@ -202,7 +202,7 @@ function guardarPipe(){
   var edadRaw = $('pd-edad').value.trim();
   l.edad = edadRaw ? parseInt(edadRaw,10) : null;
   l.genero = $('pd-genero').value;
-  l.padecimiento = $('pd-padecimiento').value;
+  l.medicoReferido = $('pd-medico-ref').value;
   l.temp = $('pd-temp').value;
   l.canal = $('pd-canal').value;
   l.sigAct = $('pd-sigact').value;
@@ -244,7 +244,7 @@ function guardarPipe(){
     paciente:     l.paciente,
     edad:         l.edad,
     genero:       l.genero,
-    padecimiento: l.padecimiento,
+    medicoReferido: l.medicoReferido,
     temperatura:  l.temp,
     canal:        l.canal,
     etapa:        l.etapa,
@@ -405,7 +405,7 @@ function openNuevoLead(){
   $('nl-correo').value=''; $('nl-cel').value='';
   $('nl-edad').value=''; $('nl-genero').value='';
   $('nl-notas').value='';
-  $('nl-padecimiento').value='TDAH'; $('nl-temp').value='Tibio';
+  $('nl-medico-ref').value = (LISTAS.medicos_referidos||['Particular'])[0]; $('nl-temp').value='Tibio';
   $('nl-canal').value='Instagram'; $('nl-etapa').value='Nuevo';
   openModal('m-nuevo-lead');
 }
@@ -420,7 +420,7 @@ function guardarNuevoLead(){
     paciente:$('nl-paciente').value.trim()||'—',
     edad: edadRaw ? parseInt(edadRaw,10) : null,
     genero:$('nl-genero').value,
-    padecimiento:$('nl-padecimiento').value, temp:$('nl-temp').value, canal:$('nl-canal').value, etapa:$('nl-etapa').value,
+    medicoReferido:$('nl-medico-ref').value, temp:$('nl-temp').value, canal:$('nl-canal').value, etapa:$('nl-etapa').value,
     sigAct:'', sigFecha:'', nota:$('nl-notas').value.trim(),
     historial:[{t:fechaLarga(HOY), x:'Lead creado manualmente'}]
   };
@@ -434,7 +434,7 @@ function guardarNuevoLead(){
     tipo: 'Primer contacto',
     fecha: HOY, hora: '10:00',
     grupo: 'hoy', done: false, urgente: true,
-    contexto: esc(l.padecimiento) + ' · Lead nuevo desde ' + esc(l.canal) + '. Hacer primer contacto.'
+    contexto: esc(l.medicoReferido||'') + (l.medicoReferido ? ' · ' : '') + 'Lead nuevo desde ' + esc(l.canal) + '. Hacer primer contacto.'
   };
   actividadesData.push(actPrimero);
 
@@ -459,7 +459,7 @@ function guardarNuevoLead(){
     paciente:     l.paciente,
     edad:         l.edad,
     genero:       l.genero,
-    padecimiento: l.padecimiento,
+    medicoReferido: l.medicoReferido,
     temperatura:  l.temp,
     canal:        l.canal,
     etapa:        l.etapa,

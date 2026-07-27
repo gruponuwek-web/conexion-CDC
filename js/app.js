@@ -6,6 +6,7 @@ var LISTAS = {
   etapas:           ['Nuevo','Contactado','Diagnóstico','Cotizado','Ganado','Perdido','No clasifica'],
   etapasOpcionales: ['Perdido','No clasifica'],
   padecimientos:    ['TDAH','Ansiedad','Depresión','Estrés crónico','Dislexia','Migraña','Cognitivo','Otro'],
+  medicos_referidos: ['Dr. García (Neurólogo)','Dr. Rodríguez (Pediatra)','Hospital Ángeles','IMSS','Particular','Otro'],
   canales:          ['Instagram','Facebook','WhatsApp','Google','Referido','Otro'],
   temperaturas:     ['Caliente','Tibio','Frío'],
   generos:          ['Masculino','Femenino','Otro'],
@@ -1027,7 +1028,7 @@ var dashCrossFilter = { etapa: null, mes: null, estadoCli: null };
 
 // Mapa de listas editables con etiquetas para la UI
 var LISTAS_CONFIG = [
-  { key:'padecimientos',     label:'Padecimientos',              desc:'Diagnósticos del paciente en el formulario de leads' },
+  { key:'medicos_referidos', label:'Médicos referidos',           desc:'Catálogo de médicos o instituciones que refieren pacientes' },
   { key:'canales',           label:'Canales de captación',       desc:'Origen de los prospectos (Instagram, Google, etc.)' },
   { key:'temperaturas',      label:'Temperaturas de lead',       desc:'Calificación de interés del prospecto' },
   { key:'generos',           label:'Géneros',                    desc:'Opciones de género en el formulario' },
@@ -1045,8 +1046,8 @@ var LISTAS_CONFIG = [
 var adminListaCtx = null; // {key, label}
 
 var SELECT_MAP = {
-  'pd-padecimiento': {key:'padecimientos'},
-  'nl-padecimiento': {key:'padecimientos'},
+  'pd-medico-ref':   {key:'medicos_referidos'},
+  'nl-medico-ref':   {key:'medicos_referidos'},
   'pd-genero':       {key:'generos',       empty:'— Sin especificar —'},
   'nl-genero':       {key:'generos',       empty:'— Sin especificar —'},
   'pd-temp':         {key:'temperaturas'},
