@@ -262,7 +262,8 @@ function renderEgresos(){
 
   // Historial
   var egresosVis = finFiltrar(historialEgresos);
-  var heRows = egresosVis.length? egresosVis.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).map(function(e){
+  var heSortBar = '<div style="display:flex;gap:2px">'+_sortBtn('egSortBy','fecha',egSortField,egSortDir)+_sortBtn('egSortBy','monto',egSortField,egSortDir)+'</div>';
+  var heRows = egresosVis.length? _egSort(egresosVis, egSortField, egSortDir).map(function(e){
     return '<div class="histrow" style="cursor:pointer" onclick="openEgresoDetalle(\''+e.id+'\')">'
       + '<div class="act-ico" style="width:34px;height:34px;background:var(--gray-bg);color:var(--ink-2)">'+ico('cobro')+'</div>'
       + '<div style="flex:1"><b style="font-weight:650">'+esc(e.nombre)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+fechaLarga(e.fecha)+' · '+esc(e.metodo)+' · '+esc(e.cuenta||'—')+' · '+esc(e.cat)+'</div></div>'
@@ -270,7 +271,7 @@ function renderEgresos(){
       + '<div style="font-weight:700;margin-right:10px">'+money(e.monto)+'</div>'
       + concBtn('egreso', e.id, e.conciliado)+'</div>';
   }).join('') : '<div class="empty" style="padding:18px">Sin egresos'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
-  html += egSection('Historial de egresos', 'Pagos ya realizados', egresosVis.length, heRows, '');
+  html += egSection('Historial de egresos', 'Pagos ya realizados', egresosVis.length, heRows, heSortBar);
 
   cont.innerHTML = html;
   renderFinKpis(finTabActual);
@@ -303,7 +304,8 @@ function toggleConciliarIngreso(id){
 function renderIngresos(){
   var cont = $('ingresos-acordeones'); if(!cont) return;
   var ingresosVis = finFiltrar(ingresosData);
-  var rows = ingresosVis.length? ingresosVis.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).map(function(i){
+  var inSortBar = '<div style="display:flex;gap:2px">'+_sortBtn('inSortBy','fecha',inSortField,inSortDir)+_sortBtn('inSortBy','monto',inSortField,inSortDir)+'</div>';
+  var rows = ingresosVis.length? _egSort(ingresosVis, inSortField, inSortDir).map(function(i){
     return '<div class="histrow">'
       + '<div class="act-ico" style="width:34px;height:34px;background:var(--green-bg);color:var(--green)">'+ico('cobro')+'</div>'
       + '<div style="flex:1"><b style="font-weight:650">'+esc(i.cliente)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+fechaLarga(i.fecha)+' · '+esc(i.concepto)+' · '+esc(i.metodo)+' · '+esc(i.cuenta||'—')+'</div></div>'
@@ -311,11 +313,11 @@ function renderIngresos(){
       + '<div style="font-weight:700;color:var(--green);margin-right:10px">'+money(i.monto)+'</div>'
       + concBtn('ingreso', i.id, i.conciliado)+'</div>';
   }).join('') : '<div class="empty" style="padding:18px">Sin ingresos'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
-  var html = egSection('Historial de ingresos', 'Cobros recibidos de clientes', ingresosData.length, rows, '');
+  var html = egSection('Historial de ingresos', 'Cobros recibidos de clientes', ingresosData.length, rows, inSortBar);
 
   // ── Ingresos adicionales ──────────────────────────────────────
   var extFilt = finFiltrar(ingresosExtras);
-  var extRows = extFilt.length ? extFilt.slice().sort(function(a,b){return (b.fecha||'').localeCompare(a.fecha||'');}).map(function(i){
+  var extRows = extFilt.length ? _egSort(extFilt, inSortField, inSortDir).map(function(i){
     return '<div class="histrow" style="cursor:pointer" onclick="abrirIngresoExtraDetalle(\''+i.id+'\')"><div class="act-ico" style="width:34px;height:34px;background:var(--emerald-bg,#D1FAE5);color:var(--emerald,#0E8F73)">'+ico('cobro')+'</div>'
       + '<div style="flex:1"><b style="font-weight:650">'+esc(i.concepto)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+fechaLarga(i.fecha)+' · '+esc(i.cliente||'—')+' · '+esc(i.metodo)+' · '+esc(i.cat)+'</div></div>'
       + '<div style="font-weight:700;color:var(--green);margin-right:10px">'+money(i.monto)+'</div>'
@@ -370,6 +372,68 @@ function neTab(t){
     if(tab) tab.classList.toggle('active', k===t);
     if(pane) pane.classList.toggle('active', k===t);
   });
+}
+
+var egSortField = 'fecha', egSortDir = 'desc';
+var inSortField = 'fecha', inSortDir = 'desc';
+
+function egSortBy(field) {
+  if (egSortField === field) egSortDir = egSortDir === 'desc' ? 'asc' : 'desc';
+  else { egSortField = field; egSortDir = 'desc'; }
+  renderEgresos();
+}
+function inSortBy(field) {
+  if (inSortField === field) inSortDir = inSortDir === 'desc' ? 'asc' : 'desc';
+  else { inSortField = field; inSortDir = 'desc'; }
+  renderIngresos();
+}
+function _egSort(arr, field, dir) {
+  return arr.slice().sort(function(a, b) {
+    if (field === 'monto') return dir === 'desc' ? (b.monto||0)-(a.monto||0) : (a.monto||0)-(b.monto||0);
+    var va = a.fecha||'', vb = b.fecha||'';
+    return dir === 'desc' ? vb.localeCompare(va) : va.localeCompare(vb);
+  });
+}
+function _sortBtn(fn, field, curField, curDir) {
+  var active = curField === field;
+  var arrow  = active ? (curDir === 'desc' ? ' ↓' : ' ↑') : '';
+  var label  = field === 'fecha' ? 'Fecha' : 'Monto';
+  return '<button class="btn btn-ghost btn-sm" style="font-size:11px;padding:2px 8px'+(active?';color:var(--primary)':'')+'" onclick="event.stopPropagation();'+fn+'(\''+field+'\')">'+(label+arrow)+'</button>';
+}
+
+function neNombreInput() {
+  var q   = (($('ne-nombre')||{}).value||'').trim().toLowerCase();
+  var sug = $('ne-suggest');
+  if (!sug) return;
+  if (q.length < 2) { sug.style.display='none'; return; }
+  var seen = {}, results = [];
+  historialEgresos.slice().reverse().forEach(function(e) {
+    var k = (e.nombre||'').toLowerCase();
+    if (k.indexOf(q) >= 0 && !seen[k]) { seen[k]=true; results.push(e); }
+  });
+  if (!results.length) { sug.style.display='none'; return; }
+  sug.innerHTML = results.slice(0,5).map(function(e) {
+    return '<div style="padding:9px 14px;cursor:pointer;border-bottom:1px solid var(--line);font-size:13px;display:flex;justify-content:space-between;align-items:center" '
+      +'onmousedown="event.preventDefault();neSuggest(\''+e.nombre.replace(/'/g,"\\'")+'\',' +e.monto+')">'
+      +'<span>'+esc(e.nombre)+'</span><span style="color:var(--ink-3);font-size:12px">'+money(e.monto)+'</span></div>';
+  }).join('');
+  sug.style.display = '';
+}
+function neSuggest(nombre, monto) {
+  $('ne-nombre').value = nombre;
+  $('ne-monto').value  = monto;
+  var sug = $('ne-suggest'); if(sug) sug.style.display='none';
+  neIvaUpdate();
+}
+
+function eliminarEgreso(id) {
+  if (!id) return;
+  if (!confirm('¿Eliminar este egreso? No se puede deshacer.')) return;
+  historialEgresos = historialEgresos.filter(function(e){ return e.id !== id; });
+  closeModal('m-egreso-detalle');
+  renderEgresos(); renderFinKpis(finTabActual);
+  toast('Egreso eliminado');
+  gs('deleteEgreso', {id:id}).catch(function(e){ console.error('[CDC GS] deleteEgreso:',e); });
 }
 
 var DEDUCIBLE_POR_CAT = {

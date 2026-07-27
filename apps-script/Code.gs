@@ -69,6 +69,7 @@ function handle(e) {
       case 'getPagosFijos':   out = getRows(SHEET_NAMES.egresos).filter(r => r.tipo === 'fijo'); break;
       case 'createEgreso':    out = appendRow(SHEET_NAMES.egresos, data);                  break;
       case 'updateEgreso':    out = updateById(SHEET_NAMES.egresos, data);                 break;
+      case 'deleteEgreso':    out = deleteById(SHEET_NAMES.egresos, data.id);             break;
       case 'deletePagoFijo':  out = deleteById(SHEET_NAMES.egresos, data.id);             break;
 
       // ── FACTURAS ──────────────────────────────────────────────
