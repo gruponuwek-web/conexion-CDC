@@ -283,7 +283,7 @@ function buildCharts(tab){
     if(kpiCont) kpiCont.innerHTML =
       kpiCard('#1F8A4C', svgIn,  money(totalIn),  'Ingresos', mesesKpi.length+' mes'+(mesesKpi.length!==1?'es':''))
     + kpiCard('#C43D3D', svgEg,  money(totalEg),  'Egresos',  dashFiltroAnio)
-    + kpiCard(utilidad>=0?'#0E6E66':'#C2820B', svgUt, money(utilidad), 'Utilidad neta', utilidad>=0?'Positiva ↑':'Negativa ↓')
+    + kpiCard(utilidad>=0?'#0E6E66':'#C2820B', svgUt, money(utilidad), 'Utilidad bruta', utilidad>=0?'Positiva ↑':'Negativa ↓')
     + kpiCard('#C2820B', svgCob, money(cobPend),  'Por cobrar', 'Cartera activa');
 
     // ── Embudo de pipeline (interactivo) ────────────────────────
@@ -349,7 +349,7 @@ function buildCharts(tab){
         plugins:{legend:{display:true,position:'top'},
           tooltip:{callbacks:{label:function(ctx){
             var util=dataIn[ctx.dataIndex]-dataEg[ctx.dataIndex];
-            var extra = ctx.datasetIndex===1 ? ' | Utilidad: $'+util.toLocaleString('es-MX') : '';
+            var extra = ctx.datasetIndex===1 ? ' | Ut. bruta: $'+util.toLocaleString('es-MX') : '';
             return ' '+ctx.dataset.label+': $'+Number(ctx.raw).toLocaleString('es-MX')+extra;
           }}}},
         scales:{y:{beginAtZero:true,ticks:{color:CL.ink3,callback:function(v){return '$'+(v/1000)+'k';}},grid:{color:CL.grid},border:{display:false}},
