@@ -235,12 +235,12 @@ function renderEgresos(){
 
   // Pagos fijos (solo los que faltan por cubrir este mes)
   var mesActual = HOY.slice(0,7);
-  var fijosPend = pagosFijos.filter(function(p){ return (p.pagadoMes||'') !== mesActual; });
+  var fijosPend = pagosFijos.filter(function(p){ return _pagoFijoVisible(p); });
   var fijosCubiertos = pagosFijos.length - fijosPend.length;
   var pfRows = fijosPend.length? fijosPend.map(function(p){
     return '<div class="histrow" style="cursor:pointer" onclick="openPagoDetalle(\''+p.id+'\')">'
       + '<div class="act-ico" style="width:34px;height:34px;background:var(--blue-bg);color:var(--blue)">'+ico('cita')+'</div>'
-      + '<div style="flex:1"><b style="font-weight:650">'+esc(p.nombre)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">Cada día '+p.dia+' · '+esc(p.cat)+' · '+esc(p.cuenta)+'</div></div>'
+      + '<div style="flex:1"><b style="font-weight:650">'+esc(p.nombre)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+_pfPeriodoLabel(p)+' · '+esc(p.cat)+' · '+esc(p.cuenta)+'</div></div>'
       + '<div style="font-weight:700">'+money(p.monto)+'</div></div>';
   }).join('') : '<div class="empty" style="padding:18px">Todos los pagos fijos de este mes están cubiertos ✓<div style="font-size:12px;color:var(--ink-3);margin-top:4px">Reaparecerán el próximo mes.</div></div>';
   if(fijosPend.length && fijosCubiertos>0){
@@ -369,6 +369,9 @@ function openNuevoEgreso(){
   var cmo=$('com-modo'); if(cmo) cmo.value='uno';
   var cn=$('com-n'); if(cn) cn.value='';
   var cnr=$('com-n-row'); if(cnr) cnr.style.display='none';
+  var nper=$('ne-periodicidad'); if(nper) nper.value='mensual';
+  var nmvr=$('ne-mesvence-row'); if(nmvr) nmvr.style.display='none';
+  var nhint=$('ne-rec-hint'); if(nhint) nhint.textContent='Aparecerá en "Pagos fijos" con recordatorio mensual.';
   neComUpdate();
   neTab('ya');
   openModal('m-nuevo-egreso');
@@ -510,6 +513,38 @@ function neActualizarCuenta(){
 
 var _MESES_COM = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
 
+function _mesesDesde(ym) {
+  if (!ym) return 999;
+  var a = ym.split('-');
+  var then = parseInt(a[0]) * 12 + parseInt(a[1]);
+  var now  = parseInt(HOY.slice(0,4)) * 12 + parseInt(HOY.slice(5,7));
+  return now - then;
+}
+function _pagoFijoVisible(p) {
+  var per = p.periodicidad || 'mensual';
+  if (per === 'bimestral') return _mesesDesde(p.pagadoMes) >= 2;
+  if (per === 'anual') {
+    var mv = p.mesVence || '01';
+    return HOY.slice(5,7) === mv && _mesesDesde(p.pagadoMes) >= 12;
+  }
+  return _mesesDesde(p.pagadoMes) >= 1;
+}
+function _pfPeriodoLabel(p) {
+  var per = p.periodicidad || 'mensual';
+  if (per === 'bimestral') return 'Bimestral · día ' + p.dia;
+  if (per === 'anual')     return 'Anual · ' + (_MESES_COM[p.mesVence] || p.mesVence || '') + ', día ' + p.dia;
+  return 'Cada día ' + p.dia;
+}
+function neRecPerUpdate() {
+  var per = ($('ne-periodicidad')||{}).value || 'mensual';
+  var mvr = $('ne-mesvence-row'); if(mvr) mvr.style.display = per === 'anual' ? '' : 'none';
+  var hint = $('ne-rec-hint');
+  if (!hint) return;
+  if (per === 'bimestral') hint.textContent = 'Aparecerá en "Pagos fijos" cada 2 meses.';
+  else if (per === 'anual') hint.textContent = 'Aparecerá en "Pagos fijos" una vez al año, el mes seleccionado.';
+  else hint.textContent = 'Aparecerá en "Pagos fijos" con recordatorio mensual.';
+}
+
 function neComUpdate() {
   var mes  = ($('com-mes')||{}).value  || '01';
   var anio = ($('com-anio')||{}).value || '';
@@ -583,11 +618,14 @@ function guardarNuevoEgreso(){
       .catch(function(e){ console.error('[CDC GS] createEgreso prog:',e); });
     toast('Egreso programado en "Por pagar"');
   } else {
-    var pf = {id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('ne-dia').value)||1, cat:cat, cuenta:(cuentasPorMetodo[$('ne-rec-metodo').value]||['BBVA 4521'])[0]};
+    var per = ($('ne-periodicidad')||{value:'mensual'}).value || 'mensual';
+    var mv  = per === 'anual' ? (($('ne-mesvence')||{value:'01'}).value || '01') : '';
+    var pf = {id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('ne-dia').value)||1, cat:cat, periodicidad:per, mesVence:mv, cuenta:(cuentasPorMetodo[$('ne-rec-metodo').value]||['BBVA 4521'])[0]};
     pagosFijos.push(pf);
-    gs('createEgreso', {id:pf.id, nombre:pf.nombre, monto:pf.monto, cat:pf.cat, fecha:'', metodo:'', cuenta:pf.cuenta, deducible:'Sí', conciliado:'No', tipo:'fijo', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+    gs('createEgreso', {id:pf.id, nombre:pf.nombre, monto:pf.monto, cat:pf.cat, fecha:'', metodo:'', cuenta:pf.cuenta, deducible:'Sí', conciliado:'No', tipo:'fijo', limite:'', periodicidad:per, mesVence:mv, dia:pf.dia, creadoEn:ahora, actualizadoEn:ahora})
       .catch(function(e){ console.error('[CDC GS] createEgreso fijo:',e); });
-    toast('Pago fijo recurrente creado');
+    var _perLabel = per==='anual' ? 'anual' : (per==='bimestral' ? 'bimestral' : 'mensual');
+    toast('Pago '+_perLabel+' recurrente creado');
   }
   closeModal('m-nuevo-egreso');
   renderEgresos();
@@ -638,7 +676,7 @@ function openPagoDetalle(id){
   var p = pf||pp; if(!p) return;
   egresoCtx = {tipo: pf?'fijo':'pendiente', id:id};
   setText('pgd-nombre', p.nombre);
-  setText('pgd-sub', pf? ('Pago fijo · cada día '+p.dia) : ('Por pagar · límite '+fechaLarga(p.limite)));
+  setText('pgd-sub', pf? ('Pago '+((p.periodicidad||'mensual')==='mensual'?'fijo':p.periodicidad)+' · '+_pfPeriodoLabel(p)) : ('Por pagar · límite '+fechaLarga(p.limite)));
   var metodo = p.metodo || (pf ? metodoDeCuenta(p.cuenta) : 'Transferencia');
   var cuentas = cuentasPorMetodo[metodo] || [];
   var cuentaSel = (p.cuenta && cuentas.indexOf(p.cuenta)>=0) ? p.cuenta : (cuentas[0]||'');
@@ -689,7 +727,9 @@ function registrarPagoDesdeDetalle(){
     if(pfijo){ pfijo.pagadoMes = HOY.slice(0,7); }
     gs('createEgreso', {id:newId2, nombre:nf, monto:monto, cat:cat, fecha:fecha, metodo:metodo, cuenta:cuenta, deducible:deducible, conciliado:'No', tipo:'historial', limite:'', creadoEn:ahora, actualizadoEn:ahora})
       .catch(function(e){ console.error('[CDC GS] createEgreso fijoPago:',e); });
-    toast('Pago fijo cubierto este mes · reaparecerá el próximo mes');
+    var _per = pfijo ? (pfijo.periodicidad || 'mensual') : 'mensual';
+    var _toastRec = _per==='anual' ? 'Pago anual registrado · reaparecerá el próximo año' : (_per==='bimestral' ? 'Pago bimestral registrado · reaparecerá en 2 meses' : 'Pago fijo cubierto este mes · reaparecerá el próximo mes');
+    toast(_toastRec);
   }
   closeModal('m-pago-detalle'); renderEgresos(); renderFinKpis(finTabActual);
 }

@@ -574,10 +574,27 @@
       <!-- pane: rec -->
       <div class="tabpane" id="nepane-rec">
         <div class="field-row">
+          <div class="field"><label>Periodicidad</label>
+            <select id="ne-periodicidad" onchange="neRecPerUpdate()">
+              <option value="mensual">Mensual</option>
+              <option value="bimestral">Bimestral (c/ 2 meses)</option>
+              <option value="anual">Anual</option>
+            </select>
+          </div>
+          <div class="field" id="ne-mesvence-row" style="display:none"><label>Mes de vencimiento</label>
+            <select id="ne-mesvence">
+              <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+              <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+              <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+              <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+            </select>
+          </div>
+        </div>
+        <div class="field-row">
           <div class="field"><label>Día del mes</label><input id="ne-dia" type="number" min="1" max="31" placeholder="5"></div>
           <div class="field"><label>Cuenta / método</label><select id="ne-rec-metodo" onchange="neActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
         </div>
-        <div class="hint">Aparecerá en "Pagos fijos" con recordatorio mensual.</div>
+        <div class="hint" id="ne-rec-hint">Aparecerá en "Pagos fijos" con recordatorio mensual.</div>
       </div>
       <!-- pane: com -->
       <div class="tabpane" id="nepane-com">
