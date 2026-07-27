@@ -355,6 +355,9 @@ function openNuevoEgreso(){
   $('ne-fecha').value=HOY; $('ne-metodo').value='Transferencia'; $('ne-deducible').value='Sí';
   $('ne-limite').value=''; $('ne-dia').value=''; $('ne-rec-metodo').value='Transferencia';
   var cr=$('ne-conciliado-row'); if(cr) cr.classList.remove('on');
+  var ir=$('ne-iva-row'); if(ir) ir.classList.remove('on');
+  var id=$('ne-iva-detail'); if(id) id.style.display='none';
+  var lbl=$('ne-monto-lbl'); if(lbl) lbl.textContent='Monto';
   neActualizarCuenta();
   neTab('ya');
   openModal('m-nuevo-egreso');
@@ -369,15 +372,58 @@ function neTab(t){
   });
 }
 
+var DEDUCIBLE_POR_CAT = {
+  'Renta':'Sí','Nómina':'Sí','Servicios':'Sí','Insumos':'Sí',
+  'Equipo':'Sí','Software':'Sí','Marketing':'Sí','Otro':'No'
+};
+
+function neCatAuto() {
+  var ded = $('ne-deducible');
+  if (ded) ded.value = DEDUCIBLE_POR_CAT[$('ne-cat').value] || 'Sí';
+}
+
+function neDomAuto() {
+  if ($('ne-metodo').value === 'Domiciliación') {
+    var conc = $('ne-conciliado-row');
+    if (conc) conc.classList.add('on');
+  }
+}
+
+function neIvaToggle() {
+  var row = $('ne-iva-row');
+  if (!row) return;
+  row.classList.toggle('on');
+  var lbl = $('ne-monto-lbl');
+  if (lbl) lbl.textContent = row.classList.contains('on') ? 'Subtotal (sin IVA)' : 'Monto';
+  neIvaUpdate();
+}
+
+function neIvaUpdate() {
+  var row = $('ne-iva-row'), det = $('ne-iva-detail');
+  if (!row || !det) return;
+  if (!row.classList.contains('on')) { det.style.display = 'none'; return; }
+  var base  = Number($('ne-monto').value) || 0;
+  var iva   = Math.round(base * 16) / 100;
+  var total = Math.round((base + iva) * 100) / 100;
+  det.style.display = '';
+  det.innerHTML = 'Base: <b>'+money(base)+'</b> + IVA: <b>'+money(iva)+'</b> = <b style="color:var(--ink)">'+money(total)+'</b>';
+}
+
+function neMontoFinal() {
+  var base = Number($('ne-monto').value) || 0;
+  var row  = $('ne-iva-row');
+  return (row && row.classList.contains('on')) ? Math.round(base * 116) / 100 : base;
+}
+
 function neActualizarCuenta(){
-  var metodo = $('ne-metodo').value;
-  var cuentas = cuentasPorMetodo[metodo] || [];
+  var metodo  = $('ne-metodo').value;
+  var cuentas = metodo === 'Domiciliación' ? ['Cargo automático'] : (cuentasPorMetodo[metodo] || []);
   setHtml('ne-cuenta', cuentas.map(function(c){return '<option>'+esc(c)+'</option>';}).join(''));
 }
 
 function guardarNuevoEgreso(){
   var nombre = $('ne-nombre').value.trim();
-  var monto = Number($('ne-monto').value)||0;
+  var monto = neMontoFinal();
   if(!nombre){ toast('Captura el concepto'); return; }
   if(monto<=0){ toast('Captura un monto válido'); return; }
   var cat = $('ne-cat').value;
