@@ -246,8 +246,7 @@ function renderEgresos(){
   if(fijosPend.length && fijosCubiertos>0){
     pfRows += '<div style="padding:8px 4px 2px;font-size:12px;color:var(--ink-3)">'+fijosCubiertos+' ya cubierto'+(fijosCubiertos>1?'s':'')+' este mes (en el historial).</div>';
   }
-  var pfBtn = '<button class="btn btn-soft btn-sm" onclick="event.stopPropagation();openPagoFijo()">+ Pago fijo</button>';
-  html += egSection('Pagos fijos', 'Egresos recurrentes mensuales', fijosPend.length, pfRows, pfBtn);
+  html += egSection('Pagos fijos', 'Egresos recurrentes mensuales', fijosPend.length, pfRows, '');
 
   // Por pagar
   var ppRows = porPagarData.length? porPagarData.map(function(p){
