@@ -248,7 +248,7 @@ function renderEgresos(){
       + '<div class="act-ico" style="width:34px;height:34px;background:var(--blue-bg);color:var(--blue)">'+ico('cita')+'</div>'
       + '<div style="flex:1"><b style="font-weight:650">'+esc(p.nombre)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+_pfPeriodoLabel(p)+' · '+esc(p.cat)+' · '+esc(p.cuenta)+'</div></div>'
       + (prio ? _prioBadge(prio) : '')
-      + '<div style="font-weight:700">'+money(p.monto)+'</div></div>';
+      + '<div style="font-weight:700">'+money(_pfMontoActual(p))+(p.tramos?'<span title="Monto variable por período" style="font-size:10px;margin-left:4px;opacity:.5">≈</span>':'')+'</div></div>';
   }).join('') : '<div class="empty" style="padding:18px">Todos los pagos recurrentes del período están cubiertos ✓<div style="font-size:12px;color:var(--ink-3);margin-top:4px">Reaparecerán en el siguiente período.</div></div>';
   if(fijosPend.length && fijosCubiertos>0){
     pfRows += '<div style="padding:8px 4px 2px;font-size:12px;color:var(--ink-3)">'+fijosCubiertos+' ya cubierto'+(fijosCubiertos>1?'s':'')+' en este período (en el historial).</div>';
@@ -380,6 +380,7 @@ function openNuevoEgreso(){
   var nper=$('ne-periodicidad'); if(nper) nper.value='mensual';
   var nmvr=$('ne-mesvence-row'); if(nmvr) nmvr.style.display='none';
   var nhint=$('ne-rec-hint'); if(nhint) nhint.textContent='Aparecerá en "Pagos fijos" con recordatorio mensual.';
+  neTramos = []; _renderNeTramos();
   neComUpdate();
   neTab('ya');
   openModal('m-nuevo-egreso');
@@ -521,6 +522,68 @@ function neActualizarCuenta(){
 
 var _MESES_COM = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
 
+// ── Tramos de monto variable ───────────────────────────────
+var neTramos = [];
+
+function _tramoIncluyeMes(desde, hasta, mes) {
+  var m = parseInt(mes), d = parseInt(desde), h = parseInt(hasta);
+  if (d <= h) return m >= d && m <= h;
+  return m >= d || m <= h; // wrap-around año (ej. Nov→Feb)
+}
+
+function _pfMontoActual(p, mes) {
+  mes = mes || HOY.slice(5, 7);
+  var tramos = [];
+  if (p.tramos) { try { tramos = JSON.parse(p.tramos); } catch(e) {} }
+  for (var i = 0; i < tramos.length; i++) {
+    if (_tramoIncluyeMes(tramos[i].desde, tramos[i].hasta, mes)) return Number(tramos[i].monto) || 0;
+  }
+  return Number(p.monto) || 0;
+}
+
+function _pfTramoActivo(p, mes) {
+  mes = mes || HOY.slice(5, 7);
+  var tramos = [];
+  if (p.tramos) { try { tramos = JSON.parse(p.tramos); } catch(e) {} }
+  for (var i = 0; i < tramos.length; i++) {
+    var t = tramos[i];
+    if (_tramoIncluyeMes(t.desde, t.hasta, mes)) return t;
+  }
+  return null;
+}
+
+function _renderNeTramos() {
+  var cont = $('ne-tramos-list'); if (!cont) return;
+  if (!neTramos.length) {
+    cont.innerHTML = '<div style="font-size:12px;color:var(--ink-3);padding:4px 0 2px">Sin tramos — monto fijo todo el año.</div>';
+    return;
+  }
+  cont.innerHTML = neTramos.map(function(t, i) {
+    var dLbl = (_MESES_COM[t.desde]||t.desde).slice(0,3);
+    var hLbl = (_MESES_COM[t.hasta]||t.hasta).slice(0,3);
+    return '<div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid var(--line)">'
+      + '<span style="flex:1;font-size:13px"><b>'+dLbl+'</b> → <b>'+hLbl+'</b>: '+money(t.monto)+'</span>'
+      + '<button type="button" class="btn btn-ghost btn-sm" style="color:var(--red);padding:2px 8px" onclick="neEliminarTramo('+i+')">✕</button>'
+    + '</div>';
+  }).join('');
+}
+
+function neAgregarTramo() {
+  var desde = ($('ne-tr-desde')||{}).value||'';
+  var hasta  = ($('ne-tr-hasta')||{}).value||'';
+  var monto  = Number(($('ne-tr-monto')||{}).value)||0;
+  if (!desde||!hasta) { toast('Selecciona los meses del tramo'); return; }
+  if (monto<=0)        { toast('Captura el monto del tramo');    return; }
+  neTramos.push({desde:desde, hasta:hasta, monto:monto});
+  var inp = $('ne-tr-monto'); if(inp){ inp.value=''; inp.focus(); }
+  _renderNeTramos();
+}
+
+function neEliminarTramo(i) {
+  neTramos.splice(i, 1);
+  _renderNeTramos();
+}
+
 function _mesesDesde(ym) {
   if (!ym) return 999;
   var a = ym.split('-');
@@ -651,9 +714,10 @@ function guardarNuevoEgreso(){
     var per  = ($('ne-periodicidad')||{value:'mensual'}).value || 'mensual';
     var mv   = per === 'anual' ? (($('ne-mesvence')||{value:'01'}).value || '01') : '';
     var prio = parseInt(($('ne-prioridad')||{}).value) || 0;
-    var pf = {id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('ne-dia').value)||1, cat:cat, periodicidad:per, mesVence:mv, prioridad:prio||'', cuenta:(cuentasPorMetodo[$('ne-rec-metodo').value]||['BBVA 4521'])[0]};
+    var tramosJson = neTramos.length ? JSON.stringify(neTramos) : '';
+    var pf = {id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('ne-dia').value)||1, cat:cat, periodicidad:per, mesVence:mv, prioridad:prio||'', cuenta:(cuentasPorMetodo[$('ne-rec-metodo').value]||['BBVA 4521'])[0], tramos:tramosJson};
     pagosFijos.push(pf);
-    gs('createEgreso', {id:pf.id, nombre:pf.nombre, monto:pf.monto, cat:pf.cat, fecha:'', metodo:'', cuenta:pf.cuenta, deducible:'Sí', conciliado:'No', tipo:'fijo', limite:'', periodicidad:per, mesVence:mv, dia:pf.dia, prioridad:prio||'', creadoEn:ahora, actualizadoEn:ahora})
+    gs('createEgreso', {id:pf.id, nombre:pf.nombre, monto:pf.monto, cat:pf.cat, fecha:'', metodo:'', cuenta:pf.cuenta, deducible:'Sí', conciliado:'No', tipo:'fijo', limite:'', periodicidad:per, mesVence:mv, dia:pf.dia, prioridad:prio||'', tramos:tramosJson, creadoEn:ahora, actualizadoEn:ahora})
       .catch(function(e){ console.error('[CDC GS] createEgreso fijo:',e); });
     var _perLabel = per==='anual' ? 'anual' : (per==='bimestral' ? 'bimestral' : 'mensual');
     toast('Pago '+_perLabel+' recurrente creado');
@@ -712,11 +776,17 @@ function openPagoDetalle(id){
   var metodo = p.metodo || (pf ? metodoDeCuenta(p.cuenta) : 'Transferencia');
   var cuentas = cuentasPorMetodo[metodo] || [];
   var cuentaSel = (p.cuenta && cuentas.indexOf(p.cuenta)>=0) ? p.cuenta : (cuentas[0]||'');
+  var _montoEfectivo = pf ? _pfMontoActual(pf) : (p.monto||0);
+  var _tramoAct = pf ? _pfTramoActivo(pf) : null;
+  var _tramoHint = _tramoAct
+    ? '<div class="hint" style="margin-top:-8px;margin-bottom:8px">Tramo activo: <b>'+(_MESES_COM[_tramoAct.desde]||_tramoAct.desde).slice(0,3)+' → '+(_MESES_COM[_tramoAct.hasta]||_tramoAct.hasta).slice(0,3)+'</b> · Monto base: '+money(pf.monto)+'</div>'
+    : '';
   var body = ''
     + '<div class="field-row">'
-      + '<div class="field"><label>Monto</label><input id="pgd-monto" type="number" min="0" value="'+(p.monto||0)+'"></div>'
+      + '<div class="field"><label>Monto</label><input id="pgd-monto" type="number" min="0" value="'+_montoEfectivo+'"></div>'
       + '<div class="field"><label>Fecha de pago</label><input id="pgd-fecha" type="date" value="'+(pf ? _pfFechaSugerida(p) : HOY)+'"></div>'
     + '</div>'
+    + _tramoHint
     + '<div class="field-row">'
       + '<div class="field"><label>Método de pago</label><select id="pgd-metodo" onchange="pgdActualizarCuenta()">'+optionsHtml(EG_METODOS, metodo)+'</select></div>'
       + '<div class="field"><label>Cuenta</label><select id="pgd-cuenta">'+optionsHtml(cuentas, cuentaSel)+'</select></div>'

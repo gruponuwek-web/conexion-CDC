@@ -89,7 +89,7 @@ window._loginSubmit  = loginSubmit;
 window._loginKeydown = loginKeydown;
 
 // ── 0. URL del Apps Script (ÚNICO lugar donde se configura) ──────
-var GS_URL = 'https://script.google.com/macros/s/AKfycbwSIiqSjkppTOgHPLm87gPrmsfhltMktdic6KwZHzVkdIDKOw0z9Y0Y2w0Cl3tRrZVRyw/exec';
+var GS_URL = 'https://script.google.com/macros/s/AKfycby65CyPaz7TJ31bnzrPV8vO2GH1o_HPDMOY6cGW7RFvcOZbcxMAV3fKOoIhibbDcxzBoQ/exec';
 
 // ── 1. Helper universal de conexión ─────────────────────────────
 //     Sin headers → sin preflight → sin error CORS
@@ -382,6 +382,8 @@ async function cargarTodo(silent) {
     } catch(e) { console.warn('[CDC] filtros:', e); }
     // Re-renderizar tableros si está activo
     if(pantallaActual==='tableros' && typeof renderTableros==='function') renderTableros();
+    if(typeof renderEscenarioBanner === 'function') renderEscenarioBanner();
+    if(typeof renderEscenarioChip   === 'function') renderEscenarioChip();
 
   } catch (err) {
     if(!silent) mostrarError('Error de conexión con Google Sheets: ' + err.toString());
@@ -823,7 +825,7 @@ function nav(key){
   if(key==='egresos'){ renderFinanzas(); var fg=$('fin-filtro-global'); if(fg) fg.innerHTML=finFiltroHtml(); }
   if(key==='facturas') renderFacturas();
   if(key==='tableros') renderTableros();
-  if(key==='admin') renderAdministracion();
+  if(key==='admin'){ renderAdministracion(); if(typeof renderEscenarioConfig==='function') renderEscenarioConfig(); }
   setTimeout(renderMobNav, 50);
 }
 
@@ -1138,6 +1140,11 @@ async function _cargarListasSheets(){
       if(k && v && Array.isArray(LISTAS[k])){
         try{ LISTAS[k] = JSON.parse(v); } catch(e){}
       }
+      if(k && typeof v !== 'undefined' && k.startsWith('escenario_') && typeof CDC_ESCENARIO !== 'undefined'){
+        var campo = k.replace('escenario_', '');
+        if(campo === 'cats_recortables'){ try{ CDC_ESCENARIO[campo] = JSON.parse(v); } catch(e){} }
+        else { var n = Number(v); CDC_ESCENARIO[campo] = isNaN(n) ? v : n; }
+      }
     });
     // Actualizar localStorage con lo de Sheets
     _guardarListasLocal();
@@ -1232,9 +1239,9 @@ async function _syncBackground() {
       if (_cr) { _cr.onboarding = onbBackup.onboarding; if (typeof obRecalc === 'function') obRecalc(); }
     }
 
-    // no re-renderizar si hay un modal abierto (perdería datos del formulario)
+    // no re-renderizar si hay un modal abierto o si admin está activo (perdería datos del formulario)
     var modalAbierto = document.querySelector('.modal.open');
-    if (!modalAbierto) nav(pantallaActual);
+    if (!modalAbierto && pantallaActual !== 'admin') nav(pantallaActual);
   } catch(e) {
     console.warn('[CDC Sync] Error en sync background:', e);
   } finally {

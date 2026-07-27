@@ -143,6 +143,7 @@
           <div class="tab" id="fintab-ingresos" onclick="finTab('ingresos')">Ingresos</div>
         </div>
         <div class="kpis" id="fin-kpis"></div>
+        <div id="escenario-chip-fin"></div>
         <div class="section-head"><h2 id="fin-head">Egresos</h2><div class="spacer"></div><button class="btn btn-primary" id="fin-nuevo-btn" onclick="openNuevoEgreso()"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.2" stroke-linecap="round"><path d="M12 5v14M5 12h14"/></svg>Nuevo egreso</button></div>
         <div id="egresos-acordeones"></div>
         <div id="ingresos-acordeones" style="display:none"></div>
@@ -167,6 +168,7 @@
           </div>
         </div>
         <div id="tableros-content">
+          <div id="escenario-banner"></div>
           <div id="dash-filtro" style="margin-bottom:12px"></div>
           <div class="dash-tabs" id="dash-tabs"></div>
           <div class="dashpane active" id="dash-general"></div>
@@ -179,6 +181,8 @@
       <section class="screen" id="screen-admin">
         <div style="margin-bottom:20px"><h2 style="font-size:1.1rem;font-weight:700;color:var(--ink)">Listas y catálogos</h2><div style="font-size:13px;color:var(--ink-3);margin-top:2px">Agrega o elimina opciones de los dropdowns. Para cambios permanentes edita <strong>listas.js</strong>.</div></div>
         <div id="admin-listas-cont"></div>
+        <div style="margin:32px 0 20px"><h2 style="font-size:1.1rem;font-weight:700;color:var(--ink)">Escenarios financieros</h2><div style="font-size:13px;color:var(--ink-3);margin-top:2px">Define el punto de equilibrio y umbrales para el análisis adaptativo del dashboard.</div></div>
+        <div id="admin-escenario-cont"></div>
       </section>
     </main>
   </div>
@@ -599,6 +603,33 @@
           <div class="field" style="opacity:.4;pointer-events:none"><label>&nbsp;</label><input disabled placeholder="Capital Humano · Renta · Prov."></div>
         </div>
         <div class="hint" id="ne-rec-hint">Aparecerá en "Pagos fijos" con recordatorio mensual.</div>
+        <!-- Tramos de monto variable -->
+        <div style="margin-top:14px;padding-top:14px;border-top:1px solid var(--line)">
+          <div style="font-size:12px;font-weight:600;color:var(--ink-2);margin-bottom:6px">Monto variable por período <span style="font-weight:400;color:var(--ink-3)">(opcional)</span></div>
+          <div id="ne-tramos-list"></div>
+          <div style="display:flex;gap:8px;align-items:flex-end;margin-top:8px;flex-wrap:wrap">
+            <div class="field" style="margin:0;min-width:90px;flex:1"><label>De</label>
+              <select id="ne-tr-desde">
+                <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+                <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+                <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;min-width:90px;flex:1"><label>Hasta</label>
+              <select id="ne-tr-hasta">
+                <option value="01">Enero</option><option value="02">Febrero</option><option value="03">Marzo</option>
+                <option value="04">Abril</option><option value="05">Mayo</option><option value="06">Junio</option>
+                <option value="07">Julio</option><option value="08">Agosto</option><option value="09">Septiembre</option>
+                <option value="10">Octubre</option><option value="11">Noviembre</option><option value="12">Diciembre</option>
+              </select>
+            </div>
+            <div class="field" style="margin:0;min-width:100px;flex:1.5"><label>Monto en ese período</label>
+              <input id="ne-tr-monto" type="number" min="0" placeholder="0">
+            </div>
+            <button type="button" class="btn btn-soft btn-sm" style="margin-bottom:2px;white-space:nowrap" onclick="neAgregarTramo()">+ Agregar tramo</button>
+          </div>
+        </div>
       </div>
       <!-- pane: com -->
       <div class="tabpane" id="nepane-com">
@@ -782,6 +813,7 @@ function loginKeydown(e){ if(e.key==='Enter') loginSubmit(); }
 <script src="./js/modules/egresos.js?v=202606292200"></script>
 <script src="./js/modules/facturas.js?v=202606292200"></script>
 <script src="./js/modules/tableros.js?v=202606292200"></script>
+<script src="./js/modules/escenarios.js?v=202607270001"></script>
 
 <!-- m-ingreso-extra -->
 <div class="modal" id="m-ingreso-extra">
