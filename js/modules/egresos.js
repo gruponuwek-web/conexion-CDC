@@ -362,17 +362,26 @@ function openNuevoEgreso(){
   var id=$('ne-iva-detail'); if(id) id.style.display='none';
   var lbl=$('ne-monto-lbl'); if(lbl) lbl.textContent='Monto';
   neActualizarCuenta();
+  var d=new Date(), mm=('0'+(d.getMonth()+1)).slice(-2);
+  var cm=$('com-mes'); if(cm) cm.value=mm;
+  var ca=$('com-anio'); if(ca) ca.value=d.getFullYear();
+  var ct=$('com-total'); if(ct) ct.value='';
+  var cmo=$('com-modo'); if(cmo) cmo.value='uno';
+  var cn=$('com-n'); if(cn) cn.value='';
+  var cnr=$('com-n-row'); if(cnr) cnr.style.display='none';
+  neComUpdate();
   neTab('ya');
   openModal('m-nuevo-egreso');
 }
 
 function neTab(t){
   neTabActual = t;
-  ['ya','prog','rec'].forEach(function(k){
+  ['ya','prog','rec','com'].forEach(function(k){
     var tab=$('netab-'+k), pane=$('nepane-'+k);
     if(tab) tab.classList.toggle('active', k===t);
     if(pane) pane.classList.toggle('active', k===t);
   });
+  var sh=$('ne-shared'); if(sh) sh.style.display = (t==='com') ? 'none' : '';
 }
 
 var _delConfirmFn = null;
@@ -499,7 +508,62 @@ function neActualizarCuenta(){
   setHtml('ne-cuenta', cuentas.map(function(c){return '<option>'+esc(c)+'</option>';}).join(''));
 }
 
+var _MESES_COM = {'01':'Enero','02':'Febrero','03':'Marzo','04':'Abril','05':'Mayo','06':'Junio','07':'Julio','08':'Agosto','09':'Septiembre','10':'Octubre','11':'Noviembre','12':'Diciembre'};
+
+function neComUpdate() {
+  var mes  = ($('com-mes')||{}).value  || '01';
+  var anio = ($('com-anio')||{}).value || '';
+  var tot  = Number(($('com-total')||{}).value) || 0;
+  var modo = ($('com-modo')||{}).value || 'uno';
+  var n    = Math.max(1, parseInt(($('com-n')||{}).value) || 1);
+  var mesLbl  = _MESES_COM[mes] || mes;
+  var periodo = mesLbl + (anio ? ' ' + anio : '');
+  var nRow = $('com-n-row'), prev = $('com-preview');
+  if (nRow) nRow.style.display = modo === 'n' ? '' : 'none';
+  if (prev) {
+    if (!tot) {
+      prev.textContent = 'Captura el período y el total para ver el resumen.';
+    } else if (modo === 'uno') {
+      prev.innerHTML = 'Se creará <b>1 egreso</b>: "Comisiones · '+periodo+'" por <b>'+money(tot)+'</b>';
+    } else {
+      var cada = money(Math.round(tot / n * 100) / 100);
+      prev.innerHTML = 'Se crearán <b>'+n+' egresos</b> de <b>'+cada+'</b> c/u &mdash; período <b>'+periodo+'</b>';
+    }
+  }
+}
+
+function guardarComisiones() {
+  var mes  = $('com-mes').value;
+  var anio = $('com-anio').value || new Date().getFullYear();
+  var tot  = Number($('com-total').value) || 0;
+  var modo = $('com-modo').value;
+  var n    = Math.max(1, parseInt($('com-n').value) || 1);
+  if (tot <= 0) { toast('Captura el total de comisiones'); return; }
+  var periodo = (_MESES_COM[mes]||mes) + ' ' + anio;
+  var fecha   = anio + '-' + mes + '-01';
+  var ahora   = new Date().toISOString();
+  if (modo === 'uno') {
+    var eg = {id:uid('com'), nombre:'Comisiones · '+periodo, monto:tot, fecha:fecha, metodo:'Transferencia', cat:'Otro', cuenta:'', deducible:'No', conciliado:false};
+    historialEgresos.push(eg);
+    gs('createEgreso', {id:eg.id, nombre:eg.nombre, monto:eg.monto, cat:eg.cat, fecha:eg.fecha, metodo:eg.metodo, cuenta:'', deducible:'No', conciliado:'No', tipo:'historial', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+      .catch(function(e){ console.error('[CDC GS] createEgreso com:',e); });
+    toast('Comisión registrada · ' + money(tot));
+  } else {
+    var cada = Math.round(tot / n * 100) / 100;
+    for (var i = 1; i <= n; i++) {
+      var egN = {id:uid('com'), nombre:'Comisión '+i+'/'+n+' · '+periodo, monto:cada, fecha:fecha, metodo:'Transferencia', cat:'Otro', cuenta:'', deducible:'No', conciliado:false};
+      historialEgresos.push(egN);
+      gs('createEgreso', {id:egN.id, nombre:egN.nombre, monto:egN.monto, cat:egN.cat, fecha:egN.fecha, metodo:egN.metodo, cuenta:'', deducible:'No', conciliado:'No', tipo:'historial', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+        .catch(function(e){ console.error('[CDC GS] createEgreso comN:',e); });
+    }
+    toast(n + ' comisiones registradas · ' + money(tot) + ' total');
+  }
+  closeModal('m-nuevo-egreso');
+  renderEgresos();
+}
+
 function guardarNuevoEgreso(){
+  if (neTabActual === 'com') { guardarComisiones(); return; }
   var nombre = $('ne-nombre').value.trim();
   var monto = neMontoFinal();
   if(!nombre){ toast('Captura el concepto'); return; }
