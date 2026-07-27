@@ -535,6 +535,21 @@ function _pfPeriodoLabel(p) {
   if (per === 'anual')     return 'Anual · ' + (_MESES_COM[p.mesVence] || p.mesVence || '') + ', día ' + p.dia;
   return 'Cada día ' + p.dia;
 }
+function _pfFechaSugerida(p) {
+  var dia    = p.dia || 1;
+  var diaStr = ('0' + dia).slice(-2);
+  var per    = p.periodicidad || 'mensual';
+  var offset = per === 'anual' ? 12 : (per === 'bimestral' ? 2 : 1);
+  var d;
+  if (p.pagadoMes) {
+    var parts = p.pagadoMes.split('-');
+    d = new Date(parseInt(parts[0]), parseInt(parts[1]) - 1 + offset, 1);
+  } else {
+    d = new Date();
+  }
+  return d.getFullYear() + '-' + ('0' + (d.getMonth() + 1)).slice(-2) + '-' + diaStr;
+}
+
 function neRecPerUpdate() {
   var per = ($('ne-periodicidad')||{}).value || 'mensual';
   var mvr = $('ne-mesvence-row'); if(mvr) mvr.style.display = per === 'anual' ? '' : 'none';
@@ -683,7 +698,7 @@ function openPagoDetalle(id){
   var body = ''
     + '<div class="field-row">'
       + '<div class="field"><label>Monto</label><input id="pgd-monto" type="number" min="0" value="'+(p.monto||0)+'"></div>'
-      + '<div class="field"><label>Fecha de pago</label><input id="pgd-fecha" type="date" value="'+HOY+'"></div>'
+      + '<div class="field"><label>Fecha de pago</label><input id="pgd-fecha" type="date" value="'+(pf ? _pfFechaSugerida(p) : HOY)+'"></div>'
     + '</div>'
     + '<div class="field-row">'
       + '<div class="field"><label>Método de pago</label><select id="pgd-metodo" onchange="pgdActualizarCuenta()">'+optionsHtml(EG_METODOS, metodo)+'</select></div>'
