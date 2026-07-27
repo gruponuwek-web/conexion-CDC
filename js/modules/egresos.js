@@ -311,7 +311,8 @@ function renderIngresos(){
       + '<div style="flex:1"><b style="font-weight:650">'+esc(i.cliente)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+fechaLarga(i.fecha)+' · '+esc(i.concepto)+' · '+esc(i.metodo)+' · '+esc(i.cuenta||'—')+'</div></div>'
       + (i.factura==='Sí'?'<span class="badge b-blue" style="margin-right:8px">Facturado</span>':'')
       + '<div style="font-weight:700;color:var(--green);margin-right:10px">'+money(i.monto)+'</div>'
-      + concBtn('ingreso', i.id, i.conciliado)+'</div>';
+      + concBtn('ingreso', i.id, i.conciliado)
+      + '<button class="btn btn-ghost btn-sm" style="color:var(--red);margin-left:4px" title="Eliminar" onclick="event.stopPropagation();eliminarIngreso(\''+i.id+'\')">×</button></div>';
   }).join('') : '<div class="empty" style="padding:18px">Sin ingresos'+(finFiltroMes||finFiltroAnio?' en el período':'')+'</div>';
   var html = egSection('Historial de ingresos', 'Cobros recibidos de clientes', ingresosData.length, rows, inSortBar);
 
@@ -696,6 +697,25 @@ function guardarIngresoExtra(){
     fecha:ie.fecha, metodo:ie.metodo, cuenta:ie.cuenta, cat:ie.cat,
     conciliado:(ie.conciliado?'Sí':'No'), creadoEn:ahora, actualizadoEn:ahora
   }).catch(function(e){ console.error('[CDC GS] createIngresoExtra:',e); });
+}
+
+function eliminarIngresoExtra(id) {
+  if (!id) return;
+  if (!confirm('¿Eliminar este ingreso adicional? No se puede deshacer.')) return;
+  ingresosExtras = ingresosExtras.filter(function(i){ return i.id !== id; });
+  closeModal('m-ingreso-extra-detalle');
+  renderIngresos(); renderFinKpis('ingresos');
+  toast('Ingreso adicional eliminado');
+  gs('deleteIngresoExtra', {id:id}).catch(function(e){ console.error('[CDC GS] deleteIngresoExtra:',e); });
+}
+
+function eliminarIngreso(id) {
+  if (!id) return;
+  if (!confirm('¿Eliminar este cobro del historial de ingresos? No se puede deshacer.')) return;
+  ingresosData = ingresosData.filter(function(i){ return i.id !== id; });
+  renderIngresos(); renderFinKpis('ingresos');
+  toast('Cobro eliminado del historial');
+  gs('deleteIngreso', {id:id}).catch(function(e){ console.error('[CDC GS] deleteIngreso:',e); });
 }
 
 function toggleConciliarIngresoExtra(id){

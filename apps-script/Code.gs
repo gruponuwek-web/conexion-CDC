@@ -81,6 +81,8 @@ function handle(e) {
       case 'getIngresosExtras':    out = getRows(SHEET_NAMES.ingresosExtras);              break;
       case 'createIngresoExtra':   out = appendRow(SHEET_NAMES.ingresosExtras, data);      break;
       case 'updateIngresoExtra':   out = updateById(SHEET_NAMES.ingresosExtras, data);     break;
+      case 'deleteIngresoExtra':   out = deleteById(SHEET_NAMES.ingresosExtras, data.id);  break;
+      case 'deleteIngreso':        out = deleteById(SHEET_NAMES.cobros, data.id);          break;
 
       // ── CATÁLOGOS ─────────────────────────────────────────────
       case 'getUsuarios':   out = getRows(SHEET_NAMES.usuarios);                           break;
