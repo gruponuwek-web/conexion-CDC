@@ -591,8 +591,12 @@
           </div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Día del mes</label><input id="ne-dia" type="number" min="1" max="31" placeholder="5"></div>
+          <div class="field"><label>Día límite del mes</label><input id="ne-dia" type="number" min="1" max="31" placeholder="Ej. 10"></div>
+          <div class="field"><label>Prioridad de pago</label><input id="ne-prioridad" type="number" min="1" max="99" placeholder="Ej. 1 = primero"></div>
+        </div>
+        <div class="field-row">
           <div class="field"><label>Cuenta / método</label><select id="ne-rec-metodo" onchange="neActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
+          <div class="field" style="opacity:.4;pointer-events:none"><label>&nbsp;</label><input disabled placeholder="Capital Humano · Renta · Prov."></div>
         </div>
         <div class="hint" id="ne-rec-hint">Aparecerá en "Pagos fijos" con recordatorio mensual.</div>
       </div>

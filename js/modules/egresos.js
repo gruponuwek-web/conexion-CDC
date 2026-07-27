@@ -236,17 +236,24 @@ function renderEgresos(){
   // Pagos fijos (solo los que faltan por cubrir este mes)
   var mesActual = HOY.slice(0,7);
   var fijosPend = pagosFijos.filter(function(p){ return _pagoFijoVisible(p); });
+  fijosPend = fijosPend.slice().sort(function(a, b) {
+    var pa = Number(a.prioridad) || 99, pb = Number(b.prioridad) || 99;
+    if (pa !== pb) return pa - pb;
+    return (a.dia || 1) - (b.dia || 1);
+  });
   var fijosCubiertos = pagosFijos.length - fijosPend.length;
   var pfRows = fijosPend.length? fijosPend.map(function(p){
+    var prio = Number(p.prioridad) || 0;
     return '<div class="histrow" style="cursor:pointer" onclick="openPagoDetalle(\''+p.id+'\')">'
       + '<div class="act-ico" style="width:34px;height:34px;background:var(--blue-bg);color:var(--blue)">'+ico('cita')+'</div>'
       + '<div style="flex:1"><b style="font-weight:650">'+esc(p.nombre)+'</b><div class="meta" style="font-size:12px;color:var(--ink-3)">'+_pfPeriodoLabel(p)+' · '+esc(p.cat)+' · '+esc(p.cuenta)+'</div></div>'
+      + (prio ? _prioBadge(prio) : '')
       + '<div style="font-weight:700">'+money(p.monto)+'</div></div>';
-  }).join('') : '<div class="empty" style="padding:18px">Todos los pagos fijos de este mes están cubiertos ✓<div style="font-size:12px;color:var(--ink-3);margin-top:4px">Reaparecerán el próximo mes.</div></div>';
+  }).join('') : '<div class="empty" style="padding:18px">Todos los pagos recurrentes del período están cubiertos ✓<div style="font-size:12px;color:var(--ink-3);margin-top:4px">Reaparecerán en el siguiente período.</div></div>';
   if(fijosPend.length && fijosCubiertos>0){
-    pfRows += '<div style="padding:8px 4px 2px;font-size:12px;color:var(--ink-3)">'+fijosCubiertos+' ya cubierto'+(fijosCubiertos>1?'s':'')+' este mes (en el historial).</div>';
+    pfRows += '<div style="padding:8px 4px 2px;font-size:12px;color:var(--ink-3)">'+fijosCubiertos+' ya cubierto'+(fijosCubiertos>1?'s':'')+' en este período (en el historial).</div>';
   }
-  html += egSection('Pagos fijos', 'Egresos recurrentes mensuales', fijosPend.length, pfRows, '<button class="btn btn-soft btn-sm" onclick="event.stopPropagation();openPagoFijo()">+ Agregar</button>');
+  html += egSection('Pagos fijos', 'Ordenados por prioridad · fecha límite', fijosPend.length, pfRows, '<button class="btn btn-soft btn-sm" onclick="event.stopPropagation();openPagoFijo()">+ Agregar</button>');
 
   // Por pagar
   var ppRows = porPagarData.length? porPagarData.map(function(p){
@@ -369,6 +376,7 @@ function openNuevoEgreso(){
   var cmo=$('com-modo'); if(cmo) cmo.value='uno';
   var cn=$('com-n'); if(cn) cn.value='';
   var cnr=$('com-n-row'); if(cnr) cnr.style.display='none';
+  var npr=$('ne-prioridad'); if(npr) npr.value='';
   var nper=$('ne-periodicidad'); if(nper) nper.value='mensual';
   var nmvr=$('ne-mesvence-row'); if(nmvr) nmvr.style.display='none';
   var nhint=$('ne-rec-hint'); if(nhint) nhint.textContent='Aparecerá en "Pagos fijos" con recordatorio mensual.';
@@ -530,10 +538,17 @@ function _pagoFijoVisible(p) {
   return _mesesDesde(p.pagadoMes) >= 1;
 }
 function _pfPeriodoLabel(p) {
-  var per = p.periodicidad || 'mensual';
-  if (per === 'bimestral') return 'Bimestral · día ' + p.dia;
-  if (per === 'anual')     return 'Anual · ' + (_MESES_COM[p.mesVence] || p.mesVence || '') + ', día ' + p.dia;
-  return 'Cada día ' + p.dia;
+  var per      = p.periodicidad || 'mensual';
+  var limStr   = 'límite día ' + (p.dia || '—');
+  if (per === 'bimestral') return 'Bimestral · ' + limStr;
+  if (per === 'anual')     return 'Anual · ' + (_MESES_COM[p.mesVence] || p.mesVence || '') + ', ' + limStr;
+  return limStr;
+}
+function _prioBadge(n) {
+  if (!n || n < 1) return '';
+  var color = n === 1 ? 'var(--red)'   : (n === 2 ? 'var(--amber)'   : 'var(--ink-3)');
+  var bg    = n === 1 ? 'var(--red-bg)': (n === 2 ? 'var(--amber-bg)': 'rgba(0,0,0,.06)');
+  return '<span title="Prioridad '+n+'" style="display:inline-flex;align-items:center;justify-content:center;min-width:20px;height:20px;border-radius:10px;padding:0 5px;background:'+bg+';color:'+color+';font-size:11px;font-weight:700;margin-right:8px">'+n+'</span>';
 }
 function _pfFechaSugerida(p) {
   var dia    = p.dia || 1;
@@ -633,11 +648,12 @@ function guardarNuevoEgreso(){
       .catch(function(e){ console.error('[CDC GS] createEgreso prog:',e); });
     toast('Egreso programado en "Por pagar"');
   } else {
-    var per = ($('ne-periodicidad')||{value:'mensual'}).value || 'mensual';
-    var mv  = per === 'anual' ? (($('ne-mesvence')||{value:'01'}).value || '01') : '';
-    var pf = {id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('ne-dia').value)||1, cat:cat, periodicidad:per, mesVence:mv, cuenta:(cuentasPorMetodo[$('ne-rec-metodo').value]||['BBVA 4521'])[0]};
+    var per  = ($('ne-periodicidad')||{value:'mensual'}).value || 'mensual';
+    var mv   = per === 'anual' ? (($('ne-mesvence')||{value:'01'}).value || '01') : '';
+    var prio = parseInt(($('ne-prioridad')||{}).value) || 0;
+    var pf = {id:uid('pf'), nombre:nombre, monto:monto, dia:Number($('ne-dia').value)||1, cat:cat, periodicidad:per, mesVence:mv, prioridad:prio||'', cuenta:(cuentasPorMetodo[$('ne-rec-metodo').value]||['BBVA 4521'])[0]};
     pagosFijos.push(pf);
-    gs('createEgreso', {id:pf.id, nombre:pf.nombre, monto:pf.monto, cat:pf.cat, fecha:'', metodo:'', cuenta:pf.cuenta, deducible:'Sí', conciliado:'No', tipo:'fijo', limite:'', periodicidad:per, mesVence:mv, dia:pf.dia, creadoEn:ahora, actualizadoEn:ahora})
+    gs('createEgreso', {id:pf.id, nombre:pf.nombre, monto:pf.monto, cat:pf.cat, fecha:'', metodo:'', cuenta:pf.cuenta, deducible:'Sí', conciliado:'No', tipo:'fijo', limite:'', periodicidad:per, mesVence:mv, dia:pf.dia, prioridad:prio||'', creadoEn:ahora, actualizadoEn:ahora})
       .catch(function(e){ console.error('[CDC GS] createEgreso fijo:',e); });
     var _perLabel = per==='anual' ? 'anual' : (per==='bimestral' ? 'bimestral' : 'mensual');
     toast('Pago '+_perLabel+' recurrente creado');
@@ -691,7 +707,8 @@ function openPagoDetalle(id){
   var p = pf||pp; if(!p) return;
   egresoCtx = {tipo: pf?'fijo':'pendiente', id:id};
   setText('pgd-nombre', p.nombre);
-  setText('pgd-sub', pf? ('Pago '+((p.periodicidad||'mensual')==='mensual'?'fijo':p.periodicidad)+' · '+_pfPeriodoLabel(p)) : ('Por pagar · límite '+fechaLarga(p.limite)));
+  var _prioSub = (pf && p.prioridad) ? ' · prioridad '+p.prioridad : '';
+  setText('pgd-sub', pf? ('Pago '+((p.periodicidad||'mensual')==='mensual'?'fijo':p.periodicidad)+' · '+_pfPeriodoLabel(p)+_prioSub) : ('Por pagar · límite '+fechaLarga(p.limite)));
   var metodo = p.metodo || (pf ? metodoDeCuenta(p.cuenta) : 'Transferencia');
   var cuentas = cuentasPorMetodo[metodo] || [];
   var cuentaSel = (p.cuenta && cuentas.indexOf(p.cuenta)>=0) ? p.cuenta : (cuentas[0]||'');
