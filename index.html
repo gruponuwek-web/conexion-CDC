@@ -469,6 +469,24 @@
   </div>
 </div>
 
+<!-- m-del-confirm -->
+<div class="modal" id="m-del-confirm">
+  <div class="modal-bg" onclick="closeModal('m-del-confirm')"></div>
+  <div class="modal-box" style="max-width:400px">
+    <div class="modal-head">
+      <div class="mh-ic" style="background:var(--red-bg);color:var(--red)"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round"><polyline points="3 6 5 6 21 6"/><path d="M19 6l-1 14a2 2 0 0 1-2 2H8a2 2 0 0 1-2-2L5 6"/><path d="M10 11v6M14 11v6"/><path d="M9 6V4h6v2"/></svg></div>
+      <div><h3>Eliminar registro</h3><div class="mh-sub" id="del-confirm-sub">Esta acción no se puede deshacer.</div></div>
+    </div>
+    <div class="modal-body">
+      <p style="font-size:14px;color:var(--ink-2);margin:0">¿Estás seguro de que deseas eliminar este registro? Una vez eliminado no podrá recuperarse.</p>
+    </div>
+    <div class="modal-foot">
+      <button class="btn btn-ghost" onclick="closeModal('m-del-confirm')">Cancelar</button>
+      <button class="btn btn-primary" style="background:var(--red);border-color:var(--red)" id="del-confirm-btn" onclick="delConfirmExecute()">Eliminar</button>
+    </div>
+  </div>
+</div>
+
 <!-- m-reprog -->
 <div class="modal" id="m-reprog">
   <div class="modal-bg" onclick="closeModal('m-reprog')"></div>

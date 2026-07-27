@@ -375,6 +375,17 @@ function neTab(t){
   });
 }
 
+var _delConfirmFn = null;
+function openDelConfirm(sub, fn) {
+  _delConfirmFn = fn;
+  var s = $('del-confirm-sub'); if(s) s.textContent = sub || 'Esta acción no se puede deshacer.';
+  openModal('m-del-confirm');
+}
+function delConfirmExecute() {
+  closeModal('m-del-confirm');
+  if (typeof _delConfirmFn === 'function') { _delConfirmFn(); _delConfirmFn = null; }
+}
+
 var egSortField = 'fecha', egSortDir = 'desc';
 var inSortField = 'fecha', inSortDir = 'desc';
 
@@ -429,12 +440,14 @@ function neSuggest(nombre, monto) {
 
 function eliminarEgreso(id) {
   if (!id) return;
-  if (!confirm('¿Eliminar este egreso? No se puede deshacer.')) return;
-  historialEgresos = historialEgresos.filter(function(e){ return e.id !== id; });
-  closeModal('m-egreso-detalle');
-  renderEgresos(); renderFinKpis(finTabActual);
-  toast('Egreso eliminado');
-  gs('deleteEgreso', {id:id}).catch(function(e){ console.error('[CDC GS] deleteEgreso:',e); });
+  var eg = getEgreso(id);
+  openDelConfirm((eg ? eg.nombre + ' · ' + money(eg.monto) : 'Egreso'), function() {
+    historialEgresos = historialEgresos.filter(function(e){ return e.id !== id; });
+    closeModal('m-egreso-detalle');
+    renderEgresos(); renderFinKpis(finTabActual);
+    toast('Egreso eliminado');
+    gs('deleteEgreso', {id:id}).catch(function(e){ console.error('[CDC GS] deleteEgreso:',e); });
+  });
 }
 
 var DEDUCIBLE_POR_CAT = {
@@ -701,21 +714,24 @@ function guardarIngresoExtra(){
 
 function eliminarIngresoExtra(id) {
   if (!id) return;
-  if (!confirm('¿Eliminar este ingreso adicional? No se puede deshacer.')) return;
-  ingresosExtras = ingresosExtras.filter(function(i){ return i.id !== id; });
-  closeModal('m-ingreso-extra-detalle');
-  renderIngresos(); renderFinKpis('ingresos');
-  toast('Ingreso adicional eliminado');
-  gs('deleteIngresoExtra', {id:id}).catch(function(e){ console.error('[CDC GS] deleteIngresoExtra:',e); });
+  openDelConfirm('Ingreso adicional · ' + ((getIngresoExtra(id)||{}).concepto||''), function() {
+    ingresosExtras = ingresosExtras.filter(function(i){ return i.id !== id; });
+    closeModal('m-ingreso-extra-detalle');
+    renderIngresos(); renderFinKpis('ingresos');
+    toast('Ingreso adicional eliminado');
+    gs('deleteIngresoExtra', {id:id}).catch(function(e){ console.error('[CDC GS] deleteIngresoExtra:',e); });
+  });
 }
 
 function eliminarIngreso(id) {
   if (!id) return;
-  if (!confirm('¿Eliminar este cobro del historial de ingresos? No se puede deshacer.')) return;
-  ingresosData = ingresosData.filter(function(i){ return i.id !== id; });
-  renderIngresos(); renderFinKpis('ingresos');
-  toast('Cobro eliminado del historial');
-  gs('deleteIngreso', {id:id}).catch(function(e){ console.error('[CDC GS] deleteIngreso:',e); });
+  var ing = ingresosData.filter(function(i){ return i.id === id; })[0];
+  openDelConfirm((ing ? ing.cliente + ' · ' + ing.concepto : 'Cobro'), function() {
+    ingresosData = ingresosData.filter(function(i){ return i.id !== id; });
+    renderIngresos(); renderFinKpis('ingresos');
+    toast('Cobro eliminado del historial');
+    gs('deleteIngreso', {id:id}).catch(function(e){ console.error('[CDC GS] deleteIngreso:',e); });
+  });
 }
 
 function toggleConciliarIngresoExtra(id){
