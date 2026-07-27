@@ -531,8 +531,8 @@ function guardarNuevoEgreso(){
 }
 
 function openPagoFijo(){
-  $('pf-nombre').value=''; $('pf-monto').value=''; $('pf-dia').value=''; $('pf-cat').value='Renta'; $('pf-cuenta').value='BBVA 4521';
-  openModal('m-pago-fijo');
+  openNuevoEgreso();
+  neTab('rec');
 }
 
 function guardarPagoFijo(){
