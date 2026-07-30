@@ -364,7 +364,7 @@
           <div class="field"><label>Servicio <span class="req">*</span></label><select id="ob-servicio" onchange="obRecalc()"><option value="">— Selecciona —</option></select></div>
         </div>
         <div class="field-row">
-          <div class="field"><label>Descuento aplicado ($)</label><input id="ob-descuento" type="number" min="0" placeholder="0" oninput="obToggleMotivo()"></div>
+          <div class="field"><label>Descuento (%)</label><input id="ob-descuento" type="number" min="0" max="100" placeholder="0" oninput="obToggleMotivo();obRecalc()"></div>
           <div class="field" id="ob-motivo-desc-wrap" style="display:none"><label>Motivo del descuento</label><select id="ob-motivo-desc"></select></div>
         </div>
       </div>

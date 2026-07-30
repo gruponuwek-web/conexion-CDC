@@ -367,8 +367,11 @@ function obRecalc(){
   var btn = $('ob-activar-btn');
   if(btn) btn.disabled = !listo;
   var falta = total - hechos;
+  var desc = Number($('ob-descuento').value)||0;
+  var montoFinal = desc > 0 ? Math.round(Number(mt) * (1 - desc/100)) : Number(mt);
   var hint;
-  if(listo) hint = 'Todo completo · listo para activar';
+  if(listo && desc > 0) hint = 'Todo completo · Monto con descuento: '+money(montoFinal)+' · '+money(Math.round(montoFinal/(Number(ns)||1)))+'/sesión';
+  else if(listo) hint = 'Todo completo · listo para activar';
   else if(!checksDone && !fieldsOk) hint = 'Faltan '+falta+' punto(s) de onboarding y los datos de tratamiento';
   else if(!checksDone) hint = 'Faltan '+falta+' punto(s) de onboarding por marcar';
   else hint = 'Completa los 4 datos de tratamiento (*)';
@@ -383,12 +386,13 @@ function activarCliente(){
   var sv = $('ob-servicio').value;
   var desc = Number($('ob-descuento').value)||0;
   var motivoDesc = desc > 0 ? ($('ob-motivo-desc').value||'') : '';
+  var montoFinal = desc > 0 ? Math.round(mt * (1 - desc/100)) : mt;
   var todos = ONB_CHECKS.every(function(ch){return c.onboarding[ch.key];});
   if(!todos){ toast('Marca los '+ONB_CHECKS.length+' puntos de onboarding antes de activar'); return; }
   if(!(ns>0 && fp && mt>0 && sv)){ toast('Faltan datos de tratamiento'); return; }
   c.numSes = ns; c.fechaPrimera = fp; c.monto = mt; c.servicio = sv;
-  c.descuento = desc; c.motivoDescuento = motivoDesc;
-  c.precioSes = Math.round(mt/ns);
+  c.descuento = desc; c.motivoDescuento = motivoDesc; c.montoFinal = montoFinal;
+  c.precioSes = Math.round(montoFinal/ns);
   c.sesiones = mkSesiones(ns, 0, c.precioSes, fp, false);
   c.estado = 'Activo';
   recomputeCliente(c);
@@ -401,8 +405,8 @@ function activarCliente(){
   gs('updateCliente', {
     id:c.id, servicio:sv, estado:'Activo',
     numSes:ns, precioSes:c.precioSes, monto:mt, fechaPrimera:fp,
-    descuento:desc||'', motivoDescuento:motivoDesc,
-    cobrado:0, porCobrar:mt, actualizadoEn:ahora
+    descuento:desc||'', motivoDescuento:motivoDesc, montoFinal:montoFinal,
+    cobrado:0, porCobrar:montoFinal, actualizadoEn:ahora
   }).then(function(r){ if(!r.ok) console.error('[CDC GS] updateCliente activar:',r.error); })
     .catch(function(e){ console.error('[CDC GS] updateCliente error:',e); });
   gs('createSesiones', {
