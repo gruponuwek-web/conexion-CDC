@@ -22,6 +22,7 @@ var LISTAS = {
     'Cheque':        ['BBVA 4521','HSBC 7832']
   },
   catIngresosExtras: ['Consultoría','Venta de producto','Donativo','Patrocinio','Capacitación','Otro'],
+  motivos_descuento: ['Convenio médico','Dificultad económica','Familiar / conocido','Cortesía','Promoción','Otro'],
   usosCFDI:          ['D01 · Honorarios médicos','G03 · Gastos en general','S01 · Sin efectos fiscales'],
 };
 
@@ -1038,6 +1039,7 @@ var LISTAS_CONFIG = [
   { key:'catEgresos',        label:'Categorías de egresos',      desc:'Clasificación de gastos en Finanzas' },
   { key:'metodosPago',       label:'Métodos de pago',            desc:'Formas de pago disponibles' },
   { key:'catIngresosExtras', label:'Categorías ingresos extras', desc:'Tipos de ingresos adicionales' },
+  { key:'motivos_descuento', label:'Motivos de descuento',       desc:'Razones por las que se aplica descuento en cobros' },
   { key:'usosCFDI',          label:'Usos de CFDI',               desc:'Opciones fiscales para facturas' },
   { key:'etapas',            label:'Etapas del pipeline',        desc:'Columnas del kanban de leads (requiere reload)' },
   { key:'etapasOpcionales',  label:'Etapas sin actividad oblig.',desc:'Etapas donde el seguimiento es opcional' },
@@ -1068,6 +1070,7 @@ var SELECT_MAP = {
   'egd-metodo':      {key:'metodosPago'},
   'ie-cat':          {key:'catIngresosExtras'},
   'ied-cat':         {key:'catIngresosExtras'},
+  'cb-motivo-desc':  {key:'motivos_descuento', empty:'— Sin motivo —'},
 };
 
 function _poblarSelect(id){

@@ -447,6 +447,10 @@
         <div class="field"><label>Método de pago</label><select id="cb-metodo" onchange="cbActualizarCuenta()"><option>Transferencia</option><option>Tarjeta</option><option>Efectivo</option><option>Cheque</option></select></div>
         <div class="field"><label>Cuenta</label><select id="cb-cuenta"></select></div>
       </div>
+      <div class="field-row">
+        <div class="field"><label>Descuento aplicado ($)</label><input id="cb-descuento" type="number" min="0" placeholder="0" oninput="cbToggleMotivo()"></div>
+        <div class="field" id="cb-motivo-desc-wrap" style="display:none"><label>Motivo del descuento</label><select id="cb-motivo-desc"></select></div>
+      </div>
       <div class="field"><label>¿Requiere factura?</label><select id="cb-factura" onchange="$('cb-factura-hint').style.display=this.value==='Sí'?'block':'none'"><option>No</option><option>Sí</option></select></div>
       <div id="cb-factura-hint" class="panel panel-blue" style="margin-bottom:0;display:none">
         <div style="font-size:12.5px;color:var(--ink-2)">Al confirmar el cobro con factura, se generará automáticamente una entrada en el módulo <b>Historial CFDI</b> con estatus <b>Por crear</b>.</div>
