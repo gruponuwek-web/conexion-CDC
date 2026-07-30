@@ -147,6 +147,23 @@ function accClienteHtml(c, open){
     body += '<div class="divider"></div>';
   }
 
+  // Entregables
+  if(c.estado !== 'En onboarding'){
+    var ENT = [
+      {key:'neuroInicial', t:'Neurometría inicial realizada', d:'qEEG basal entregado al paciente'},
+      {key:'neuroFinal',   t:'Neurometría final realizada',   d:'qEEG final entregado al paciente'}
+    ];
+    body += '<div style="margin-top:16px;padding-top:14px;border-top:1px solid var(--line)">'
+      + '<div class="panel-title" style="margin-bottom:10px">Entregables</div>';
+    ENT.forEach(function(e){
+      var on = c[e.key];
+      body += '<label class="checkrow'+(on?' on':'')+'" onclick="toggleEntregable(\''+c.id+'\',\''+e.key+'\')" style="margin-bottom:8px">'
+        + '<span class="cbox"><svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"><path d="M20 6 9 17l-5-5"/></svg></span>'
+        + '<span><span class="ct">'+e.t+'</span><br><span class="cd">'+e.d+'</span></span></label>';
+    });
+    body += '</div>';
+  }
+
   // estado / fiscal
   body += '<div style="display:flex;gap:30px;flex-wrap:wrap"><div>'+estadoControlHtml(c)+'</div>';
   var segBadge = (c.aseguradora && c.aseguradora !== 'Particular / Sin aseguradora' && c.aseguradora !== '— Sin aseguradora —')
@@ -319,6 +336,15 @@ function guardarEditarDatosCli(){
     .catch(function(e){ console.error('[CDC GS] updateCliente datos:',e); });
 }
 var _editDatosCliId = null;
+
+function toggleEntregable(id, key){
+  var c = getCliente(id); if(!c) return;
+  c[key] = !c[key];
+  renderClientes();
+  var payload = {id:id, actualizadoEn:new Date().toISOString()};
+  payload[key] = c[key] ? 'Sí' : 'No';
+  gs('updateCliente', payload).catch(function(e){ console.error('[CDC GS] toggleEntregable:',e); });
+}
 
 var _objTimer = null;
 function setObjetivoFuncional(id, v){
