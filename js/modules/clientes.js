@@ -289,6 +289,7 @@ function abrirOnboarding(clienteId, fresh, prevEtapa, leadId){
   $('ob-num-sesiones').value = c.numSes || '';
   $('ob-fecha-primera').value = c.fechaPrimera || '';
   $('ob-monto-total').value = c.monto || '';
+  _poblarSelect('ob-servicio');
   $('ob-servicio').value = c.servicio || '';
   _poblarSelect('ob-aseguradora');
   $('ob-aseguradora').value = c.aseguradora || '';
@@ -388,7 +389,7 @@ function obRecalc(){
   var hint;
   if(listo && desc > 0) hint = 'Todo completo · Monto con descuento: '+money(montoFinal)+' · '+money(Math.round(montoFinal/(Number(ns)||1)))+'/sesión';
   else if(listo) hint = 'Todo completo · listo para activar';
-  else hint = 'Completa los 4 datos de tratamiento (*)'+(falta>0?' · '+falta+' check(s) pendientes':'');
+  else hint = 'Completa los datos de tratamiento en la pestaña 1 (*)';
   setText('ob-hint', hint);
 }
 
