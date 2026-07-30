@@ -361,7 +361,7 @@ function renderFinanzas(){
 }
 
 function openNuevoEgreso(){
-  $('ne-nombre').value=''; $('ne-monto').value=''; $('ne-cat').value='Renta';
+  $('ne-nombre').value=''; $('ne-proveedor').value=''; $('ne-monto').value=''; $('ne-cat').value='Renta';
   $('ne-fecha').value=HOY; $('ne-metodo').value='Transferencia'; $('ne-deducible').value='Sí';
   $('ne-limite').value=''; $('ne-dia').value=''; $('ne-rec-metodo').value='Transferencia';
   var cr=$('ne-conciliado-row'); if(cr) cr.classList.remove('on');
@@ -693,21 +693,22 @@ function guardarComisiones() {
 function guardarNuevoEgreso(){
   if (neTabActual === 'com') { guardarComisiones(); return; }
   var nombre = $('ne-nombre').value.trim();
+  var proveedor = $('ne-proveedor').value.trim();
   var monto = neMontoFinal();
   if(!nombre){ toast('Captura el concepto'); return; }
   if(monto<=0){ toast('Captura un monto válido'); return; }
   var cat = $('ne-cat').value;
   var ahora = new Date().toISOString();
   if(neTabActual==='ya'){
-    var eg = {id:uid('he'), nombre:nombre, monto:monto, fecha:$('ne-fecha').value||HOY, metodo:$('ne-metodo').value, cat:cat, cuenta:$('ne-cuenta').value||'', deducible:$('ne-deducible').value, conciliado:$('ne-conciliado-row').classList.contains('on')};
+    var eg = {id:uid('he'), nombre:nombre, proveedor:proveedor, monto:monto, fecha:$('ne-fecha').value||HOY, metodo:$('ne-metodo').value, cat:cat, cuenta:$('ne-cuenta').value||'', deducible:$('ne-deducible').value, conciliado:$('ne-conciliado-row').classList.contains('on')};
     historialEgresos.push(eg);
-    gs('createEgreso', {id:eg.id, nombre:eg.nombre, monto:eg.monto, cat:eg.cat, fecha:eg.fecha, metodo:eg.metodo, cuenta:eg.cuenta, deducible:eg.deducible, conciliado:(eg.conciliado?'Sí':'No'), tipo:'historial', limite:'', creadoEn:ahora, actualizadoEn:ahora})
+    gs('createEgreso', {id:eg.id, nombre:eg.nombre, proveedor:eg.proveedor, monto:eg.monto, cat:eg.cat, fecha:eg.fecha, metodo:eg.metodo, cuenta:eg.cuenta, deducible:eg.deducible, conciliado:(eg.conciliado?'Sí':'No'), tipo:'historial', limite:'', creadoEn:ahora, actualizadoEn:ahora})
       .catch(function(e){ console.error('[CDC GS] createEgreso:',e); });
     toast('Egreso registrado en historial');
   } else if(neTabActual==='prog'){
-    var pp = {id:uid('pp'), nombre:nombre, monto:monto, cat:cat, limite:$('ne-limite').value||HOY, metodo:'Transferencia'};
+    var pp = {id:uid('pp'), nombre:nombre, proveedor:proveedor, monto:monto, cat:cat, limite:$('ne-limite').value||HOY, metodo:'Transferencia'};
     porPagarData.push(pp);
-    gs('createEgreso', {id:pp.id, nombre:pp.nombre, monto:pp.monto, cat:pp.cat, fecha:'', metodo:pp.metodo, cuenta:'', deducible:'Sí', conciliado:'No', tipo:'porpagar', limite:pp.limite, creadoEn:ahora, actualizadoEn:ahora})
+    gs('createEgreso', {id:pp.id, nombre:pp.nombre, proveedor:pp.proveedor||'', monto:pp.monto, cat:pp.cat, fecha:'', metodo:pp.metodo, cuenta:'', deducible:'Sí', conciliado:'No', tipo:'porpagar', limite:pp.limite, creadoEn:ahora, actualizadoEn:ahora})
       .catch(function(e){ console.error('[CDC GS] createEgreso prog:',e); });
     toast('Egreso programado en "Por pagar"');
   } else {
