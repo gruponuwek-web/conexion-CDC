@@ -134,7 +134,7 @@ function accClienteHtml(c, open){
   // substats
   body += '<div class="subgrid">'
     + '<div class="substat"><div class="l">Paquete</div><div class="v" id="cd-monto">'+money(c.monto)+'</div></div>'
-    + (c.descuento>0 ? '<div class="substat"><div class="l">Descuento</div><div class="v" style="color:var(--green)">-'+money(c.monto-c.montoFinal)+'<div style="font-size:11px;font-weight:500;color:var(--ink-3);margin-top:2px">-'+c.descuento+'% · final '+money(c.montoFinal)+'</div></div></div>' : '')
+    + (c.descuento>0 ? '<div class="substat"><div class="l">Descuento</div><div class="v" style="color:var(--green)">'+money(c.montoFinal)+'<div style="font-size:11px;font-weight:500;color:var(--ink-3);margin-top:2px">-'+money(c.monto-c.montoFinal)+' · -'+c.descuento+'%</div></div></div>' : '')
     + '<div class="substat"><div class="l">Cobrado</div><div class="v" id="cd-cobrado" style="color:var(--green)">'+money(c.cobrado)+'</div></div>'
     + '<div class="substat"><div class="l">Por cobrar</div><div class="v" id="cd-porcobrar" style="color:var(--amber)">'+money(c.porCobrar)+'</div></div>'
     + '<div class="substat"><div class="l">Avance</div><div class="v" id="cd-ses-kpi">'+progPct+'%</div></div>'
