@@ -25,7 +25,7 @@ function inlineCuentaUpdate(){
   var metodo = document.getElementById('inline-cb-metodo');
   var cuenta  = document.getElementById('inline-cb-cuenta');
   if(!metodo || !cuenta) return;
-  var cuentas = cuentasPorMetodo[metodo.value] || [];
+  var cuentas = (LISTAS && LISTAS.cuentas) || [];
   cuenta.innerHTML = cuentas.map(function(c){ return '<option>'+c+'</option>'; }).join('');
 }
 
@@ -77,8 +77,7 @@ function registrarCobroInline(clienteId, n){
 }
 
 function cbActualizarCuenta(){
-  var metodo = $('cb-metodo').value;
-  var cuentas = cuentasPorMetodo[metodo] || [];
+  var cuentas = (LISTAS && LISTAS.cuentas) || [];
   setHtml('cb-cuenta', cuentas.map(function(c){return '<option>'+esc(c)+'</option>';}).join(''));
 }
 
@@ -92,15 +91,7 @@ function openCobro(clienteId, n){
   $('cb-metodo').value = 'Transferencia';
   cbActualizarCuenta();
   $('cb-factura').value = 'No';
-  $('cb-descuento').value = '';
-  $('cb-motivo-desc-wrap').style.display = 'none';
-  _poblarSelect('cb-motivo-desc');
   openModal('m-cobro');
-}
-
-function cbToggleMotivo(){
-  var d = Number($('cb-descuento').value) || 0;
-  $('cb-motivo-desc-wrap').style.display = d > 0 ? '' : 'none';
 }
 
 function registrarCobro(){
@@ -108,9 +99,7 @@ function registrarCobro(){
   var monto = Number($('cb-monto').value)||0;
   var fecha = $('cb-fecha').value || HOY;
   var metodo = $('cb-metodo').value;
-  var cuenta = $('cb-cuenta').value || (cuentasPorMetodo[metodo]||[''])[0];
-  var descuento = Number($('cb-descuento').value) || 0;
-  var motivoDescuento = descuento > 0 ? ($('cb-motivo-desc').value || '') : '';
+  var cuenta = $('cb-cuenta').value || ((LISTAS && LISTAS.cuentas)||[''])[0];
   var requiereFactura = $('cb-factura').value==='Sí';
   x.s.estado='done';
   x.s.fecha = x.s.fecha || fecha;
@@ -123,7 +112,7 @@ function registrarCobro(){
   closeModal('m-cobro');
   recomputeCliente(x.c);
   renderClientes(); renderNav();
-  toast('Cobro de '+money(monto)+' registrado'+(descuento?' · desc. '+money(descuento)+(motivoDescuento?' ('+motivoDescuento+')':''):'')+(requiereFactura?' · factura en cola':''));
+  toast('Cobro de '+money(monto)+' registrado'+(requiereFactura?' · factura en cola':''));
   // Guardar en Sheets
   var ahora = new Date().toISOString();
   var hoy = ahora.slice(0,10);
@@ -152,7 +141,6 @@ function registrarCobro(){
     id:uid('co'), clienteId:x.c.id,
     sesionId:sesId, sesionN:sesionCtx.n, monto:monto, fecha:fecha,
     metodo:metodo, cuenta:cuenta,
-    descuento:descuento||'', motivoDescuento:motivoDescuento,
     facturaRequerida:(requiereFactura?'Sí':'No'), creadoEn:ahora
   }).catch(function(e){ console.error('[CDC GS] createCobro:',e); });
   gs('updateCliente', {id:x.c.id,

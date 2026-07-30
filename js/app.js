@@ -21,6 +21,7 @@ var LISTAS = {
     'Transferencia': ['HSBC 7832','Banorte 3492'],
     'Cheque':        ['BBVA 4521','HSBC 7832']
   },
+  cuentas:           ['Efectivo caja','BBVA 4521','HSBC 7832','Santander 1180','Banorte 3492'],
   catIngresosExtras: ['Consultoría','Venta de producto','Donativo','Patrocinio','Capacitación','Otro'],
   motivos_descuento: ['Convenio médico','Dificultad económica','Familiar / conocido','Cortesía','Promoción','Otro'],
   servicios:         ['Consulta inicial','Neurometría qEEG','Consulta médica - Neurólogo','Consulta médica - Psiquiatra','Consulta médica - Neuropediatra','Consulta médica - Neuropsicólogo','Sesiones TMS (20 sesiones)','Sesión EMT adicional (21+)','Consulta de seguimiento','Comisión renta de espacio','Otros'],
@@ -1043,6 +1044,7 @@ var LISTAS_CONFIG = [
   { key:'razonesCancel',     label:'Razones de cancelación',     desc:'Motivos de baja del paciente' },
   { key:'catEgresos',        label:'Categorías de egresos',      desc:'Clasificación de gastos en Finanzas' },
   { key:'metodosPago',       label:'Métodos de pago',            desc:'Formas de pago disponibles' },
+  { key:'cuentas',           label:'Cuentas bancarias',          desc:'Cuentas disponibles al registrar un cobro o egreso' },
   { key:'catIngresosExtras', label:'Categorías ingresos extras', desc:'Tipos de ingresos adicionales' },
   { key:'motivos_descuento', label:'Motivos de descuento',       desc:'Razones por las que se aplica descuento en cobros' },
   { key:'servicios',         label:'Servicios / tratamientos',   desc:'Catálogo de servicios seleccionables en el onboarding' },
