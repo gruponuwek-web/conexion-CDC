@@ -266,7 +266,7 @@ function ganarLead(id, prevEtapa){
     var nc = {
       id:nuevoId, nombre:l.nombre, correo:l.correo||'', cel:l.cel||'',
       paciente:l.paciente, edad:l.edad!=null?l.edad:null, genero:l.genero||'',
-      padecimiento:l.padecimiento, servicio:'', estado:'En onboarding',
+      medicoReferido:l.medicoReferido||'', padecimiento:l.padecimiento, servicio:'', estado:'En onboarding',
       monto:0, cobrado:0, porCobrar:0, numSes:0, precioSes:0,
       rfc:'', razonSocial:l.nombre, usoCFDI:'D01 · Honorarios médicos', sesiones:[], notas:l.nota||'',
       onboarding:{contrato:false,anticipo:false,consent:false,neurometria:false,expediente:false,protocolo:false,calendario:false}
@@ -278,7 +278,7 @@ function ganarLead(id, prevEtapa){
     gs('createCliente', {
       id:nuevoId, nombre:nc.nombre, correo:nc.correo, cel:nc.cel,
       paciente:nc.paciente, edad:nc.edad, genero:nc.genero,
-      padecimiento:nc.padecimiento, servicio:'', estado:'En onboarding',
+      medicoReferido:nc.medicoReferido, padecimiento:nc.padecimiento, servicio:'', estado:'En onboarding',
       razonPausa:'', monto:0, cobrado:0, porCobrar:0, numSes:0, precioSes:0,
       rfc:'', razonSocial:nc.nombre, usoCFDI:'D01 · Honorarios médicos',
       notas:nc.notas, creadoEn:ahora, actualizadoEn:ahora

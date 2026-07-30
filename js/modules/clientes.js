@@ -134,7 +134,7 @@ function accClienteHtml(c, open){
   // substats
   body += '<div class="subgrid">'
     + '<div class="substat"><div class="l">Paquete</div><div class="v" id="cd-monto">'+money(c.monto)+'</div></div>'
-    + (c.descuento>0 ? '<div class="substat"><div class="l">Descuento</div><div class="v" style="color:var(--green)">-'+c.descuento+'% → '+money(c.montoFinal)+'</div></div>' : '')
+    + (c.descuento>0 ? '<div class="substat"><div class="l">Descuento</div><div class="v" style="color:var(--green)">-'+money(c.monto-c.montoFinal)+'<div style="font-size:11px;font-weight:500;color:var(--ink-3);margin-top:2px">-'+c.descuento+'% · final '+money(c.montoFinal)+'</div></div></div>' : '')
     + '<div class="substat"><div class="l">Cobrado</div><div class="v" id="cd-cobrado" style="color:var(--green)">'+money(c.cobrado)+'</div></div>'
     + '<div class="substat"><div class="l">Por cobrar</div><div class="v" id="cd-porcobrar" style="color:var(--amber)">'+money(c.porCobrar)+'</div></div>'
     + '<div class="substat"><div class="l">Avance</div><div class="v" id="cd-ses-kpi">'+progPct+'%</div></div>'
@@ -150,6 +150,7 @@ function accClienteHtml(c, open){
   body += '<div style="display:flex;gap:30px;flex-wrap:wrap"><div>'+estadoControlHtml(c)+'</div>';
   body += '<div style="flex:1;min-width:220px"><div class="panel-title">Datos fiscales</div>'
     + '<div style="font-size:13px;color:var(--ink-2);line-height:1.9">'
+    + (c.medicoReferido ? '<div><b>Médico referido:</b> '+esc(c.medicoReferido)+'</div>' : '')
     + '<div><b>RFC:</b> '+(esc(c.rfc)||'—')+'</div>'
     + '<div><b>Razón social:</b> '+(esc(c.razonSocial)||'—')+'</div>'
     + '<div><b>Uso CFDI:</b> '+(esc(c.usoCFDI)||'—')+'</div>'
