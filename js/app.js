@@ -211,19 +211,22 @@ async function cargarTodo(silent) {
 
     if (rClientes.ok) {
       CDC.clientes = rClientes.data.map(function(c){
-        c.monto     = Number(c.monto)     || 0;
-        c.cobrado   = Number(c.cobrado)   || 0;
-        c.porCobrar = Number(c.porCobrar) || 0;
-        c.numSes    = Number(c.numSes)    || 0;
-        c.precioSes = Number(c.precioSes) || 0;
+        c.monto      = Number(c.monto)      || 0;
+        c.montoFinal = Number(c.montoFinal) || 0;
+        c.cobrado    = Number(c.cobrado)    || 0;
+        c.porCobrar  = Number(c.porCobrar)  || 0;
+        c.numSes     = Number(c.numSes)     || 0;
+        c.precioSes  = Number(c.precioSes)  || 0;
+        c.descuento  = Number(c.descuento)  || 0;
         if (c.celular !== undefined && c.cel === undefined) c.cel = c.celular;
         // Anidar sesiones desde la hoja Sesiones
         c.sesiones = sesionesPorCliente[c.id] || [];
         // Si tiene sesiones pero porCobrar es 0, recalcular
         if (c.sesiones.length > 0 && c.porCobrar === 0 && c.monto > 0) {
+          var _base = c.montoFinal || c.monto;
           var doneN = c.sesiones.filter(function(s){ return s.estado === 'done'; }).length;
           c.cobrado   = doneN * c.precioSes;
-          c.porCobrar = c.monto - c.cobrado;
+          c.porCobrar = _base - c.cobrado;
         }
         // Parsear onboarding si viene de Sheets como JSON string
         if (typeof c.onboarding === 'string') { try { c.onboarding = JSON.parse(c.onboarding); } catch(e) { c.onboarding = null; } }
@@ -322,9 +325,10 @@ async function cargarTodo(silent) {
             if(cobradoPorSesion[key]) s.precio = cobradoPorSesion[key];
           });
         }
-        // porCobrar = paquete total - lo ya cobrado (fuente de verdad: hoja Cobros)
+        // porCobrar = paquete total (con descuento si aplica) - lo ya cobrado
         c.cobrado   = cobradoPorCliente[cid] !== undefined ? cobradoPorCliente[cid] : (c.cobrado || 0);
-        c.porCobrar = Math.max(0, (c.monto || 0) - c.cobrado);
+        var _base = c.montoFinal || c.monto;
+        c.porCobrar = Math.max(0, _base - c.cobrado);
       });
       clientesData = CDC.clientes;
 
