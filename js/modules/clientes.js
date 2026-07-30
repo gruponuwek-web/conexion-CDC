@@ -151,7 +151,9 @@ function accClienteHtml(c, open){
   body += '<div style="flex:1;min-width:220px"><div class="panel-title">Datos fiscales</div>'
     + '<div style="font-size:13px;color:var(--ink-2);line-height:1.9">'
     + '<div><b>Médico referido:</b> '+(esc(c.medicoReferido)||'—')+'</div>'
-    + '<div><b>Aseguradora:</b> '+(esc(c.aseguradora)||'—')+'</div>'
+    + (c.aseguradora && c.aseguradora !== 'Particular / Sin aseguradora'
+        ? '<div><b>Aseguradora:</b> '+esc(c.aseguradora)+' &nbsp;<button onclick="toggleEstatusSeguro(\''+c.id+'\')" style="font-size:11px;padding:2px 8px;border-radius:10px;border:none;cursor:pointer;font-weight:600;background:'+(c.estatusSeguro==='Cobrado'?'var(--green)':'var(--amber)')+';color:#fff">'+esc(c.estatusSeguro||'En proceso')+'</button></div>'
+        : (c.aseguradora ? '<div><b>Aseguradora:</b> '+(esc(c.aseguradora)||'—')+'</div>' : ''))
     + '<div><b>RFC:</b> '+(esc(c.rfc)||'—')+'</div>'
     + '<div><b>Razón social:</b> '+(esc(c.razonSocial)||'—')+'</div>'
     + '<div><b>Uso CFDI:</b> '+(esc(c.usoCFDI)||'—')+'</div>'
@@ -267,6 +269,14 @@ function setRazonOtro(id, v){
     gs('updateCliente', {id:id, razonOtro:v, actualizadoEn:new Date().toISOString()})
       .catch(function(e){ console.error('[CDC GS] setRazonOtro:',e); });
   }, 800);
+}
+
+function toggleEstatusSeguro(id){
+  var c = getCliente(id); if(!c) return;
+  c.estatusSeguro = (c.estatusSeguro === 'Cobrado') ? 'En proceso' : 'Cobrado';
+  renderClientes();
+  gs('updateCliente', {id:id, estatusSeguro:c.estatusSeguro, actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] toggleEstatusSeguro:',e); });
 }
 
 function abrirOnboarding(clienteId, fresh, prevEtapa, leadId){
