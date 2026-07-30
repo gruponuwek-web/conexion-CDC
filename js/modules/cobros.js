@@ -86,7 +86,15 @@ function openCobro(clienteId, n){
   var s = c.sesiones[n-1]; if(!s) return;
   sesionCtx = {clienteId:clienteId, n:n};
   setText('cb-sub', c.nombre+' · Sesión '+n);
-  $('cb-monto').value = s.precio||c.precioSes||0;
+  // Calcular sugerido: por cobrar real ÷ sesiones pendientes
+  var base = (c.montoFinal > 0 ? c.montoFinal : c.monto) || 0;
+  var porCobrar = Math.max(0, base - (c.cobrado || 0));
+  var pendientes = (c.sesiones || []).filter(function(x){ return x.estado !== 'done'; }).length;
+  var sugerido = pendientes > 0 ? Math.round(porCobrar / pendientes) : (s.precio || c.precioSes || 0);
+  $('cb-monto').value = sugerido;
+  setText('cb-monto-hint', pendientes > 0
+    ? 'Sugerido: ' + money(sugerido) + ' · Por cobrar ' + money(porCobrar) + ' ÷ ' + pendientes + ' ses. pendientes'
+    : 'Última sesión · Por cobrar: ' + money(porCobrar));
   $('cb-fecha').value = HOY;
   $('cb-metodo').value = 'Transferencia';
   cbActualizarCuenta();
