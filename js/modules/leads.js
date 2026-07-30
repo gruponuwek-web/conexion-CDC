@@ -76,7 +76,10 @@ function renderPipeline(){
     var html = '';
     leads.forEach(function(l){
       html += '<div class="lead-card" draggable="true" data-id="'+l.id+'" ondragstart="onDragStart(event,\''+l.id+'\')" ondragend="onDragEnd(event)" onclick="openPipeDetalle(\''+l.id+'\',false)">'
-        + '<div class="lc-name">'+esc(l.nombre)+'</div>'
+        + '<div style="display:flex;align-items:flex-start;justify-content:space-between">'
+          + '<div class="lc-name">'+esc(l.nombre)+'</div>'
+          + '<button onclick="event.stopPropagation();eliminarLead(\''+l.id+'\')" title="Eliminar" style="background:none;border:none;cursor:pointer;padding:0 2px;color:var(--ink-3);font-size:16px;line-height:1;flex-shrink:0" onmouseover="this.style.color=\'var(--red)\'" onmouseout="this.style.color=\'var(--ink-3)\'">&#xd7;</button>'
+        + '</div>'
         + '<div class="lc-pac">'+esc(l.paciente)+' · '+esc(l.medicoReferido||l.padecimiento||'—')+'</div>'
         + '<div class="lc-foot">'+tempBadge(l.temp)+'<span style="margin-left:auto">'+esc(l.canal)+'</span></div>'
         + '</div>';
