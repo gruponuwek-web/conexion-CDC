@@ -150,7 +150,7 @@ function accClienteHtml(c, open){
   body += '<div style="display:flex;gap:30px;flex-wrap:wrap"><div>'+estadoControlHtml(c)+'</div>';
   body += '<div style="flex:1;min-width:220px"><div class="panel-title">Datos fiscales</div>'
     + '<div style="font-size:13px;color:var(--ink-2);line-height:1.9">'
-    + (c.medicoReferido ? '<div><b>Médico referido:</b> '+esc(c.medicoReferido)+'</div>' : '')
+    + '<div><b>Médico referido:</b> '+(esc(c.medicoReferido)||'—')+'</div>'
     + '<div><b>RFC:</b> '+(esc(c.rfc)||'—')+'</div>'
     + '<div><b>Razón social:</b> '+(esc(c.razonSocial)||'—')+'</div>'
     + '<div><b>Uso CFDI:</b> '+(esc(c.usoCFDI)||'—')+'</div>'
