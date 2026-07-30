@@ -87,12 +87,11 @@ function openCobro(clienteId, n){
   sesionCtx = {clienteId:clienteId, n:n};
   setText('cb-sub', c.nombre+' · Sesión '+n);
   // Calcular sugerido: por cobrar real ÷ sesiones pendientes
-  var base = (c.montoFinal > 0 ? c.montoFinal : c.monto) || 0;
-  var porCobrar = Math.max(0, base - (c.cobrado || 0));
-  var pendientes = (c.sesiones || []).filter(function(x){ return x.estado !== 'done'; }).length;
-  var sugerido = pendientes > 0 ? Math.round(porCobrar / pendientes) : (s.precio || c.precioSes || 0);
+  var porCobrar = c.porCobrar || 0;
+  var pendientes = (c.sesiones || []).filter(function(x){ return x.cobrada !== 'Sí' && x.cobrada !== true; }).length;
+  var sugerido = pendientes > 0 ? Math.round(porCobrar / pendientes) : porCobrar;
   $('cb-monto').value = sugerido;
-  setText('cb-monto-hint', pendientes > 0
+  setText('cb-monto-hint', pendientes > 1
     ? 'Sugerido: ' + money(sugerido) + ' · Por cobrar ' + money(porCobrar) + ' ÷ ' + pendientes + ' ses. pendientes'
     : 'Última sesión · Por cobrar: ' + money(porCobrar));
   $('cb-fecha').value = HOY;
