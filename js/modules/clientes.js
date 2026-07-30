@@ -156,7 +156,6 @@ function accClienteHtml(c, open){
     + '<div style="font-size:13px;color:var(--ink-2);line-height:1.9">'
     + '<div><b>Médico referido:</b> '+(esc(c.medicoReferido)||'—')+'</div>'
     + '<div><b>Aseguradora:</b> '+(esc(c.aseguradora)||'—')+segBadge+'</div>'
-    + '<div><b>RFC:</b> '+(esc(c.rfc)||'—')+'</div>'
     + '<div><b>Razón social:</b> '+(esc(c.razonSocial)||'—')+'</div>'
     + '<div><b>Uso CFDI:</b> '+(esc(c.usoCFDI)||'—')+'</div>'
     + '</div></div></div>';
