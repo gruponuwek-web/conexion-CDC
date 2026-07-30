@@ -132,7 +132,7 @@ function accClienteHtml(c, open){
 
   // substats
   body += '<div class="subgrid">'
-    + '<div class="substat"><div class="l">Paquete</div><div class="v" id="cd-monto">'+money(c.monto)+'</div></div>'
+    + '<div class="substat"><div class="l">Paquete</div><div class="v" id="cd-monto">'+money(c.monto)+(c.descuento>0?'<span style="margin-left:6px;font-size:11px;font-weight:600;color:var(--green);background:var(--green-bg);padding:1px 6px;border-radius:20px">-'+c.descuento+'% → '+money(c.montoFinal)+'</span>':'')+'</div></div>'
     + '<div class="substat"><div class="l">Cobrado</div><div class="v" id="cd-cobrado" style="color:var(--green)">'+money(c.cobrado)+'</div></div>'
     + '<div class="substat"><div class="l">Por cobrar</div><div class="v" id="cd-porcobrar" style="color:var(--amber)">'+money(c.porCobrar)+'</div></div>'
     + '<div class="substat"><div class="l">Avance</div><div class="v" id="cd-ses-kpi">'+progPct+'%</div></div>'
