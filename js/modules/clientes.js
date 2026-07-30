@@ -151,6 +151,7 @@ function accClienteHtml(c, open){
   body += '<div style="flex:1;min-width:220px"><div class="panel-title">Datos fiscales</div>'
     + '<div style="font-size:13px;color:var(--ink-2);line-height:1.9">'
     + '<div><b>Médico referido:</b> '+(esc(c.medicoReferido)||'—')+'</div>'
+    + '<div><b>Aseguradora:</b> '+(esc(c.aseguradora)||'—')+'</div>'
     + '<div><b>RFC:</b> '+(esc(c.rfc)||'—')+'</div>'
     + '<div><b>Razón social:</b> '+(esc(c.razonSocial)||'—')+'</div>'
     + '<div><b>Uso CFDI:</b> '+(esc(c.usoCFDI)||'—')+'</div>'
@@ -279,6 +280,8 @@ function abrirOnboarding(clienteId, fresh, prevEtapa, leadId){
   $('ob-fecha-primera').value = c.fechaPrimera || '';
   $('ob-monto-total').value = c.monto || '';
   $('ob-servicio').value = c.servicio || '';
+  _poblarSelect('ob-aseguradora');
+  $('ob-aseguradora').value = c.aseguradora || '';
   $('ob-descuento').value = c.descuento || '';
   _poblarSelect('ob-motivo-desc');
   $('ob-motivo-desc').value = c.motivoDescuento || '';
@@ -385,11 +388,13 @@ function activarCliente(){
   var fp = $('ob-fecha-primera').value;
   var mt = Number($('ob-monto-total').value)||0;
   var sv = $('ob-servicio').value;
+  var aseguradora = $('ob-aseguradora').value || '';
   var desc = Number($('ob-descuento').value)||0;
   var motivoDesc = desc > 0 ? ($('ob-motivo-desc').value||'') : '';
   var montoFinal = desc > 0 ? Math.round(mt * (1 - desc/100)) : mt;
   if(!(ns>0 && fp && mt>0 && sv)){ toast('Faltan datos de tratamiento'); return; }
   c.numSes = ns; c.fechaPrimera = fp; c.monto = mt; c.servicio = sv;
+  c.aseguradora = aseguradora;
   c.descuento = desc; c.motivoDescuento = motivoDesc; c.montoFinal = montoFinal;
   c.precioSes = Math.round(montoFinal/ns);
   c.sesiones = mkSesiones(ns, 0, c.precioSes, fp, false);
@@ -402,7 +407,7 @@ function activarCliente(){
   // Actualizar cliente en Sheets
   var ahora = new Date().toISOString();
   gs('updateCliente', {
-    id:c.id, servicio:sv, estado:'Activo',
+    id:c.id, servicio:sv, aseguradora:aseguradora||'', estado:'Activo',
     numSes:ns, precioSes:c.precioSes, monto:mt, fechaPrimera:fp,
     descuento:desc||'', motivoDescuento:motivoDesc, montoFinal:montoFinal,
     cobrado:0, porCobrar:montoFinal, actualizadoEn:ahora

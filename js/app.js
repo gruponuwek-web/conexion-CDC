@@ -25,6 +25,7 @@ var LISTAS = {
   catIngresosExtras: ['Consultoría','Venta de producto','Donativo','Patrocinio','Capacitación','Otro'],
   motivos_descuento: ['Convenio médico','Dificultad económica','Familiar / conocido','Cortesía','Promoción','Otro'],
   servicios:         ['Consulta inicial','Neurometría qEEG','Consulta médica - Neurólogo','Consulta médica - Psiquiatra','Consulta médica - Neuropediatra','Consulta médica - Neuropsicólogo','Sesiones TMS (20 sesiones)','Sesión EMT adicional (21+)','Consulta de seguimiento','Comisión renta de espacio','Otros'],
+  aseguradoras:      ['GNP','AXA','BBVA Seguros','Banamex Seguros','Metlife','Allianz','Seguros Monterrey','MAPFRE','HDI Seguros','Particular / Sin aseguradora'],
   usosCFDI:          ['D01 · Honorarios médicos','G03 · Gastos en general','S01 · Sin efectos fiscales'],
 };
 
@@ -1048,6 +1049,7 @@ var LISTAS_CONFIG = [
   { key:'catIngresosExtras', label:'Categorías ingresos extras', desc:'Tipos de ingresos adicionales' },
   { key:'motivos_descuento', label:'Motivos de descuento',       desc:'Razones por las que se aplica descuento en cobros' },
   { key:'servicios',         label:'Servicios / tratamientos',   desc:'Catálogo de servicios seleccionables en el onboarding' },
+  { key:'aseguradoras',      label:'Aseguradoras',               desc:'Compañías de seguro médico' },
   { key:'usosCFDI',          label:'Usos de CFDI',               desc:'Opciones fiscales para facturas' },
   { key:'etapas',            label:'Etapas del pipeline',        desc:'Columnas del kanban de leads (requiere reload)' },
   { key:'etapasOpcionales',  label:'Etapas sin actividad oblig.',desc:'Etapas donde el seguimiento es opcional' },
@@ -1080,6 +1082,7 @@ var SELECT_MAP = {
   'ied-cat':         {key:'catIngresosExtras'},
   'cb-motivo-desc':  {key:'motivos_descuento', empty:'— Sin motivo —'},
   'ob-servicio':     {key:'servicios',         empty:'— Selecciona —'},
+  'ob-aseguradora':  {key:'aseguradoras',      empty:'— Sin aseguradora —'},
   'ob-motivo-desc':  {key:'motivos_descuento', empty:'— Sin motivo —'},
 };
 
