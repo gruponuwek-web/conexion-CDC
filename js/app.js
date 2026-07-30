@@ -212,12 +212,12 @@ async function cargarTodo(silent) {
     if (rClientes.ok) {
       CDC.clientes = rClientes.data.map(function(c){
         c.monto      = Number(c.monto)      || 0;
-        c.montoFinal = Number(c.montoFinal) || 0;
+        c.descuento  = Number(c.descuento)  || 0;
+        c.montoFinal = Number(c.montoFinal) || (c.descuento > 0 ? Math.round(c.monto * (1 - c.descuento/100)) : 0);
         c.cobrado    = Number(c.cobrado)    || 0;
         c.porCobrar  = Number(c.porCobrar)  || 0;
         c.numSes     = Number(c.numSes)     || 0;
         c.precioSes  = Number(c.precioSes)  || 0;
-        c.descuento  = Number(c.descuento)  || 0;
         if (c.celular !== undefined && c.cel === undefined) c.cel = c.celular;
         // Anidar sesiones desde la hoja Sesiones
         c.sesiones = sesionesPorCliente[c.id] || [];

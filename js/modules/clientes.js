@@ -31,8 +31,9 @@ function recomputeCliente(c){
   var done = c.sesiones.filter(function(s){return s.estado==='done';});
   // Sumar montos reales cobrados por sesión (no precio fijo * cantidad)
   c.cobrado   = done.reduce(function(sum, s){ return sum + (Number(s.precio)||0); }, 0);
-  // porCobrar = monto total pactado - lo cobrado (no suma de sesiones pendientes)
-  c.porCobrar = Math.max(0, (Number(c.monto) || 0) - c.cobrado);
+  // porCobrar = monto final (con descuento si aplica) - lo cobrado
+  var _base = (c.montoFinal > 0 ? c.montoFinal : null) || c.monto || 0;
+  c.porCobrar = Math.max(0, _base - c.cobrado);
   if(c.sesiones.length>0 && done.length===c.sesiones.length && c.estado!=='Cancelado' && c.estado!=='Pausado'){
     c.estado = 'Completado';
   }
