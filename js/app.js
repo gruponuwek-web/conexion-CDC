@@ -174,6 +174,8 @@ async function cargarTodo(silent) {
       if (l.temperatura !== undefined && l.temp === undefined) l.temp = l.temperatura;
       // celular → cel
       if (l.celular !== undefined && l.cel === undefined) l.cel = l.celular;
+      // "Medico referido" (con espacio, columna legacy) → medicoReferido
+      if (l['Medico referido'] !== undefined && !l.medicoReferido) l.medicoReferido = l['Medico referido'];
       // sigActTipo → sigAct, sigActFecha → sigFecha, sigActHora → sigHora
       if (l.sigActTipo !== undefined && l.sigAct === undefined) l.sigAct = l.sigActTipo;
       if (l.sigActFecha !== undefined && l.sigFecha === undefined) l.sigFecha = l.sigActFecha;
