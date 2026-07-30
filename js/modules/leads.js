@@ -169,6 +169,7 @@ function openPipeDetalle(id, fromDrag){
   $('pd-paciente').value = (l.paciente && l.paciente!=='—') ? l.paciente : '';
   $('pd-edad').value = (l.edad!=null && l.edad!=='') ? l.edad : '';
   $('pd-genero').value = l.genero||'';
+  _poblarSelect('pd-medico-ref');
   $('pd-medico-ref').value = l.medicoReferido || l.padecimiento || '';
   $('pd-temp').value = l.temp||'Tibio';
   $('pd-canal').value = l.canal||'';
@@ -405,7 +406,7 @@ function openNuevoLead(){
   $('nl-correo').value=''; $('nl-cel').value='';
   $('nl-edad').value=''; $('nl-genero').value='';
   $('nl-notas').value='';
-  $('nl-medico-ref').value = (LISTAS.medicos_referidos||['Particular'])[0]; $('nl-temp').value='Tibio';
+  _poblarSelect('nl-medico-ref'); $('nl-medico-ref').value = (LISTAS.medicos_referidos||['Particular'])[0]; $('nl-temp').value='Tibio';
   $('nl-canal').value='Instagram'; $('nl-etapa').value='Nuevo';
   openModal('m-nuevo-lead');
 }
