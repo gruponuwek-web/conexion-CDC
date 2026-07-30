@@ -1074,6 +1074,7 @@ var SELECT_MAP = {
   'ied-cat':         {key:'catIngresosExtras'},
   'cb-motivo-desc':  {key:'motivos_descuento', empty:'— Sin motivo —'},
   'ob-servicio':     {key:'servicios',         empty:'— Selecciona —'},
+  'ob-motivo-desc':  {key:'motivos_descuento', empty:'— Sin motivo —'},
 };
 
 function _poblarSelect(id){

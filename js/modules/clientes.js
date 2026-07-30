@@ -276,10 +276,19 @@ function abrirOnboarding(clienteId, fresh, prevEtapa, leadId){
   $('ob-fecha-primera').value = c.fechaPrimera || '';
   $('ob-monto-total').value = c.monto || '';
   $('ob-servicio').value = c.servicio || '';
+  $('ob-descuento').value = c.descuento || '';
+  _poblarSelect('ob-motivo-desc');
+  $('ob-motivo-desc').value = c.motivoDescuento || '';
+  $('ob-motivo-desc-wrap').style.display = (Number(c.descuento) > 0) ? '' : 'none';
   var cb = $('ob-cancelar-btn'); if(cb) cb.style.display = fresh ? '' : 'none';
   obTab(1);
   obRecalc();
   openModal('m-onboarding');
+}
+
+function obToggleMotivo(){
+  var d = Number($('ob-descuento').value) || 0;
+  $('ob-motivo-desc-wrap').style.display = d > 0 ? '' : 'none';
 }
 
 function guardarOnboarding(){
@@ -372,10 +381,13 @@ function activarCliente(){
   var fp = $('ob-fecha-primera').value;
   var mt = Number($('ob-monto-total').value)||0;
   var sv = $('ob-servicio').value;
+  var desc = Number($('ob-descuento').value)||0;
+  var motivoDesc = desc > 0 ? ($('ob-motivo-desc').value||'') : '';
   var todos = ONB_CHECKS.every(function(ch){return c.onboarding[ch.key];});
   if(!todos){ toast('Marca los '+ONB_CHECKS.length+' puntos de onboarding antes de activar'); return; }
   if(!(ns>0 && fp && mt>0 && sv)){ toast('Faltan datos de tratamiento'); return; }
   c.numSes = ns; c.fechaPrimera = fp; c.monto = mt; c.servicio = sv;
+  c.descuento = desc; c.motivoDescuento = motivoDesc;
   c.precioSes = Math.round(mt/ns);
   c.sesiones = mkSesiones(ns, 0, c.precioSes, fp, false);
   c.estado = 'Activo';
@@ -389,6 +401,7 @@ function activarCliente(){
   gs('updateCliente', {
     id:c.id, servicio:sv, estado:'Activo',
     numSes:ns, precioSes:c.precioSes, monto:mt, fechaPrimera:fp,
+    descuento:desc||'', motivoDescuento:motivoDesc,
     cobrado:0, porCobrar:mt, actualizadoEn:ahora
   }).then(function(r){ if(!r.ok) console.error('[CDC GS] updateCliente activar:',r.error); })
     .catch(function(e){ console.error('[CDC GS] updateCliente error:',e); });

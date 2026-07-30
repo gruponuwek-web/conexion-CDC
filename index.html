@@ -363,6 +363,10 @@
           <div class="field"><label>Monto total <span class="req">*</span></label><input id="ob-monto-total" type="number" min="0" placeholder="32000" oninput="obRecalc()"></div>
           <div class="field"><label>Servicio <span class="req">*</span></label><select id="ob-servicio" onchange="obRecalc()"><option value="">— Selecciona —</option></select></div>
         </div>
+        <div class="field-row">
+          <div class="field"><label>Descuento aplicado ($)</label><input id="ob-descuento" type="number" min="0" placeholder="0" oninput="obToggleMotivo()"></div>
+          <div class="field" id="ob-motivo-desc-wrap" style="display:none"><label>Motivo del descuento</label><select id="ob-motivo-desc"></select></div>
+        </div>
       </div>
       <div class="tabpane" id="obpane-2">
         <div id="ob-checks-2"></div>
