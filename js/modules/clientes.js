@@ -160,6 +160,15 @@ function accClienteHtml(c, open){
     + '<div><b>Uso CFDI:</b> '+(esc(c.usoCFDI)||'—')+'</div>'
     + '</div></div></div>';
 
+  // Objetivo funcional
+  body += '<div style="margin-top:18px;padding-top:14px;border-top:1px solid var(--line)">'
+    + '<div class="panel-title" style="margin-bottom:4px">Objetivo funcional del tratamiento</div>'
+    + '<div style="font-size:12px;color:var(--ink-3);margin-bottom:8px">Meta concreta acordada con el paciente, contra la que se mide el avance</div>'
+    + '<textarea id="obj-'+c.id+'" rows="3" placeholder="Ej. Reducir crisis de ansiedad a menos de 1 por semana en 2 meses…" '
+    + 'style="width:100%;box-sizing:border-box;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-1);resize:vertical;font-family:inherit" '
+    + 'oninput="setObjetivoFuncional(\''+c.id+'\',this.value)">'+esc(c.objetivoFuncional||'')+'</textarea>'
+    + '</div>';
+
   body += '</div>';
   return '<div class="acc '+st.cls+' open" id="acc-'+c.id+'">'+head+body+'</div>';
 }
@@ -310,6 +319,17 @@ function guardarEditarDatosCli(){
     .catch(function(e){ console.error('[CDC GS] updateCliente datos:',e); });
 }
 var _editDatosCliId = null;
+
+var _objTimer = null;
+function setObjetivoFuncional(id, v){
+  var c = getCliente(id); if(!c) return;
+  c.objetivoFuncional = v;
+  clearTimeout(_objTimer);
+  _objTimer = setTimeout(function(){
+    gs('updateCliente', {id:id, objetivoFuncional:v, actualizadoEn:new Date().toISOString()})
+      .catch(function(e){ console.error('[CDC GS] setObjetivoFuncional:',e); });
+  }, 800);
+}
 
 function setEstatusSeguro(id, valor){
   var c = getCliente(id); if(!c) return;
