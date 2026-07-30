@@ -184,6 +184,7 @@ function accClienteHtml(c, open){
     + '<textarea id="obj-'+c.id+'" rows="3" placeholder="Ej. Reducir crisis de ansiedad a menos de 1 por semana en 2 meses…" '
     + 'style="width:100%;box-sizing:border-box;font-size:13px;padding:8px 10px;border:1px solid var(--line);border-radius:8px;background:var(--surface);color:var(--ink-1);resize:vertical;font-family:inherit" '
     + 'oninput="setObjetivoFuncional(\''+c.id+'\',this.value)">'+esc(c.objetivoFuncional||'')+'</textarea>'
+    + '<div id="obj-status-'+c.id+'" style="font-size:11px;color:var(--ink-3);margin-top:4px;min-height:16px"></div>'
     + '</div>';
 
   body += '</div>';
@@ -350,10 +351,13 @@ var _objTimer = null;
 function setObjetivoFuncional(id, v){
   var c = getCliente(id); if(!c) return;
   c.objetivoFuncional = v;
+  var st = $('obj-status-'+id);
+  if(st) st.textContent = 'Guardando…';
   clearTimeout(_objTimer);
   _objTimer = setTimeout(function(){
     gs('updateCliente', {id:id, objetivoFuncional:v, actualizadoEn:new Date().toISOString()})
-      .catch(function(e){ console.error('[CDC GS] setObjetivoFuncional:',e); });
+      .then(function(){ if(st) st.textContent = 'Guardado ✓'; })
+      .catch(function(e){ console.error('[CDC GS] setObjetivoFuncional:',e); if(st) st.textContent = 'Error al guardar'; });
   }, 800);
 }
 
