@@ -150,7 +150,7 @@ function accClienteHtml(c, open){
   // estado / fiscal
   body += '<div style="display:flex;gap:30px;flex-wrap:wrap"><div>'+estadoControlHtml(c)+'</div>';
   var segBadge = (c.aseguradora && c.aseguradora !== 'Particular / Sin aseguradora' && c.aseguradora !== '— Sin aseguradora —')
-    ? ' &nbsp;<button onclick="toggleEstatusSeguro(\''+c.id+'\')" style="font-size:11px;padding:2px 8px;border-radius:10px;border:none;cursor:pointer;font-weight:600;background:'+(c.estatusSeguro==='Cobrado'?'var(--green)':'var(--amber)')+';color:#fff">'+esc(c.estatusSeguro||'En proceso')+'</button>' : '';
+    ? ' &nbsp;<select onchange="setEstatusSeguro(\''+c.id+'\',this.value)" style="font-size:11px;padding:2px 6px;border-radius:8px;border:1px solid var(--line);background:'+(c.estatusSeguro==='Cobrado'?'var(--green-bg)':'var(--amber-bg)')+';color:'+(c.estatusSeguro==='Cobrado'?'var(--green)':'var(--amber)')+';font-weight:600;cursor:pointer"><option'+(c.estatusSeguro!=='Cobrado'?' selected':'')+'>En proceso</option><option'+(c.estatusSeguro==='Cobrado'?' selected':'')+'>Cobrado</option></select>' : '';
   body += '<div style="flex:1;min-width:220px"><div class="panel-title" style="display:flex;align-items:center;justify-content:space-between">Datos fiscales'
     + '<button onclick="abrirEditarDatosCli(\''+c.id+'\')" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--line);background:none;cursor:pointer;color:var(--ink-2)">Editar</button></div>'
     + '<div style="font-size:13px;color:var(--ink-2);line-height:1.9">'
@@ -311,12 +311,12 @@ function guardarEditarDatosCli(){
 }
 var _editDatosCliId = null;
 
-function toggleEstatusSeguro(id){
+function setEstatusSeguro(id, valor){
   var c = getCliente(id); if(!c) return;
-  c.estatusSeguro = (c.estatusSeguro === 'Cobrado') ? 'En proceso' : 'Cobrado';
+  c.estatusSeguro = valor;
   renderClientes();
-  gs('updateCliente', {id:id, estatusSeguro:c.estatusSeguro, actualizadoEn:new Date().toISOString()})
-    .catch(function(e){ console.error('[CDC GS] toggleEstatusSeguro:',e); });
+  gs('updateCliente', {id:id, estatusSeguro:valor, actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] setEstatusSeguro:',e); });
 }
 
 function abrirOnboarding(clienteId, fresh, prevEtapa, leadId){
