@@ -149,12 +149,13 @@ function accClienteHtml(c, open){
 
   // estado / fiscal
   body += '<div style="display:flex;gap:30px;flex-wrap:wrap"><div>'+estadoControlHtml(c)+'</div>';
-  body += '<div style="flex:1;min-width:220px"><div class="panel-title">Datos fiscales</div>'
+  var segBadge = (c.aseguradora && c.aseguradora !== 'Particular / Sin aseguradora' && c.aseguradora !== '— Sin aseguradora —')
+    ? ' &nbsp;<button onclick="toggleEstatusSeguro(\''+c.id+'\')" style="font-size:11px;padding:2px 8px;border-radius:10px;border:none;cursor:pointer;font-weight:600;background:'+(c.estatusSeguro==='Cobrado'?'var(--green)':'var(--amber)')+';color:#fff">'+esc(c.estatusSeguro||'En proceso')+'</button>' : '';
+  body += '<div style="flex:1;min-width:220px"><div class="panel-title" style="display:flex;align-items:center;justify-content:space-between">Datos fiscales'
+    + '<button onclick="abrirEditarDatosCli(\''+c.id+'\')" style="font-size:11px;padding:2px 8px;border-radius:6px;border:1px solid var(--line);background:none;cursor:pointer;color:var(--ink-2)">Editar</button></div>'
     + '<div style="font-size:13px;color:var(--ink-2);line-height:1.9">'
     + '<div><b>Médico referido:</b> '+(esc(c.medicoReferido)||'—')+'</div>'
-    + (c.aseguradora && c.aseguradora !== 'Particular / Sin aseguradora'
-        ? '<div><b>Aseguradora:</b> '+esc(c.aseguradora)+' &nbsp;<button onclick="toggleEstatusSeguro(\''+c.id+'\')" style="font-size:11px;padding:2px 8px;border-radius:10px;border:none;cursor:pointer;font-weight:600;background:'+(c.estatusSeguro==='Cobrado'?'var(--green)':'var(--amber)')+';color:#fff">'+esc(c.estatusSeguro||'En proceso')+'</button></div>'
-        : (c.aseguradora ? '<div><b>Aseguradora:</b> '+(esc(c.aseguradora)||'—')+'</div>' : ''))
+    + '<div><b>Aseguradora:</b> '+(esc(c.aseguradora)||'—')+segBadge+'</div>'
     + '<div><b>RFC:</b> '+(esc(c.rfc)||'—')+'</div>'
     + '<div><b>Razón social:</b> '+(esc(c.razonSocial)||'—')+'</div>'
     + '<div><b>Uso CFDI:</b> '+(esc(c.usoCFDI)||'—')+'</div>'
@@ -285,6 +286,31 @@ function eliminarCliente(id){
     gs('cascadeDeleteCliente', {id:id}).catch(function(e){ console.error('[CDC GS] cascadeDeleteCliente:',e); });
   });
 }
+
+function abrirEditarDatosCli(id){
+  var c = getCliente(id); if(!c) return;
+  _editDatosCliId = id;
+  _poblarSelect('edc-medico-ref');
+  $('edc-medico-ref').value = c.medicoReferido || '';
+  _poblarSelect('edc-aseguradora');
+  $('edc-aseguradora').value = c.aseguradora || '';
+  var esList = $('edc-estatus-seguro');
+  if(esList) esList.value = c.estatusSeguro || 'En proceso';
+  openModal('m-editar-datos-cli');
+}
+
+function guardarEditarDatosCli(){
+  var c = getCliente(_editDatosCliId); if(!c){ closeModal('m-editar-datos-cli'); return; }
+  c.medicoReferido = $('edc-medico-ref').value;
+  c.aseguradora    = $('edc-aseguradora').value;
+  c.estatusSeguro  = $('edc-estatus-seguro').value;
+  closeModal('m-editar-datos-cli');
+  renderClientes();
+  toast('Datos actualizados');
+  gs('updateCliente', {id:c.id, medicoReferido:c.medicoReferido, aseguradora:c.aseguradora, estatusSeguro:c.estatusSeguro, actualizadoEn:new Date().toISOString()})
+    .catch(function(e){ console.error('[CDC GS] updateCliente datos:',e); });
+}
+var _editDatosCliId = null;
 
 function toggleEstatusSeguro(id){
   var c = getCliente(id); if(!c) return;
