@@ -41,11 +41,24 @@ function handle(e) {
       case 'getLeads':      out = getRows(SHEET_NAMES.leads);                              break;
       case 'createLead':    out = appendRow(SHEET_NAMES.leads, data);                      break;
       case 'updateLead':    out = updateById(SHEET_NAMES.leads, data);                     break;
+      case 'deleteLead':
+        try { deleteById(SHEET_NAMES.leads, data.id); } catch(_) {}
+        deleteWhere(SHEET_NAMES.agenda, 'refId', data.id);
+        out = { ok: true };
+        break;
 
       // ── CLIENTES ──────────────────────────────────────────────
       case 'getClientes':   out = getRows(SHEET_NAMES.clientes);                           break;
       case 'createCliente': out = appendRow(SHEET_NAMES.clientes, data);                   break;
       case 'updateCliente': out = updateById(SHEET_NAMES.clientes, data);                  break;
+      case 'cascadeDeleteCliente':
+        try { deleteById(SHEET_NAMES.clientes, data.id); } catch(_) {}
+        deleteWhere(SHEET_NAMES.sesiones,  'clienteId', data.id);
+        deleteWhere(SHEET_NAMES.cobros,    'clienteId', data.id);
+        deleteWhere(SHEET_NAMES.facturas,  'clienteId', data.id);
+        deleteWhere(SHEET_NAMES.agenda,    'refId',     data.id);
+        out = { ok: true };
+        break;
 
       // ── AGENDA ────────────────────────────────────────────────
       case 'getAgenda':
@@ -180,6 +193,22 @@ function getSheet(sheetName) {
   const sheet = SpreadsheetApp.getActive().getSheetByName(sheetName);
   if (!sheet) throw new Error('No existe la hoja: ' + sheetName);
   return sheet;
+}
+
+function deleteWhere(sheetName, field, value) {
+  const sheet = getSheet(sheetName);
+  const values = sheet.getDataRange().getValues();
+  const headers = values[0];
+  const col = headers.indexOf(field);
+  if (col < 0) return { count: 0 };
+  let count = 0;
+  for (let i = values.length - 1; i >= 1; i--) {
+    if (String(values[i][col]) === String(value)) {
+      sheet.deleteRow(i + 1);
+      count++;
+    }
+  }
+  return { count: count };
 }
 
 function deleteById(sheetName, id) {

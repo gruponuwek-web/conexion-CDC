@@ -188,6 +188,18 @@ function openPipeDetalle(id, fromDrag){
   openModal('m-pipe-detalle');
 }
 
+function eliminarLead(id){
+  var l = getLead(id); if(!l) return;
+  openDelConfirm('Eliminar lead: '+l.nombre+' · esto borrará sus actividades relacionadas', function(){
+    leadsData = leadsData.filter(function(x){ return x.id !== id; });
+    actividadesData = actividadesData.filter(function(x){ return x.refId !== id; });
+    closeModal('m-pipe-detalle');
+    renderLeads(); renderPipeline(); renderNav();
+    toast(l.nombre+' eliminado');
+    gs('deleteLead', {id:id}).catch(function(e){ console.error('[CDC GS] deleteLead:',e); });
+  });
+}
+
 function guardarPipe(){
   var l = getLead(pipeActualId);
   if(!l){

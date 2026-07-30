@@ -116,6 +116,7 @@ function accClienteHtml(c, open){
     + '<div class="acc-right">'
       + '<span class="badge '+st.badge+'">'+esc(st.label)+'</span>'
       + '<div class="acc-mini"><div class="v">'+(totalN?doneN+'/'+totalN:'—')+'</div><div class="l">Sesiones</div></div>'
+      + '<button onclick="event.stopPropagation();eliminarCliente(\''+c.id+'\')" title="Eliminar cliente" style="background:none;border:none;cursor:pointer;padding:4px 6px;color:var(--ink-3);opacity:.6;font-size:17px;line-height:1" onmouseover="this.style.opacity=1;this.style.color=\'var(--red)\'" onmouseout="this.style.opacity=.6;this.style.color=\'var(--ink-3)\'">&#xd7;</button>'
       + '<svg class="acc-chev" xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="m6 9 6 6 6-6"/></svg>'
     + '</div></div>';
 
@@ -269,6 +270,20 @@ function setRazonOtro(id, v){
     gs('updateCliente', {id:id, razonOtro:v, actualizadoEn:new Date().toISOString()})
       .catch(function(e){ console.error('[CDC GS] setRazonOtro:',e); });
   }, 800);
+}
+
+function eliminarCliente(id){
+  var c = getCliente(id); if(!c) return;
+  openDelConfirm('Eliminar cliente: '+c.nombre+' · esto borrará sesiones, cobros, facturas y actividades', function(){
+    clientesData = clientesData.filter(function(x){ return x.id !== id; });
+    cobrosData    = cobrosData.filter(function(x){ return x.clienteId !== id; });
+    facturasData  = facturasData.filter(function(x){ return x.clienteId !== id; });
+    actividadesData = actividadesData.filter(function(x){ return x.refId !== id; });
+    if(clienteAbiertoId === id) clienteAbiertoId = null;
+    renderClientes(); renderNav();
+    toast(c.nombre+' eliminado');
+    gs('cascadeDeleteCliente', {id:id}).catch(function(e){ console.error('[CDC GS] cascadeDeleteCliente:',e); });
+  });
 }
 
 function toggleEstatusSeguro(id){
