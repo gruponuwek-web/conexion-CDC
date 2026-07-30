@@ -366,7 +366,7 @@ function obRecalc(){
   // R2: requiere # sesiones + fecha + monto + servicio
   var ns = $('ob-num-sesiones').value, fp = $('ob-fecha-primera').value, mt = $('ob-monto-total').value, sv = $('ob-servicio').value;
   var fieldsOk = ns && Number(ns)>0 && fp && mt && Number(mt)>0 && sv;
-  var listo = checksDone && fieldsOk;
+  var listo = fieldsOk;
   var btn = $('ob-activar-btn');
   if(btn) btn.disabled = !listo;
   var falta = total - hechos;
@@ -375,9 +375,7 @@ function obRecalc(){
   var hint;
   if(listo && desc > 0) hint = 'Todo completo · Monto con descuento: '+money(montoFinal)+' · '+money(Math.round(montoFinal/(Number(ns)||1)))+'/sesión';
   else if(listo) hint = 'Todo completo · listo para activar';
-  else if(!checksDone && !fieldsOk) hint = 'Faltan '+falta+' punto(s) de onboarding y los datos de tratamiento';
-  else if(!checksDone) hint = 'Faltan '+falta+' punto(s) de onboarding por marcar';
-  else hint = 'Completa los 4 datos de tratamiento (*)';
+  else hint = 'Completa los 4 datos de tratamiento (*)'+(falta>0?' · '+falta+' check(s) pendientes':'');
   setText('ob-hint', hint);
 }
 
@@ -390,8 +388,6 @@ function activarCliente(){
   var desc = Number($('ob-descuento').value)||0;
   var motivoDesc = desc > 0 ? ($('ob-motivo-desc').value||'') : '';
   var montoFinal = desc > 0 ? Math.round(mt * (1 - desc/100)) : mt;
-  var todos = ONB_CHECKS.every(function(ch){return c.onboarding[ch.key];});
-  if(!todos){ toast('Marca los '+ONB_CHECKS.length+' puntos de onboarding antes de activar'); return; }
   if(!(ns>0 && fp && mt>0 && sv)){ toast('Faltan datos de tratamiento'); return; }
   c.numSes = ns; c.fechaPrimera = fp; c.monto = mt; c.servicio = sv;
   c.descuento = desc; c.motivoDescuento = motivoDesc; c.montoFinal = montoFinal;
