@@ -273,13 +273,13 @@ function buildCharts(tab){
       return s + base * 0.10;
     }, 0);
 
-    function kpiCard(color, icon, valor, label, sub){
-      return '<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:18px 20px;box-shadow:var(--shadow-sm)">'
+    function kpiCard(color, icon, valor, label, sub, accentVal){
+      return '<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:18px 20px;box-shadow:var(--shadow-sm)'+(accentVal?';border-left:4px solid '+color:'')+';">'
         + '<div style="display:flex;align-items:center;gap:10px;margin-bottom:10px">'
           + '<div style="width:36px;height:36px;border-radius:9px;background:'+color+'22;display:flex;align-items:center;justify-content:center;color:'+color+'">'+icon+'</div>'
           + '<span style="font-size:12px;font-weight:600;color:var(--ink-3);text-transform:uppercase;letter-spacing:.04em">'+label+'</span>'
         + '</div>'
-        + '<div style="font-size:28px;font-weight:800;color:var(--ink);letter-spacing:-.5px;line-height:1">'+valor+'</div>'
+        + '<div style="font-size:28px;font-weight:800;color:'+(accentVal?color:'var(--ink)')+';letter-spacing:-.5px;line-height:1">'+valor+'</div>'
         + (sub ? '<div style="font-size:12px;color:var(--ink-3);margin-top:5px">'+sub+'</div>' : '')
         + '</div>';
     }
@@ -298,8 +298,8 @@ function buildCharts(tab){
         kpiCard('#1F8A4C', svgIn,   money(totalIn),   'Ingresos',       mesesKpi.length+' mes'+(mesesKpi.length!==1?'es':''))
       + kpiCard('#C43D3D', svgEg,   money(totalEg),   'Egresos',        dashFiltroAnio)
       + kpiCard(utilidad>=0?'#0E6E66':'#C2820B', svgUt, money(utilidad), 'Utilidad bruta', utilidad>=0?'Positiva ↑':'Negativa ↓')
-      + kpiCard('#C43D3D', svgDesc, money(totalDesc), 'Descuentos',     'Monto bonificado')
-      + kpiCard('#1565A7', svgCom,  money(totalCom),  'Comisiones',     '10% referidos')
+      + kpiCard('#C43D3D', svgDesc, money(totalDesc), 'Descuentos',     'Monto bonificado', true)
+      + kpiCard('#1565A7', svgCom,  money(totalCom),  'Comisiones',     '10% referidos',   true)
       + kpiCard('#C2820B', svgCob,  money(cobPend),   'Por cobrar',     'Cartera activa');
     }
 
