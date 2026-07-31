@@ -298,7 +298,7 @@ function buildCharts(tab){
         kpiCard('#1F8A4C', svgIn,   money(totalIn),   'Ingresos',       mesesKpi.length+' mes'+(mesesKpi.length!==1?'es':''))
       + kpiCard('#C43D3D', svgEg,   money(totalEg),   'Egresos',        dashFiltroAnio)
       + kpiCard(utilidad>=0?'#0E6E66':'#C2820B', svgUt, money(utilidad), 'Utilidad bruta', utilidad>=0?'Positiva ↑':'Negativa ↓')
-      + kpiCard('#7B5EA7', svgDesc, money(totalDesc), 'Descuentos',     'Monto bonificado')
+      + kpiCard('#C43D3D', svgDesc, money(totalDesc), 'Descuentos',     'Monto bonificado')
       + kpiCard('#1565A7', svgCom,  money(totalCom),  'Comisiones',     '10% referidos')
       + kpiCard('#C2820B', svgCob,  money(cobPend),   'Por cobrar',     'Cartera activa');
     }
