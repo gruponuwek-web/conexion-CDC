@@ -262,6 +262,11 @@ function buildCharts(tab){
     var totalEg = dashFiltrar(historialEgresos).reduce(function(s,r){return s+(r.monto||0);},0);
     var utilidad = totalIn - totalEg;
     var cobPend  = clientesData.reduce(function(s,c){return s+(c.porCobrar||0);},0);
+    var totalDesc = clientesData.reduce(function(s,c){
+      var mf = Number(c.montoFinal)||0;
+      var mo = Number(c.monto)||0;
+      return s + (mf > 0 && mf < mo ? mo - mf : 0);
+    }, 0);
 
     function kpiCard(color, icon, valor, label, sub){
       return '<div style="background:var(--surface);border:1px solid var(--line);border-radius:var(--r-sm);padding:18px 20px;box-shadow:var(--shadow-sm)">'
@@ -274,17 +279,22 @@ function buildCharts(tab){
         + '</div>';
     }
 
-    var svgIn  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
-    var svgEg  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>';
-    var svgUt  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>';
-    var svgCob = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+    var svgIn   = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"/></svg>';
+    var svgEg   = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><rect x="2" y="5" width="20" height="14" rx="2"/><path d="M2 10h20"/></svg>';
+    var svgUt   = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M3 3v18h18"/><path d="m7 14 4-4 3 3 5-6"/></svg>';
+    var svgCob  = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><circle cx="12" cy="12" r="9"/><path d="M12 7v5l3 2"/></svg>';
+    var svgDesc = '<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" style="width:18px;height:18px"><path d="M20 12V22H4V12"/><path d="M22 7H2v5h20V7z"/><path d="M12 22V7"/><path d="M12 7H7.5a2.5 2.5 0 0 1 0-5C11 2 12 7 12 7z"/><path d="M12 7h4.5a2.5 2.5 0 0 0 0-5C13 2 12 7 12 7z"/></svg>';
 
     var kpiCont = $('dash-kpis-general');
-    if(kpiCont) kpiCont.innerHTML =
-      kpiCard('#1F8A4C', svgIn,  money(totalIn),  'Ingresos', mesesKpi.length+' mes'+(mesesKpi.length!==1?'es':''))
-    + kpiCard('#C43D3D', svgEg,  money(totalEg),  'Egresos',  dashFiltroAnio)
-    + kpiCard(utilidad>=0?'#0E6E66':'#C2820B', svgUt, money(utilidad), 'Utilidad bruta', utilidad>=0?'Positiva ↑':'Negativa ↓')
-    + kpiCard('#C2820B', svgCob, money(cobPend),  'Por cobrar', 'Cartera activa');
+    if(kpiCont){
+      kpiCont.style.gridTemplateColumns = 'repeat(5,1fr)';
+      kpiCont.innerHTML =
+        kpiCard('#1F8A4C', svgIn,   money(totalIn),   'Ingresos',       mesesKpi.length+' mes'+(mesesKpi.length!==1?'es':''))
+      + kpiCard('#C43D3D', svgEg,   money(totalEg),   'Egresos',        dashFiltroAnio)
+      + kpiCard(utilidad>=0?'#0E6E66':'#C2820B', svgUt, money(utilidad), 'Utilidad bruta', utilidad>=0?'Positiva ↑':'Negativa ↓')
+      + kpiCard('#7B5EA7', svgDesc, money(totalDesc), 'Descuentos',     'Monto bonificado')
+      + kpiCard('#C2820B', svgCob,  money(cobPend),   'Por cobrar',     'Cartera activa');
+    }
 
     // ── Embudo de pipeline (interactivo) ────────────────────────
     var pipeColors = ETAPAS.map(function(e){
