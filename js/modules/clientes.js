@@ -29,11 +29,9 @@ async function _recargarClientes() {
 function recomputeCliente(c){
   if(!c.sesiones) return;
   var done = c.sesiones.filter(function(s){return s.estado==='done';});
-  // Cobrado = suma real de cobros registrados para este cliente (fuente de verdad)
+  // Cobrado = suma real de cobros registrados para este cliente (fuente de verdad: hoja Cobros)
   var cobrosCliente = (ingresosData || []).filter(function(co){ return String(co.clienteId) === String(c.id); });
-  c.cobrado = cobrosCliente.length > 0
-    ? cobrosCliente.reduce(function(sum, co){ return sum + (Number(co.monto)||0); }, 0)
-    : done.reduce(function(sum, s){ return sum + (Number(s.precio)||0); }, 0);
+  c.cobrado = cobrosCliente.reduce(function(sum, co){ return sum + (Number(co.monto)||0); }, 0);
   // porCobrar = monto final (con descuento si aplica) - lo cobrado
   var _base = (c.montoFinal > 0 ? c.montoFinal : null) || c.monto || 0;
   c.porCobrar = Math.max(0, _base - c.cobrado);
