@@ -30,7 +30,7 @@ function recomputeCliente(c){
   if(!c.sesiones) return;
   var done = c.sesiones.filter(function(s){return s.estado==='done';});
   // Cobrado = suma real de cobros registrados para este cliente (fuente de verdad)
-  var cobrosCliente = (cobrosData || []).filter(function(co){ return co.clienteId === c.id; });
+  var cobrosCliente = (ingresosData || []).filter(function(co){ return String(co.clienteId) === String(c.id); });
   c.cobrado = cobrosCliente.length > 0
     ? cobrosCliente.reduce(function(sum, co){ return sum + (Number(co.monto)||0); }, 0)
     : done.reduce(function(sum, s){ return sum + (Number(s.precio)||0); }, 0);
@@ -306,7 +306,7 @@ function eliminarCliente(id){
   var c = getCliente(id); if(!c) return;
   openDelConfirm('Eliminar cliente: '+c.nombre+' · esto borrará sesiones, cobros, facturas y actividades', function(){
     clientesData = clientesData.filter(function(x){ return x.id !== id; });
-    cobrosData    = cobrosData.filter(function(x){ return x.clienteId !== id; });
+    ingresosData  = ingresosData.filter(function(x){ return String(x.clienteId) !== String(id); });
     facturasData  = facturasData.filter(function(x){ return x.clienteId !== id; });
     actividadesData = actividadesData.filter(function(x){ return x.refId !== id; });
     if(clienteAbiertoId === id) clienteAbiertoId = null;

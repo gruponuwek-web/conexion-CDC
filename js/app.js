@@ -340,6 +340,7 @@ async function cargarTodo(silent) {
         var nombreCliente = clienteIdx[String(co.clienteId)] || co.clienteId || '';
         return {
           id:         co.id,
+          clienteId:  co.clienteId || '',
           cliente:    nombreCliente,
           concepto:   'Sesión ' + (co.sesionN || '') + ' · EMT',
           monto:      Number(co.monto) || 0,
