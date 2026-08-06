@@ -108,30 +108,44 @@ var ES_META = {
 
 // ── Generar recomendaciones ────────────────────────────────
 function _esRecs(res) {
-  var cats = (CDC_ESCENARIO.cats_recortables || []).join(', ') || 'ver Config → Escenarios';
-  var recs = [];
+  var cats    = (CDC_ESCENARIO.cats_recortables || []).join(', ') || 'ver Config → Escenarios';
+  var recs    = [];
+
+  // Datos reales del negocio para recomendaciones concretas
+  var activos  = (clientesData || []).filter(function(c){ return c.estado === 'Activo'; });
+  var cobPend  = activos.reduce(function(s, c){ return s + (c.porCobrar || 0); }, 0);
+  var nActivos = activos.length;
+  var deficit  = res.eq - res.promedioUlt;
+
   if (res.escenario === 'CRITICO') {
-    recs.push({ tipo:'alerta', txt:'Ingresos por debajo del equilibrio con reservas insuficientes. Acción inmediata requerida.' });
-    recs.push({ tipo:'accion', txt:'Recortar gastos variables no esenciales: ' + cats + '.' });
-    recs.push({ tipo:'accion', txt:'Revisar sueldo del dueño temporalmente.' });
-    recs.push({ tipo:'accion', txt:'Priorizar cobranza: revisar pagos pendientes de clientes.' });
-    recs.push({ tipo:'meta',   txt:'Meta inmediata: superar ' + money(res.eq) + '/mes durante ' + res.nMeses + ' meses consecutivos.' });
+    recs.push({ tipo:'alerta', txt:'Ingresos por debajo del equilibrio <b>' + res.nMeses + ' meses consecutivos</b> y reservas insuficientes. Se requiere acción esta semana.' });
+    if (cobPend > 0)
+      recs.push({ tipo:'accion', txt:'Cobranza inmediata: tienes <b>' + money(cobPend) + '</b> pendientes con ' + nActivos + ' cliente' + (nActivos !== 1 ? 's' : '') + ' activo' + (nActivos !== 1 ? 's' : '') + '. Contáctarlos hoy.' });
+    recs.push({ tipo:'accion', txt:'Recortar gastos variables esta semana: <b>' + cats + '</b>.' });
+    recs.push({ tipo:'accion', txt:'Revisar si el sueldo del titular puede reducirse temporalmente hasta estabilizar.' });
+    recs.push({ tipo:'accion', txt:'No confirmar sesiones nuevas sin validar que el cobro está asegurado.' });
+    recs.push({ tipo:'meta',   txt:'Meta: superar <b>' + money(res.eq) + '/mes</b> durante ' + res.nMeses + ' meses. Déficit actual: <b>' + money(deficit) + '/mes</b>.' });
   } else if (res.escenario === 'MALO') {
     recs.push({ tipo:'accion', txt:'Congelar aprobación de gastos nuevos este mes.' });
-    recs.push({ tipo:'accion', txt:'Reducir: ' + cats + '.' });
-    recs.push({ tipo:'accion', txt:'Sin bonos ni extras hasta recuperar el equilibrio.' });
-    recs.push({ tipo:'meta',   txt:'Meta: ' + money(res.eq) + '/mes. Promedio actual: ' + money(res.promedioUlt) + ' (déficit ' + money(res.eq - res.promedioUlt) + ').' });
+    if (cobPend > 0)
+      recs.push({ tipo:'accion', txt:'Activar cobranza: <b>' + money(cobPend) + '</b> pendientes con clientes activos.' });
+    recs.push({ tipo:'accion', txt:'Reducir: <b>' + cats + '</b>.' });
+    recs.push({ tipo:'accion', txt:'Sin bonos ni extras hasta alcanzar el equilibrio.' });
+    recs.push({ tipo:'meta',   txt:'Meta: <b>' + money(res.eq) + '/mes</b>. Promedio actual: ' + money(res.promedioUlt) + ' (déficit <b>' + money(deficit) + '</b>).' });
   } else if (res.escenario === 'ESTABLE') {
-    recs.push({ tipo:'ok',     txt:'Operación normal. Mantener presupuestos actuales.' });
-    recs.push({ tipo:'ok',     txt:'Punto de equilibrio (' + money(res.eq) + '/mes) cubierto.' });
-    recs.push({ tipo:'meta',   txt:'Mantener tendencia los próximos ' + res.nMeses + ' meses para mejorar el escenario.' });
+    recs.push({ tipo:'ok',   txt:'Punto de equilibrio cubierto (<b>' + money(res.eq) + '/mes</b>). Operación normal.' });
+    if (nActivos > 0)
+      recs.push({ tipo:'ok',   txt:'<b>' + nActivos + '</b> cliente' + (nActivos !== 1 ? 's' : '') + ' activo' + (nActivos !== 1 ? 's' : '') + ' generando flujo.' });
+    recs.push({ tipo:'meta', txt:'Mantener tendencia <b>' + res.nMeses + '</b> meses más para mejorar a BUENO.' });
   } else if (res.escenario === 'BUENO') {
     var ahorro = Math.round(res.excedente * res.ahorro_pct / 100);
     var reinv  = Math.round(res.excedente * res.reinv_pct  / 100);
-    recs.push({ tipo:'ok',    txt:'Excedente promedio: ' + money(res.excedente) + '/mes sobre el punto de equilibrio.' });
-    recs.push({ tipo:'meta',  txt:'Sugerencia de reserva (' + res.ahorro_pct + '%): ' + money(ahorro) + ' este mes.' });
-    recs.push({ tipo:'meta',  txt:'Sugerencia de reinversión (' + res.reinv_pct + '%): ' + money(reinv) + ' este mes.' });
-    recs.push({ tipo:'ok',    txt:'Bonos e inversión habilitados este período.' });
+    recs.push({ tipo:'ok',   txt:'Excedente promedio de <b>' + money(res.excedente) + '/mes</b> sobre el punto de equilibrio.' });
+    if (nActivos > 0)
+      recs.push({ tipo:'ok',   txt:'<b>' + nActivos + '</b> cliente' + (nActivos !== 1 ? 's' : '') + ' activo' + (nActivos !== 1 ? 's' : '') + ' — flujo estable.' });
+    recs.push({ tipo:'meta', txt:'Reserva sugerida (' + res.ahorro_pct + '%): <b>' + money(ahorro) + '</b> este mes.' });
+    recs.push({ tipo:'meta', txt:'Reinversión sugerida (' + res.reinv_pct + '%): <b>' + money(reinv) + '</b> este mes.' });
+    recs.push({ tipo:'ok',   txt:'Bonos e inversión habilitados este período.' });
   } else {
     recs.push({ tipo:'accion', txt:'Configura el punto de equilibrio para activar el análisis automático.' });
   }
