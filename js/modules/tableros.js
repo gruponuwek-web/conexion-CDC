@@ -354,7 +354,28 @@ function buildCharts(tab){
         return _enFiltro(f) && f.slice(5,7)===m;
       }).reduce(function(s,r){return s+(r.monto||0);},0);
     });
+    var pluginLabelsIngEgr = {
+      id:'labelsIngEgr',
+      afterDatasetsDraw: function(chart){
+        var ctx = chart.ctx;
+        chart.data.datasets.forEach(function(ds, i){
+          var meta = chart.getDatasetMeta(i);
+          meta.data.forEach(function(pt, idx){
+            var val = ds.data[idx];
+            if(!val) return;
+            var lbl = val >= 1000 ? '$'+(val/1000).toFixed(0)+'k' : '$'+val;
+            ctx.save();
+            ctx.font = '600 10px sans-serif';
+            ctx.fillStyle = ds.borderColor;
+            ctx.textAlign = 'center';
+            ctx.fillText(lbl, pt.x, pt.y - 8);
+            ctx.restore();
+          });
+        });
+      }
+    };
     safeChart('ch-ing-egr', {type:'line',
+      plugins:[pluginLabelsIngEgr],
       data:{labels:labMeses, datasets:[
         {label:'Ingresos', data:dataIn, borderColor:CL.green, backgroundColor:'rgba(34,197,94,.12)',
          tension:.35, fill:true, pointRadius:4, pointHoverRadius:6, pointBackgroundColor:CL.green, borderWidth:2.5},
