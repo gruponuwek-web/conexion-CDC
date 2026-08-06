@@ -360,6 +360,7 @@ function buildCharts(tab){
         var ctx = chart.ctx;
         chart.data.datasets.forEach(function(ds, i){
           var meta = chart.getDatasetMeta(i);
+          // Etiquetas de valor en cada punto
           meta.data.forEach(function(pt, idx){
             var val = ds.data[idx];
             if(!val) return;
@@ -371,6 +372,16 @@ function buildCharts(tab){
             ctx.fillText(lbl, pt.x, pt.y - 8);
             ctx.restore();
           });
+          // Etiqueta del nombre de la serie al final de la línea
+          var lastIdx = ds.data.reduce(function(acc, v, idx){ return v ? idx : acc; }, -1);
+          if(lastIdx < 0) return;
+          var lastPt = meta.data[lastIdx];
+          ctx.save();
+          ctx.font = '700 11px sans-serif';
+          ctx.fillStyle = ds.borderColor;
+          ctx.textAlign = 'left';
+          ctx.fillText(ds.label, lastPt.x + 8, lastPt.y + 4);
+          ctx.restore();
         });
       }
     };
